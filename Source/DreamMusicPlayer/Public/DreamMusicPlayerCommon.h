@@ -94,16 +94,16 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FDreamMusicInfomation
+struct FDreamMusicInformation
 {
 	GENERATED_BODY()
 
 public:
-	FDreamMusicInfomation()
+	FDreamMusicInformation()
 	{
 	};
 
-	FDreamMusicInfomation(FString InTitle, FString InArtist, FString InAlbum, TObjectPtr<UTexture2D> InCover,
+	FDreamMusicInformation(FString InTitle, FString InArtist, FString InAlbum, TObjectPtr<UTexture2D> InCover,
 	                      FString InGenre) :
 		Title(InTitle), Artist(InArtist), Album(InAlbum), Cover(InCover),
 		Genre(InGenre)
@@ -132,7 +132,7 @@ public:
 	FString Genre;
 public:
 	bool IsValid() const;
-	bool operator==(const FDreamMusicInfomation& Target) const;
+	bool operator==(const FDreamMusicInformation& Target) const;
 };
 
 // 歌曲数据
@@ -172,13 +172,13 @@ struct FDreamMusicDataStruct : public FTableRowBase
 {
 	GENERATED_BODY()
 public:
-	FDreamMusicDataStruct() : Infomation(FDreamMusicInfomation()), Data(FDreamMusicInformationData()) {};
-	FDreamMusicDataStruct(FDreamMusicInfomation InInfomation, FDreamMusicInformationData InfomationData)
-		: Infomation(InInfomation), Data(InfomationData) {};
+	FDreamMusicDataStruct() : Information(FDreamMusicInformation()), Data(FDreamMusicInformationData()) {};
+	FDreamMusicDataStruct(FDreamMusicInformation InInformation, FDreamMusicInformationData InfomationData)
+		: Information(InInformation), Data(InfomationData) {};
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FDreamMusicInfomation Infomation;
+	FDreamMusicInformation Information;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FDreamMusicInformationData Data;

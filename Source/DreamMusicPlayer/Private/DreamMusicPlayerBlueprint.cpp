@@ -9,3 +9,13 @@ TArray<FString> UDreamMusicPlayerBlueprint::GetLyricFileNames()
 {
 	return FDreamMusicPlayerLyricTools::GetLyricFileNames();
 }
+
+float UDreamMusicPlayerBlueprint::ConvLyricTimestampToFloat(FDreamMusicLyricTimestamp InTimestamp)
+{
+	return FDreamMusicPlayerLyricTools::Conv_FloatFromTimestamp(InTimestamp);
+}
+
+FDreamMusicLyricTimestamp UDreamMusicPlayerBlueprint::ConvFloatToLyricTimestamp(float InFloat)
+{
+	return FDreamMusicPlayerLyricTools::Conv_TimestampFromFloat(InFloat);
+}

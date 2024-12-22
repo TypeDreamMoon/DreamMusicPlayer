@@ -219,6 +219,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Functions")
 	void SetMusicPercent(float InPercent);
 
+	UFUNCTION(BlueprintCallable, Category = "Functions")
+	void SetMusicPercentWithTimestamp(FDreamMusicLyricTimestamp InTimestamp);
+	
 	// 从音乐数据结构播放音乐
 	// Loop
 	UFUNCTION(BlueprintCallable, Category = "Functions")

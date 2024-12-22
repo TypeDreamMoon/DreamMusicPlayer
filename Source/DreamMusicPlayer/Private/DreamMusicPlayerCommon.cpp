@@ -86,12 +86,12 @@ bool FDreamMusicLyric::operator!=(const FDreamMusicLyric& Target) const
 	return !(*this == Target);
 }
 
-bool FDreamMusicInfomation::IsValid() const
+bool FDreamMusicInformation::IsValid() const
 {
 	return !Title.IsEmpty() || !Artist.IsEmpty() || !Album.IsEmpty() || Cover.IsValid() || !Genre.IsEmpty();
 }
 
-bool FDreamMusicInfomation::operator==(const FDreamMusicInfomation& Target) const
+bool FDreamMusicInformation::operator==(const FDreamMusicInformation& Target) const
 {
 	return Title == Target.Title && Artist == Target.Artist && Album == Target.Album && Genre == Target.Genre && Cover == Target.Cover;
 }
@@ -108,10 +108,10 @@ bool FDreamMusicInformationData::operator==(const FDreamMusicInformationData& Ta
 
 bool FDreamMusicDataStruct::IsVaild() const
 {
-	return Infomation.IsValid() && Data.IsValid();
+	return Information.IsValid() && Data.IsValid();
 }
 
 bool FDreamMusicDataStruct::operator==(const FDreamMusicDataStruct& Target) const
 {
-	return Infomation == Target.Infomation && Data == Target.Data;
+	return Information == Target.Information && Data == Target.Data;
 }

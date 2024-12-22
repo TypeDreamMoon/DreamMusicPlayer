@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "DreamMusicPlayerBlueprint.generated.h"
 
+struct FDreamMusicLyricTimestamp;
 /**
  * 
  */
@@ -16,4 +17,10 @@ class DREAMMUSICPLAYER_API UDreamMusicPlayerBlueprint : public UBlueprintFunctio
 public:
 	UFUNCTION(BlueprintPure)
 	static TArray<FString> GetLyricFileNames();
+
+	UFUNCTION(BlueprintPure)
+	static float ConvLyricTimestampToFloat(FDreamMusicLyricTimestamp InTimestamp);
+
+	UFUNCTION(BlueprintPure)
+	static FDreamMusicLyricTimestamp ConvFloatToLyricTimestamp(float InFloat);
 };

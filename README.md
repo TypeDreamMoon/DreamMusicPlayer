@@ -2,6 +2,8 @@
 
 ---
 
+![Icon128](Resources/Icon128.png "Icon128")
+
 ## Developer : DreamMoon
 
 ## Support Engine Version :
@@ -30,7 +32,15 @@
 
 5. 音乐封面主题色计算
 
-6. ...
+6. 音频可视化
+
+7. 播放器控件
+
+8. 模块化设计
+
+9. 点击歌词播放
+
+10. ...
 
 ## Tools :
 
@@ -47,3 +57,23 @@
 - Bilibili : [梦月_DreamMoon-哔哩哔哩](https://space.bilibili.com/1115826412)
 
 - Github : [TypeDreamMoon (DreamMoon) · GitHub](https://github.com/TypeDreamMoon)
+
+## Sample Music :
+
+- UnAlive - 森カリオペ
+
+- こちら、幸福安心委员会です.（这里是，幸福安心委员会） - 96猫
+
+## Third Party Asset :
+
+1. https://yesicon.app/
+
+# Sample
+
+![Sample1](Images/Sample1.png "Sample1")
+
+![Sample2](Images/Sample2.png "Sample2")
+
+![Sample3](Images/Sample3.png "Sample3")
+
+![Sample4](Images/Sample4.png "Sample4")

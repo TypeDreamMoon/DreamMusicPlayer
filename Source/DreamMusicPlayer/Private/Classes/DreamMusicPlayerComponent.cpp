@@ -287,7 +287,7 @@ void UDreamMusicPlayerComponent::StartMusic()
 
 	// Callback
 	OnMusicPlay.Broadcast(CurrentMusicData);
-	DMP_LOG(Log, TEXT("Play Music : Name : %-15s Duration : %f"), *CurrentMusicData.Infomation.Title,
+	DMP_LOG(Log, TEXT("Play Music : Name : %-15s Duration : %f"), *CurrentMusicData.Information.Title,
 	        CurrentMusicDuration)
 }
 
@@ -323,8 +323,8 @@ void UDreamMusicPlayerComponent::EndMusic(bool Native)
 	ConstantQ = nullptr;
 	Loudness = nullptr;
 	OnMusicEnd.Broadcast();
-	DMP_LOG(Log, TEXT("Music End : Name : %-15s Play Mode : %d"), *CurrentMusicData.Infomation.Title, (int)PlayMode);
-	DMP_LOG(Log, TEXT("Music End : Name : %-15s Play Mode : %d"), *CurrentMusicData.Infomation.Title, (int)PlayMode);
+	DMP_LOG(Log, TEXT("Music End : Name : %-15s Play Mode : %d"), *CurrentMusicData.Information.Title, (int)PlayMode);
+	DMP_LOG(Log, TEXT("Music End : Name : %-15s Play Mode : %d"), *CurrentMusicData.Information.Title, (int)PlayMode);
 
 	if (!Native)
 	{
@@ -386,6 +386,12 @@ void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
 	        CurrentTimestamp.Seconds, CurrentTimestamp.Millisecond);
 }
 
+void UDreamMusicPlayerComponent::SetMusicPercentWithTimestamp(FDreamMusicLyricTimestamp InTimestamp)
+{
+	SetMusicPercent(FDreamMusicPlayerLyricTools::Conv_FloatFromTimestamp(InTimestamp) / CurrentMusicDuration);
+}
+
+
 void UDreamMusicPlayerComponent::SetCurrentLyric(FDreamMusicLyric InLyric)
 {
 	if (InLyric != CurrentLyric && InLyric.IsNotEmpty())
@@ -401,7 +407,7 @@ void UDreamMusicPlayerComponent::LoadAsset()
 {
 	SoundWave = CurrentMusicData.Data.Music.LoadSynchronous();
 	LoadAudioNrt();
-	Cover = CurrentMusicData.Infomation.Cover.LoadSynchronous();
+	Cover = CurrentMusicData.Information.Cover.LoadSynchronous();
 }
 
 void UDreamMusicPlayerComponent::LoadAudioNrt()
@@ -421,7 +427,7 @@ void UDreamMusicPlayerComponent::MusicTick()
 		                                               ? FadeAduioSetting.FadeOutDuration
 		                                               : 0.0f))
 	{
-		DMP_LOG(Log, TEXT("Music Tick Music Name : %s - End"), *CurrentMusicData.Infomation.Title)
+		DMP_LOG(Log, TEXT("Music Tick Music Name : %s - End"), *CurrentMusicData.Information.Title)
 		EndMusic();
 
 		return;
