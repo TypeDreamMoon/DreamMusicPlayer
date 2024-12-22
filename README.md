@@ -1,26 +1,14 @@
-# Unreal - Dream Music Player
+# Unreal - Dream Music Player - 梦月音乐播放器
 
 ---
 
-![Icon128](Resources/Icon128.png "Icon128")
+## 开发者 : [DreamMoon](https://github.com/TypeDreamMoon)
 
-## Developer : DreamMoon
+## 支持引擎版本 : 5.x (需自行构建)
 
-## Support Engine Version :
+---
 
-- 5.0
-
-- 5.1
-
-- 5.2
-
-- 5.3
-
-- 5.4
-
-- 5.5
-
-## Support :
+## 支持 :
 
 1. 滚动歌词
 
@@ -40,15 +28,19 @@
 
 9. 点击歌词播放
 
-10. ...
+10. ...以后可能支持网络歌曲播放
 
-## Tools :
+---
+
+## 第三方工具 :
 
 1. [GitHub - jitwxs/163MusicLyrics: Windows 云音乐歌词获取【网易云、QQ音乐】](https://github.com/jitwxs/163MusicLyrics)
 2. [音乐标签pc版 - vinlxc - 博客园](https://www.cnblogs.com/vinlxc/p/11347744.html)
 3. LyricDownloader
 
-## Help :
+---
+
+## 帮助 :
 
 - QQ : 466585194
 
@@ -58,17 +50,15 @@
 
 - Github : [TypeDreamMoon (DreamMoon) · GitHub](https://github.com/TypeDreamMoon)
 
-## Sample Music :
+---
 
-- UnAlive - 森カリオペ
-
-- こちら、幸福安心委员会です.（这里是，幸福安心委员会） - 96猫
-
-## Third Party Asset :
+## 第三方资产 :
 
 1. https://yesicon.app/
 
-# Sample
+---
+
+## Sample
 
 ![Sample1](Images/Sample1.png "Sample1")
 
@@ -77,3 +67,23 @@
 ![Sample3](Images/Sample3.png "Sample3")
 
 ![Sample4](Images/Sample4.png "Sample4")
+
+---
+
+## 教程
+
+- 插件构建教程
+  
+  - https://www.bilibili.com/video/BV1Xr4y1K7jR
+  
+  - https://www.bilibili.com/video/BV1cy411875N
+
+- 插件使用教程
+  
+  - 待更新...
+
+
+
+![Icon128](Resources/Icon128.png "Icon128")
+
+
