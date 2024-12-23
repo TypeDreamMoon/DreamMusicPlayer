@@ -80,10 +80,7 @@
 
 - 插件使用教程
   
-  - 待更新...
-
-
+  - [1.0.0 版教程](https://www.bilibili.com/video/BV1MkDmY7Evv)
+  - 新版待更新...
 
 ![Icon128](Resources/Icon128.png "Icon128")
-
-
