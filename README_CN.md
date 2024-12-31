@@ -1,38 +1,38 @@
-# Unreal - Dream Music Player
+# 梦月音乐播放器
 
 ---
 
-### [中文](README_CN.md)
+### [ENGLISH](README.md)
 
-## Developer : [DreamMoon](https://github.com/TypeDreamMoon)
+## 开发者 : [DreamMoon](https://github.com/TypeDreamMoon)
 
-## Support engine version : 5.x (Need to build)
-
----
-
-## Support :
-
-1. Scroll lyrics
-
-2. Lyrics file reading
-
-3. The music comes out gradually
-
-4. Music playlist
-
-5. Music cover theme color calculation(KMeans)
-
-6. Audio visualization
-
-7. Modularization
-
-8. Click lyrics to play
-
-9. ...Internet song playback may be supported in the future
+## 支持引擎版本 : 5.x (需自行构建)
 
 ---
 
-## Third-party tools :
+## 支持 :
+
+1. 滚动歌词
+
+2. 歌词文件读取
+
+3. 音乐渐进渐出
+
+4. 音乐歌单
+
+5. 音乐封面主题色计算
+
+6. 音频可视化
+
+7. 模块化
+
+8. 点击歌词播放
+
+9. ...以后可能支持网络歌曲播放
+
+---
+
+## 第三方工具 :
 
 1. [GitHub - jitwxs/163MusicLyrics: Windows 云音乐歌词获取【网易云、QQ音乐】](https://github.com/jitwxs/163MusicLyrics)
 2. [音乐标签pc版 - vinlxc - 博客园](https://www.cnblogs.com/vinlxc/p/11347744.html)
@@ -40,9 +40,9 @@
 
 ---
 
-## Help :
+## 帮助 :
 
-- QQ群 : 466585194
+- QQ : 466585194
 
 - Email : 1067823908@qq.com
 
@@ -54,7 +54,7 @@
 
 ---
 
-## Third party assets :
+## 第三方资产 :
 
 1. https://yesicon.app/
 
@@ -72,17 +72,17 @@
 
 ---
 
-## Tutorial
+## 教程
 
-- Plugin building tutorial
+- 插件构建教程
   
   - https://www.bilibili.com/video/BV1Xr4y1K7jR
   
   - https://www.bilibili.com/video/BV1cy411875N
 
-- Plugin use tutorial
+- 插件使用教程
   
-  - [1.0.0 版教程 BILIBILI](https://www.bilibili.com/video/BV1MkDmY7Evv)
-  - New version to be updated...
+  - [1.0.0 版教程](https://www.bilibili.com/video/BV1MkDmY7Evv)
+  - 新版待更新...
 
 ![Icon128](Resources/Icon128.png "Icon128")
