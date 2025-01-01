@@ -2,7 +2,7 @@
 
 ---
 
-###  [中文](README_CN.md)
+### [中文](README_CN.md)
 
 ## Developer : [DreamMoon](https://github.com/TypeDreamMoon)
 
@@ -68,6 +68,12 @@
 ---
 
 ## Sample
+
+![SampleV2_1](Images/SampleV2_1.png "SampleV2_1")
+
+![SampleV2_2](Images/SampleV2_2.png "SampleV2_2")
+
+![SampleV2_3](Images/SampleV2_3.png "SampleV2_3")
 
 ![Sample1](Images/Sample1.png "Sample1")
 
