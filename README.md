@@ -2,11 +2,18 @@
 
 ---
 
-### [中文](README_CN.md)
+###  [中文](README_CN.md)
 
 ## Developer : [DreamMoon](https://github.com/TypeDreamMoon)
 
 ## Support engine version : 5.x (Need to build)
+
+## Developer engine :
+
+| Plugins Version | Engine Version |
+| --------------- | -------------- |
+| 1.1.0           | 5.0            |
+| 1.1.1           | 5.5            |
 
 ---
 
@@ -74,15 +81,11 @@
 
 ## Tutorial
 
-- Plugin building tutorial
-  
-  - https://www.bilibili.com/video/BV1Xr4y1K7jR
-  
-  - https://www.bilibili.com/video/BV1cy411875N
-
-- Plugin use tutorial
-  
-  - [1.0.0 版教程 BILIBILI](https://www.bilibili.com/video/BV1MkDmY7Evv)
-  - New version to be updated...
+| Tutorial        | YouTube                                 | Bilibili                                                                                                                      |
+|:---------------:|:---------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------:|
+| P1 Perview      | [YouTube](https://youtu.be/1s6l5LL4gdM) | [Bilibili](https://www.bilibili.com/video/BV1rk6RYPEvc/?share_source=copy_web&vd_source=a81e6aca9f64409a68ec31aa70046f0c)     |
+| P2 Base         | [YouTube](https://youtu.be/sttFgOPDo1g) | [Bilibili](https://www.bilibili.com/video/BV1rk6RYPEvc/?p=2&share_source=copy_web&vd_source=a81e6aca9f64409a68ec31aa70046f0c) |
+| P3 Lyric        | [YouTube](https://youtu.be/lvammFAA8II) | [Bilibili](https://www.bilibili.com/video/BV1rk6RYPEvc/?p=3&share_source=copy_web&vd_source=a81e6aca9f64409a68ec31aa70046f0c) |
+| P4 Audio Visual | [YouTube](https://youtu.be/7b-o5JEmOmE) | [Bilibili](https://www.bilibili.com/video/BV1rk6RYPEvc/?p=4&share_source=copy_web&vd_source=a81e6aca9f64409a68ec31aa70046f0c) |
 
 ![Icon128](Resources/Icon128.png "Icon128")
