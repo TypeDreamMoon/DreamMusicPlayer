@@ -242,7 +242,7 @@ public:
 
 	// 获取音频可视化数据
 	UFUNCTION(BlueprintPure, Category = "Functions")
-	void GetAudioNrtData(TArray<float>& ConstantNrtL, TArray<float>& ConstantNrtR, TArray<float>& ConstantNrtAverage,
+	void GetAudioNrtData(bool bConstantReverse, TArray<float>& ConstantNrtL, TArray<float>& ConstantNrtR, TArray<float>& ConstantNrtAverage,
 	                     float& OutLoudnessValue);
 
 	UFUNCTION(BlueprintPure, Category = "Functions")

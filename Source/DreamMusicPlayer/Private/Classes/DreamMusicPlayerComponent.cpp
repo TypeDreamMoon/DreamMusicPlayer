@@ -216,15 +216,24 @@ FDreamMusicDataStruct UDreamMusicPlayerComponent::GetLastMusicData(FDreamMusicDa
 		                     : MusicDataList.Find(InData) - 1];
 }
 
-void UDreamMusicPlayerComponent::GetAudioNrtData(TArray<float>& ConstantNrtL, TArray<float>& ConstantNrtR,
+void UDreamMusicPlayerComponent::GetAudioNrtData(bool bConstantReverse, TArray<float>& ConstantNrtL, TArray<float>& ConstantNrtR,
                                                  TArray<float>& ConstantNrtAverage,
                                                  float& OutLoudnessValue)
 {
 	ConstantNrtL = ConstantQDataL;
 	ConstantNrtR = ConstantQDataR;
 	TArray<float> ConstantQData, ConstantQDataAverage;
-	ConstantQData.Append(ConstantQDataL);
-	ConstantQData.Append(ConstantQDataR);
+	if (bConstantReverse)
+	{
+		ConstantQData.Append(ConstantQDataR);
+		ConstantQData.Append(ConstantQDataL);
+	}
+	else
+	{
+		ConstantQData.Append(ConstantQDataL);
+		ConstantQData.Append(ConstantQDataR);
+	}	
+	
 	for (int i = 0; i < ConstantQData.Num() / 2; ++i)
 	{
 		ConstantQDataAverage.Add((ConstantQData[i] + ConstantQData[ConstantQData.Num() - i - 1]) / 2);
