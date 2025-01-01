@@ -1,4 +1,4 @@
-// Copyright © Dream Moon Studio . Dream Moon All rights reserved
+﻿// Copyright © Dream Moon Studio . Dream Moon All rights reserved
 
 #pragma once
 
@@ -11,7 +11,6 @@
  */
 
 USTRUCT(BlueprintType)
-
 struct FDreamColorKMeansCluster
 {
 	GENERATED_BODY()
@@ -58,7 +57,7 @@ private:
 	void AssignLinearColorToClusters(const TArray<FLinearColor>& Colors, TArray<FDreamColorKMeansCluster>& Clusters, TArray<int32>& ClusterIndices);
 	// 更新聚类中心
 	void UpdateLinearClusterCentroids(TArray<FDreamColorKMeansCluster>& Clusters);
- 
+	
 	// 激活Node
 	virtual void Activate() override;
 };

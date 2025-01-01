@@ -20,6 +20,7 @@ UDreamAsyncAction_KMeansTexture* UDreamAsyncAction_KMeansTexture::KMeansTexture(
 	Node->NodeMaxIterations = MaxIterations;
 	GetDefault<UDreamMusicPlayerSettings>()->KMeansTextureMaterial.LoadSynchronous();
 	Node->RegisterWithGameInstance(WorldContextObject);
+	Node->Activate();
 	return Node;
 }
 

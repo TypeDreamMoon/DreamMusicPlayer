@@ -5,12 +5,10 @@
 
 #include "ConstantQNRT.h"
 #include "DreamMusicPlayerBlueprint.h"
-#include "DreamMusicPlayerSettings.h"
 #include "Algo/RandomShuffle.h"
 #include "Containers/Array.h"
 #include "DreamMusicPlayerLog.h"
 #include "LoudnessNRT.h"
-#include "AsyncAction/DreamAsyncAction_KMeansTexture.h"
 #include "Classes/DreamMusicData.h"
 #include "Classes/DreamMusicPlayerLyricTools.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -25,7 +23,7 @@ void UDreamMusicPlayerComponent::BeginPlay()
 	SubAudioComponentB->SetupAttachment(GetOwner()->GetRootComponent());
 	SubAudioComponentB->RegisterComponent();
 
-	if (SondList)
+	if (SongList)
 	{
 		InitializeMusicList();
 	}
@@ -59,7 +57,7 @@ void UDreamMusicPlayerComponent::InitializeMusicList()
 	DMP_LOG(Log, TEXT("InitializeMusicList - Begin"));
 	TArray<FDreamMusicPlayerSondList*> BufferList;
 	MusicDataList.Empty();
-	SondList->GetAllRows<FDreamMusicPlayerSondList>("", BufferList);
+	SongList->GetAllRows<FDreamMusicPlayerSondList>("", BufferList);
 	for (auto Element : BufferList)
 	{
 		if (Element)
@@ -73,7 +71,7 @@ void UDreamMusicPlayerComponent::InitializeMusicList()
 
 void UDreamMusicPlayerComponent::InitializeMusicListWithSongTable(UDataTable* Table)
 {
-	SondList = Table;
+	SongList = Table;
 	InitializeMusicList();
 }
 
@@ -273,7 +271,6 @@ void UDreamMusicPlayerComponent::StartMusic()
 	ToggleActiveAudioComponent();
 
 	InitializeLyricList();
-	LoadAsset();
 
 	// Play Music
 	CurrentMusicDuration = SoundWave->Duration;
@@ -281,7 +278,7 @@ void UDreamMusicPlayerComponent::StartMusic()
 	GetActiveAudioComponent()->Play();
 
 	// Fade In
-	GetActiveAudioComponent()->FadeIn(FadeAduioSetting.bEnableFadeAudio ? FadeAduioSetting.FadeInDuration : 0.0f);
+	GetActiveAudioComponent()->FadeIn(FadeAudioSetting.bEnableFadeAudio ? FadeAudioSetting.FadeInDuration : 0.0f);
 
 	bIsPaused = false;
 	bIsPlaying = true;
@@ -303,7 +300,7 @@ void UDreamMusicPlayerComponent::StartMusic()
 void UDreamMusicPlayerComponent::EndMusic(bool Native)
 {
 	// Stop Music
-	GetActiveAudioComponent()->FadeOut(FadeAduioSetting.bEnableFadeAudio ? FadeAduioSetting.FadeOutDuration : 0.0f,
+	GetActiveAudioComponent()->FadeOut(FadeAudioSetting.bEnableFadeAudio ? FadeAudioSetting.FadeOutDuration : 0.0f,
 	                                   0.0f);
 	if (GWorld->GetTimerManager().TimerExists(StopTimerHandle))
 	{
@@ -313,7 +310,7 @@ void UDreamMusicPlayerComponent::EndMusic(bool Native)
 	else
 	{
 		GWorld->GetTimerManager().SetTimer(StopTimerHandle, GetActiveAudioComponent(), &UAudioComponent::Stop,
-									   FadeAduioSetting.bEnableFadeAudio ? FadeAduioSetting.FadeOutDuration : 0.0f);
+									   FadeAudioSetting.bEnableFadeAudio ? FadeAudioSetting.FadeOutDuration : 0.0f);
 	}
 	bIsPaused = false;
 	bIsPlaying = false;
@@ -374,6 +371,11 @@ void UDreamMusicPlayerComponent::UnPauseMusic()
 void UDreamMusicPlayerComponent::SetMusicData(FDreamMusicDataStruct InData)
 {
 	CurrentMusicData = InData;
+	
+	LoadAudioNrt();
+	SoundWave = CurrentMusicData.Data.Music.LoadSynchronous();
+	Cover = CurrentMusicData.Information.Cover.LoadSynchronous();
+	
 	OnMusicDataChanged.Broadcast(CurrentMusicData);
 }
 
@@ -395,7 +397,7 @@ void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
 	        CurrentTimestamp.Seconds, CurrentTimestamp.Millisecond);
 }
 
-void UDreamMusicPlayerComponent::SetMusicPercentWithTimestamp(FDreamMusicLyricTimestamp InTimestamp)
+void UDreamMusicPlayerComponent::SetMusicPercentFromTimestamp(FDreamMusicLyricTimestamp InTimestamp)
 {
 	SetMusicPercent(FDreamMusicPlayerLyricTools::Conv_FloatFromTimestamp(InTimestamp) / CurrentMusicDuration);
 }
@@ -412,13 +414,6 @@ void UDreamMusicPlayerComponent::SetCurrentLyric(FDreamMusicLyric InLyric)
 	}
 }
 
-void UDreamMusicPlayerComponent::LoadAsset()
-{
-	SoundWave = CurrentMusicData.Data.Music.LoadSynchronous();
-	LoadAudioNrt();
-	Cover = CurrentMusicData.Information.Cover.LoadSynchronous();
-}
-
 void UDreamMusicPlayerComponent::LoadAudioNrt()
 {
 	if (CurrentMusicData.Data.ConstantQ.IsValid())
@@ -432,8 +427,8 @@ void UDreamMusicPlayerComponent::MusicTick()
 {
 	// Check Music Is Ended
 
-	if (CurrentDuration >= CurrentMusicDuration - (FadeAduioSetting.bEnableFadeAudio
-		                                               ? FadeAduioSetting.FadeOutDuration
+	if (CurrentDuration >= CurrentMusicDuration - (FadeAudioSetting.bEnableFadeAudio
+		                                               ? FadeAudioSetting.FadeOutDuration
 		                                               : 0.0f))
 	{
 		DMP_LOG(Log, TEXT("Music Tick Music Name : %s - End"), *CurrentMusicData.Information.Title)
