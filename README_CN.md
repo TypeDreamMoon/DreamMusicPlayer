@@ -6,14 +6,16 @@
 
 ## 开发者 : [DreamMoon](https://github.com/TypeDreamMoon)
 
+## 示例项目 : [Unreal Dream Music Player Sample Project Repository](https://github.com/TypeDreamMoon/DreamMusicPlayerSample)
+
 ## 支持引擎版本 : 5.x (需自行构建)
 
 ## 开发者引擎 :
 
 | 插件版本  | 引擎版本 |
-| ----- | -------------------------------- |
-| 1.1.0 | 5.0                              |
-| 1.1.1 | 5.5                              |
+| ----- | ---- |
+| 1.1.0 | 5.0  |
+| 1.1.1 | 5.5  |
 
 ---
 
