@@ -46,8 +46,16 @@ void UDreamMusicPlayerComponent::InitializeLyricList()
 	}
 	DMP_LOG(Log, TEXT("InitializeLyricList - Begin"));
 	CurrentMusicLyricList.Empty();
-	CurrentMusicLyricList = FDreamMusicPlayerLyricTools::LoadLyricFromFile(
-		FDreamMusicPlayerLyricTools::GetLyricFilePath(CurrentMusicData.Data.LyricFileName));
+	// OLD
+	// CurrentMusicLyricList = FDreamMusicPlayerLyricTools::LoadLyricFromFile(
+	// 	FDreamMusicPlayerLyricTools::GetLyricFilePath(CurrentMusicData.Data.LyricFileName));
+
+	FDreamMusicPlayerLyricParser Parser(FDreamMusicPlayerLyricTools::GetLyricFilePath(CurrentMusicData.Data.LyricFileName),
+	                                    CurrentMusicData.Data.LyricParseFileType,
+	                                    CurrentMusicData.Data.LyricParseLineType);
+
+	CurrentMusicLyricList = Parser.GetLyrics();
+
 	OnLyricListChanged.Broadcast(CurrentMusicLyricList);
 	DMP_LOG(Log, TEXT("InitializeLyricList Count : %02d - End"), CurrentMusicLyricList.Num());
 }
@@ -230,8 +238,8 @@ void UDreamMusicPlayerComponent::GetAudioNrtData(bool bConstantReverse, TArray<f
 	{
 		ConstantQData.Append(ConstantQDataL);
 		ConstantQData.Append(ConstantQDataR);
-	}	
-	
+	}
+
 	for (int i = 0; i < ConstantQData.Num() / 2; ++i)
 	{
 		ConstantQDataAverage.Add((ConstantQData[i] + ConstantQData[ConstantQData.Num() - i - 1]) / 2);
@@ -310,7 +318,7 @@ void UDreamMusicPlayerComponent::EndMusic(bool Native)
 	else
 	{
 		GWorld->GetTimerManager().SetTimer(StopTimerHandle, GetActiveAudioComponent(), &UAudioComponent::Stop,
-									   FadeAudioSetting.bEnableFadeAudio ? FadeAudioSetting.FadeOutDuration : 0.0f);
+		                                   FadeAudioSetting.bEnableFadeAudio ? FadeAudioSetting.FadeOutDuration : 0.0f);
 	}
 	bIsPaused = false;
 	bIsPlaying = false;
@@ -371,11 +379,11 @@ void UDreamMusicPlayerComponent::UnPauseMusic()
 void UDreamMusicPlayerComponent::SetMusicData(FDreamMusicDataStruct InData)
 {
 	CurrentMusicData = InData;
-	
+
 	LoadAudioNrt();
 	SoundWave = CurrentMusicData.Data.Music.LoadSynchronous();
 	Cover = CurrentMusicData.Information.Cover.LoadSynchronous();
-	
+
 	OnMusicDataChanged.Broadcast(CurrentMusicData);
 }
 
