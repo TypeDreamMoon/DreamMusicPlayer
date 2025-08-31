@@ -31,24 +31,8 @@ enum class EDreamMusicPlayerPlayMode : uint8
 UENUM(BlueprintType)
 enum class EDreamMusicPlayerLyricParseFileType : uint8
 {
-	/**
-	 * [Sample] Line By Line LRC Lyric
-	 * [00:48.710]風 触れる ホシの 願い
-	 * [00:59.210]見上げ 地に縛られている
-	 */
-	LRC_LineByLine UMETA(DisplayName = "LRC(LineByLine)"),
-	/**
-	 * [Sample] Word By Word LRC Lyric
-	 * [00:48.710]風 [00:50.560]触[00:51.060]れ[00:51.270]る [00:53.570]ホ[00:53.920]シ[00:54.800]の [00:56.620]願[00:57.270]い[00:58.770]
-	 * [00:59.210]見[01:00.090]上[01:00.130]げ [01:02.610]地[01:03.030]に[01:03.640]縛[01:04.640]ら[01:06.010]れ[01:06.170]て[01:07.560]い[01:07.590]る[01:08.690]
-	 */
-	LRC_WordByWord UMETA(DisplayName = "LRC(WordByWord)"),
-	/**
-	 * [Sample] ESLyric
-	 * [00:48.710]<00:48.710>風 <00:50.560>触<00:51.060>れ<00:51.270>る <00:53.570>ホ<00:53.920>シ<00:54.800>の <00:56.620>願<00:57.270>い<00:58.770>
-	 * [00:59.210]<00:59.210>見<01:00.090>上<01:00.130>げ <01:02.610>地<01:03.030>に<01:03.640>縛<01:04.640>ら<01:06.010>れ<01:06.170>て<01:07.560>い<01:07.590>る<01:08.690>
-	 */
-	LRC_ESLyric UMETA(DisplayName = "LRC(ESLyric)"),
+	// Three Types of LRC File
+	LRC UMETA(DisplayName = "LRC"),
 	/**
 	 * [Sample] SRT
 	 * 1
@@ -65,6 +49,30 @@ enum class EDreamMusicPlayerLyricParseFileType : uint8
 	 * @see https://fileinfo.com/extension/ass
 	 */
 	ASS UMETA(DisplayName = "ASS"),
+};
+
+UENUM(BlueprintType)
+enum class EDreamMusicPlayerLrcLyricType : uint8
+{
+	None UMETA(DisplayName = "None"),
+	/**
+	 * [Sample] Line By Line LRC Lyric
+	 * [00:48.710]風 触れる ホシの 願い
+	 * [00:59.210]見上げ 地に縛られている
+	 */
+	LineByLine UMETA(DisplayName = "LineByLine"),
+	/**
+	 * [Sample] Word By Word LRC Lyric
+	 * [00:48.710]風 [00:50.560]触[00:51.060]れ[00:51.270]る [00:53.570]ホ[00:53.920]シ[00:54.800]の [00:56.620]願[00:57.270]い[00:58.770]
+	 * [00:59.210]見[01:00.090]上[01:00.130]げ [01:02.610]地[01:03.030]に[01:03.640]縛[01:04.640]ら[01:06.010]れ[01:06.170]て[01:07.560]い[01:07.590]る[01:08.690]
+	 */
+	WordByWord UMETA(DisplayName = "WordByWord"),
+	/**
+	 * [Sample] ESLyric
+	 * [00:48.710]<00:48.710>風 <00:50.560>触<00:51.060>れ<00:51.270>る <00:53.570>ホ<00:53.920>シ<00:54.800>の <00:56.620>願<00:57.270>い<00:58.770>
+	 * [00:59.210]<00:59.210>見<01:00.090>上<01:00.130>げ <01:02.610>地<01:03.030>に<01:03.640>縛<01:04.640>ら<01:06.010>れ<01:06.170>て<01:07.560>い<01:07.590>る<01:08.690>
+	 */
+	ESLyric UMETA(DisplayName = "ESLyric"),
 };
 
 UENUM(BlueprintType)
@@ -331,23 +339,28 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<USoundWave> Music;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EDreamMusicPlayerLyricParseFileType LyricParseFileType = EDreamMusicPlayerLyricParseFileType::LRC_LineByLine;
+	// 歌词解析文件类型
+	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite)
+	EDreamMusicPlayerLyricParseFileType LyricParseFileType = EDreamMusicPlayerLyricParseFileType::LRC;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	// LRC歌词类型
+	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite, meta=(EditConditionHides, EditCondition="LyricParseFileType == EDreamMusicPlayerLyricParseFileType::LRC"))
+	EDreamMusicPlayerLrcLyricType LrcLyricType = EDreamMusicPlayerLrcLyricType::None;
+
+	// 歌词行类型
+	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite)
 	EDreamMusicPlayerLyricParseLineType LyricParseLineType = EDreamMusicPlayerLyricParseLineType::Romanization_Lyric;
 
 	// 内容路径请在ProjectSetting -> DreamPlugins -> Musicplayer -> LyricContentPath 中配置
-	UPROPERTY
-	(EditAnywhere, BlueprintReadWrite, meta=(GetOptions = "DreamMusicPlayer.DreamMusicPlayerBlueprint.GetLyricFileNames"))
+	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite, meta=(GetOptions = "DreamMusicPlayer.DreamMusicPlayerBlueprint.GetLyricFileNames"))
 	FString LyricFileName;
 
 	// 频谱可视化对象
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(MetaClass = "ConstantQNRT"))
+	UPROPERTY(Category="Visual", EditAnywhere, BlueprintReadWrite, meta=(MetaClass = "ConstantQNRT"))
 	FSoftObjectPath ConstantQ;
 
 	// 响度可视化对象
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(MetaClass = "LoudnessNRT"))
+	UPROPERTY(Category="Visual", EditAnywhere, BlueprintReadWrite, meta=(MetaClass = "LoudnessNRT"))
 	FSoftObjectPath Loudness;
 
 public:

@@ -46,13 +46,11 @@ void UDreamMusicPlayerComponent::InitializeLyricList()
 	}
 	DMP_LOG(Log, TEXT("InitializeLyricList - Begin"));
 	CurrentMusicLyricList.Empty();
-	// OLD
-	// CurrentMusicLyricList = FDreamMusicPlayerLyricTools::LoadLyricFromFile(
-	// 	FDreamMusicPlayerLyricTools::GetLyricFilePath(CurrentMusicData.Data.LyricFileName));
-
+	
 	FDreamMusicPlayerLyricParser Parser(FDreamMusicPlayerLyricTools::GetLyricFilePath(CurrentMusicData.Data.LyricFileName),
 	                                    CurrentMusicData.Data.LyricParseFileType,
-	                                    CurrentMusicData.Data.LyricParseLineType);
+	                                    CurrentMusicData.Data.LyricParseLineType,
+	                                    CurrentMusicData.Data.LrcLyricType);
 
 	CurrentMusicLyricList = Parser.GetLyrics();
 

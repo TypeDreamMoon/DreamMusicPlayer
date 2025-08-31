@@ -19,7 +19,7 @@ namespace FDreamMusicPlayerLyricTools
 struct DREAMMUSICPLAYER_API FDreamMusicPlayerLyricParser
 {
 	FDreamMusicPlayerLyricParser() = delete;
-	FDreamMusicPlayerLyricParser(FString InFilePath, EDreamMusicPlayerLyricParseFileType InFileType, EDreamMusicPlayerLyricParseLineType InLineType);
+	FDreamMusicPlayerLyricParser(FString InFilePath, EDreamMusicPlayerLyricParseFileType InFileType, EDreamMusicPlayerLyricParseLineType InLineType, EDreamMusicPlayerLrcLyricType InLrcParseMethod = EDreamMusicPlayerLrcLyricType::None);
 
 public:
 	FString FilePath;
@@ -29,6 +29,7 @@ public:
 	TArray<FDreamMusicLyric> Lyrics;
 	EDreamMusicPlayerLyricParseFileType FileType;
 	EDreamMusicPlayerLyricParseLineType LineType;
+	EDreamMusicPlayerLrcLyricType LrcParseMethod = EDreamMusicPlayerLrcLyricType::LineByLine;
 	TSharedPtr<FDreamMusicPlayerLyricFileParserBase> Parser;
 
 public:
@@ -45,7 +46,7 @@ public:
 	FString GetFileExtension() const;
 
 	EDreamMusicPlayerLyricParseFileType DetectFileType() const;
-	EDreamMusicPlayerLyricParseFileType DetectLRCSubtype() const;
+	EDreamMusicPlayerLrcLyricType DetectLRCSubtype() const;
 
 	void ExtractMetadata();
 	FString GetMetadata(const FString& Key) const;

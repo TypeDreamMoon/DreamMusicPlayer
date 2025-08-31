@@ -82,11 +82,12 @@ TArray<FString> FDreamMusicPlayerLyricTools::GetLyricFileNames()
 #define IS_DEBUG_PARSER true
 #define DMP_LOG_DEBUG(V, F, ...) if (IS_DEBUG_PARSER) DMP_LOG(V, TEXT("[Parser Debug]:" F), __VA_ARGS__)
 
-FDreamMusicPlayerLyricParser::FDreamMusicPlayerLyricParser(FString InFilePath, EDreamMusicPlayerLyricParseFileType InFileType, EDreamMusicPlayerLyricParseLineType InLineType)
+FDreamMusicPlayerLyricParser::FDreamMusicPlayerLyricParser(FString InFilePath, EDreamMusicPlayerLyricParseFileType InFileType, EDreamMusicPlayerLyricParseLineType InLineType, EDreamMusicPlayerLrcLyricType InLrcParseMethod)
 {
 	FilePath = InFilePath;
 	FileType = InFileType;
 	LineType = InLineType;
+	LrcParseMethod = InLrcParseMethod;
 	
 	BeginDecodeFile();
 }
@@ -155,16 +156,8 @@ void FDreamMusicPlayerLyricParser::InitializeParser()
 		Parser = MakeShared<FDreamMusicPlayerLyricFileParser_SRT>(CachedFileContent, CachedFileLines, LineType);
 		break;
 
-	case EDreamMusicPlayerLyricParseFileType::LRC_LineByLine:
-		Parser = MakeShared<FDreamMusicPlayerLyricFileParser_LRC>(CachedFileContent, CachedFileLines, 0, LineType);
-		break;
-
-	case EDreamMusicPlayerLyricParseFileType::LRC_WordByWord:
-		Parser = MakeShared<FDreamMusicPlayerLyricFileParser_LRC>(CachedFileContent, CachedFileLines, 1, LineType);
-		break;
-
-	case EDreamMusicPlayerLyricParseFileType::LRC_ESLyric:
-		Parser = MakeShared<FDreamMusicPlayerLyricFileParser_LRC>(CachedFileContent, CachedFileLines, 2, LineType);
+	case EDreamMusicPlayerLyricParseFileType::LRC:
+		Parser = MakeShared<FDreamMusicPlayerLyricFileParser_LRC>(CachedFileContent, CachedFileLines, LrcParseMethod, LineType);
 		break;
 
 	case EDreamMusicPlayerLyricParseFileType::ASS:
@@ -231,14 +224,14 @@ EDreamMusicPlayerLyricParseFileType FDreamMusicPlayerLyricParser::DetectFileType
 	else if (Extension == TEXT("lrc"))
 	{
 		// Analyze content to determine LRC subtype
-		return DetectLRCSubtype();
+		return EDreamMusicPlayerLyricParseFileType::LRC;
 	}
 
 	// Default fallback
-	return EDreamMusicPlayerLyricParseFileType::LRC_LineByLine;
+	return EDreamMusicPlayerLyricParseFileType::LRC;
 }
 
-EDreamMusicPlayerLyricParseFileType FDreamMusicPlayerLyricParser::DetectLRCSubtype() const
+EDreamMusicPlayerLrcLyricType FDreamMusicPlayerLyricParser::DetectLRCSubtype() const
 {
 	for (const FString& Line : CachedFileLines)
 	{
@@ -257,7 +250,7 @@ EDreamMusicPlayerLyricParseFileType FDreamMusicPlayerLyricParser::DetectLRCSubty
 					FString AfterFirstTimestamp = TrimmedLine.Mid(FirstBracket + 1);
 					if (AfterFirstTimestamp.Contains(TEXT("<")) && AfterFirstTimestamp.Contains(TEXT(">")))
 					{
-						return EDreamMusicPlayerLyricParseFileType::LRC_ESLyric;
+						return EDreamMusicPlayerLrcLyricType::ESLyric;
 					}
 				}
 			}
@@ -269,14 +262,14 @@ EDreamMusicPlayerLyricParseFileType FDreamMusicPlayerLyricParser::DetectLRCSubty
 				FString AfterFirstTimestamp = TrimmedLine.Mid(FirstTimestamp + 1);
 				if (AfterFirstTimestamp.Contains(TEXT("[")))
 				{
-					return EDreamMusicPlayerLyricParseFileType::LRC_WordByWord;
+					return EDreamMusicPlayerLrcLyricType::WordByWord;
 				}
 			}
 		}
 	}
 
 	// Default to line-by-line
-	return EDreamMusicPlayerLyricParseFileType::LRC_LineByLine;
+	return EDreamMusicPlayerLrcLyricType::LineByLine;
 }
 
 void FDreamMusicPlayerLyricParser::ExtractMetadata()

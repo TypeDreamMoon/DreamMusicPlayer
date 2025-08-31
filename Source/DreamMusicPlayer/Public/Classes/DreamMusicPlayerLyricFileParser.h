@@ -57,13 +57,13 @@ protected:
 struct DREAMMUSICPLAYER_API FDreamMusicPlayerLyricFileParser_LRC : public FDreamMusicPlayerLyricFileParserBase
 {
 public:
-	FDreamMusicPlayerLyricFileParser_LRC(const FString& InFileContent, const TArray<FString>& InLines, int8 InParseMethod, EDreamMusicPlayerLyricParseLineType InLineType)
+	FDreamMusicPlayerLyricFileParser_LRC(const FString& InFileContent, const TArray<FString>& InLines, EDreamMusicPlayerLrcLyricType InParseMethod, EDreamMusicPlayerLyricParseLineType InLineType)
 		: FDreamMusicPlayerLyricFileParserBase(InFileContent, InLines, InLineType), ParseMethod(InParseMethod)
 	{
 	}
 
 protected:
-	uint8 ParseMethod;
+	EDreamMusicPlayerLrcLyricType ParseMethod;
 
 public:
 	virtual void Parse() override;
