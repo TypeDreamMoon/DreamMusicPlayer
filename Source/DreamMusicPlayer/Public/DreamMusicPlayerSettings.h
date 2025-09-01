@@ -29,19 +29,6 @@ public:
 	virtual FName GetSectionName() const override { return TEXT("DreamMusicPlayerSetting"); }
 
 public:
-	// KMeans Texture 算法映射材质
-	UPROPERTY(EditAnywhere, DisplayName="K-均值算法映射材质", Category="KMeans Texture", Config)
-	TSoftObjectPtr<UMaterialInterface> KMeansTextureMaterial;
-
-	// KMeans Texture 算法材质槽位名称
-	// 例如 "Texture"
-	UPROPERTY(EditAnywhere, DisplayName="K-均值算法材质槽位名称", Category="KMeans Texture", Config)
-	FName KMeansTextureSlotName = FName{TEXTVIEW("Texture")};
-
-	// KMeans Texture 算法渲染目标大小
-	UPROPERTY(EditAnywhere, DisplayName="K-均值算法渲染目标大小", Category="KMeans Texture", Config)
-	FIntPoint KMeansTextureSize = FIntPoint(256, 256);
-
 	// 歌词Content路径
 	UPROPERTY(EditAnywhere, DisplayName="歌词Content路径", Category="Lyric", Config, meta=(LongPackageName))
 	FDirectoryPath LyricContentPath;
@@ -49,7 +36,7 @@ public:
 	UPROPERTY(EditAnywhere, DisplayName="启用调试模式", Category="Debug", Config)
 	bool bEnableDebugMode = false;
 
-	UPROPERTY(EditAnywhere, DisplayName="启用播放器Tick调试")
+	UPROPERTY(EditAnywhere, DisplayName="启用播放器Tick调试", Category="Debug", Config)
 	bool bEnableTickDebugMode = false;
 
 	UPROPERTY(EditAnywhere, DisplayName="启用解析器调试模式", Category="Debug", Config, meta=(EditConditionHides, EditCondition="bEnableDebugMode"))

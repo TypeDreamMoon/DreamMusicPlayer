@@ -23,6 +23,7 @@ public:
 	UDreamMusicPlayerComponent();
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
 public:
 	/** Delegates **/
 
@@ -45,6 +46,8 @@ public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMusicPlayerPlayModeDelegate, EDreamMusicPlayerPlayMode, Mode);
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMusicPlayerTick, float, Time);
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FMusicPlayerThemeColorChanged, const TArray<FKMeansColorCluster>&, Colors, bool, bSuccess);
 
 	/**
 	 * Music Data Changed
@@ -111,6 +114,9 @@ public:
 	 */
 	UPROPERTY(BlueprintAssignable, Category = "Delegates|Lyric")
 	FMusicPlayerLyricAndIndexDelegate OnLyricChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Delegates|ThemeColor")
+	FMusicPlayerThemeColorChanged OnThemeColorChanged;
 
 public:
 	/** Propertys **/
@@ -226,9 +232,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	bool bUseThemeColorExtension = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", meta=(EditCondition="bUseThemeColorExtension"))
+	float SampleRate = 0.25f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", meta=(EditCondition="bUseThemeColorExtension"))
+	bool bIgnoreTransparent = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", meta=(EditCondition="bUseThemeColorExtension"))
+	float AlphaThreshold = 0.5f;
+
 	// Cover Theme Color Count
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", meta=(EditCondition="bUseThemeColorExtension"))
-	int CoverThemeColorCount = 3;
+	int CoverThemeColorCount = 4;
 
 	// Max Iterations Count
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", meta=(EditCondition="bUseThemeColorExtension"))
@@ -391,6 +406,50 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Functions")
 	UAudioComponent* GetLastActiveAudioComponent() const;
 
+	/**
+	* Get Current Lyric Word Progress for regular lyrics
+	* @param CurrentTime Current playback time in seconds
+	* @param InLyric The lyric line to check
+	* @return Progress information for word timings
+	*/
+	UFUNCTION(BlueprintPure, Category = "Functions|Lyric")
+	FDreamMusicLyricProgress GetCurrentLyricWordProgress(float CurrentTime, const FDreamMusicLyric& InLyric) const;
+
+	/**
+	 * Get Current Romanization Word Progress
+	 * @param CurrentTime Current playback time in seconds
+	 * @param InLyric The lyric line to check
+	 * @return Progress information for romanization word timings
+	 */
+	UFUNCTION(BlueprintPure, Category = "Functions|Lyric")
+	FDreamMusicLyricProgress GetCurrentRomanizationProgress(float CurrentTime, const FDreamMusicLyric& InLyric) const;
+
+	/**
+	 * Get Current Lyric Line Progress (fallback when no word timings available)
+	 * @param CurrentTime Current playback time in seconds
+	 * @param InLyric The lyric line to check
+	 * @return Progress information based on line timestamps
+	 */
+	UFUNCTION(BlueprintPure, Category = "Functions|Lyric")
+	FDreamMusicLyricProgress GetCurrentLyricLineProgress(float CurrentTime, const FDreamMusicLyric& InLyric) const;
+
+	/**
+		 * Extract theme colors from current music cover asynchronously
+		 * @param ClusterCount Number of dominant colors to extract
+		 * @param MaxIterations Maximum K-Means iterations
+		 */
+	UFUNCTION(BlueprintCallable, Category = "Functions|Theme")
+	void ExtractCoverThemeColors(int32 ClusterCount = 5, int32 MaxIterations = 100);
+
+	/**
+	 * Extract theme colors from any texture asynchronously
+	 * @param Texture Target texture to analyze
+	 * @param ClusterCount Number of dominant colors to extract
+	 * @param MaxIterations Maximum K-Means iterations
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Functions|Theme")
+	void ExtractTextureThemeColors(UTexture2D* Texture, int32 ClusterCount = 5, int32 MaxIterations = 100);
+
 public:
 	UFUNCTION()
 	TArray<FString> GetNames() const;
@@ -450,4 +509,20 @@ private:
 	 * @return Whether the A audio component is active
 	 */
 	bool ToggleActiveAudioComponent();
+
+	/**
+	 * Helper function to calculate word progress from word timing array
+	 * @param CurrentTime Current playback time in seconds
+	 * @param WordTimings Array of word timings
+	 * @param LineStartTime Start time of the lyric line
+	 * @return Progress information
+	 */
+	FDreamMusicLyricProgress CalculateWordProgress(float CurrentTime, const TArray<FDreamMusicLyricWord>& WordTimings, float LineStartTime) const;
+
+private:
+	UPROPERTY()
+	TObjectPtr<UDreamAsyncAction_KMeansTexture> CurrentKMeansTask;
+
+	UFUNCTION()
+	void OnThemeColorsExtracted(const TArray<FKMeansColorCluster>& ColorClusters, bool bSuccess);
 };

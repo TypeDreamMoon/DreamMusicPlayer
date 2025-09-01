@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Kismet/BlueprintAsyncActionBase.h"
+#include "Engine/CancellableAsyncAction.h"
 #include "DreamAsyncAction_KMeansTexture.generated.h"
 
 /**
@@ -11,53 +11,97 @@
  */
 
 USTRUCT(BlueprintType)
-struct FDreamColorKMeansCluster
+struct FKMeansColorCluster
 {
 	GENERATED_BODY()
 
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FLinearColor Centroid;
+	UPROPERTY(BlueprintReadOnly)
+	FLinearColor Color;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FLinearColor> Points;
+	UPROPERTY(BlueprintReadOnly)
+	float Weight; // Percentage of pixels in this cluster (0.0 to 1.0)
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 PixelCount;
+
+	FKMeansColorCluster()
+		: Color(FLinearColor::White)
+		, Weight(0.0f)
+		, PixelCount(0)
+	{
+	}
+
+	FKMeansColorCluster(FLinearColor InColor, float InWeight, int32 InPixelCount)
+		: Color(InColor)
+		, Weight(InWeight)
+		, PixelCount(InPixelCount)
+	{
+	}
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FKMeansTextureCompleted, const TArray<FKMeansColorCluster>&, ColorClusters, bool, bSuccess);
+
 UCLASS()
-class DREAMMUSICPLAYER_API UDreamAsyncAction_KMeansTexture : public UBlueprintAsyncActionBase
+class DREAMMUSICPLAYER_API UDreamAsyncAction_KMeansTexture : public UCancellableAsyncAction
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFinish, const TArray<FLinearColor>&, ClusterColors);
+    UPROPERTY(BlueprintAssignable)
+    FKMeansTextureCompleted OnCompleted;
 
-	UPROPERTY(BlueprintAssignable)
-	FOnFinish OnFinish;
+    /**
+     * Extract dominant colors from texture using K-Means clustering
+     * @param Texture The texture to analyze
+     * @param ClusterCount Number of color clusters to find (typically 3-8)
+     * @param MaxIterations Maximum iterations for K-Means algorithm
+     * @param SampleRate Sample rate for pixel sampling (1.0 = all pixels, 0.1 = every 10th pixel)
+     * @param bIgnoreTransparent Whether to ignore transparent/semi-transparent pixels
+     * @param AlphaThreshold Minimum alpha value to consider (0.0-1.0, used when bIgnoreTransparent is true)
+     */
+    UFUNCTION(BlueprintCallable, Category = "Dream Music Player", meta = (BlueprintInternalUseOnly = "true"))
+    static UDreamAsyncAction_KMeansTexture* KMeansTextureAnalysis(
+        UTexture2D* Texture,
+        int32 ClusterCount = 5,
+        int32 MaxIterations = 100,
+        float SampleRate = 0.25f,
+        bool bIgnoreTransparent = true,
+        float AlphaThreshold = 0.5f
+    );
 
-public:
-	UFUNCTION(BlueprintCallable,
-		meta=(BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject", AutoCreateRefTerm =
-			"WorldContextObject"))
-	static UDreamAsyncAction_KMeansTexture* KMeansTexture(UTexture2D* Texture2D, int32 K, int32 MaxIterations,
-	                                                      UObject* WorldContextObject);
+    virtual void Activate() override;
+    virtual void Cancel() override;
+
+	bool bIsCancelled;
+	inline int32 GetSamplePixelNum()
+	{
+		return SampledPixels.Num();
+	}
 
 private:
-	TArray<FLinearColor> NodeColors;
-	int32 NodeK;
-	int32 NodeMaxIterations;
- 
-	UPROPERTY()
-	UObject* WorldContext;
-	UPROPERTY()
-	UTexture2D* Texture;
- 
-	// 计算线性颜色之间的距离平方
-	float LinearColorDistanceSquared(const FLinearColor& A, const FLinearColor& B);
-	// 分配线性颜色到最近的聚类中心
-	void AssignLinearColorToClusters(const TArray<FLinearColor>& Colors, TArray<FDreamColorKMeansCluster>& Clusters, TArray<int32>& ClusterIndices);
-	// 更新聚类中心
-	void UpdateLinearClusterCentroids(TArray<FDreamColorKMeansCluster>& Clusters);
-	
-	// 激活Node
-	virtual void Activate() override;
+    // Input parameters
+    UPROPERTY()
+    TObjectPtr<UTexture2D> SourceTexture;
+    
+    int32 NumClusters;
+    int32 MaxIterationsCount;
+    float PixelSampleRate;
+    bool bIgnoreTransparentPixels;
+    float MinAlphaThreshold;
+
+    // Processing data
+    TArray<FLinearColor> SampledPixels;
+    TArray<FLinearColor> ClusterCentroids;
+    TArray<int32> PixelClusterAssignments;
+
+    void ExecuteKMeans();
+    void InitializeClusters();
+    bool AssignPixelsToClusters();
+    void UpdateClusterCentroids();
+    float CalculateColorDistance(const FLinearColor& Color1, const FLinearColor& Color2) const;
+    void SampleTexturePixels();
+    TArray<FKMeansColorCluster> GenerateResults();
+	void DecodeDXT1Block(const uint8* BlockData, FLinearColor* OutPixels);
+	FColor UnpackDXT1Color(uint16 Color);
+    void CompleteTask(bool bSuccess);
 };

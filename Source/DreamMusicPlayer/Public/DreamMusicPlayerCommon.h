@@ -130,7 +130,6 @@ public:
 	bool operator<=(const FDreamMusicLyricTimestamp& Target) const;
 	bool operator<(const FDreamMusicLyricTimestamp& Target) const;
 
-	
 
 	static FDreamMusicLyricTimestamp Parse(const FString& TimestampStr)
 	{
@@ -289,6 +288,36 @@ public:
 		                       WordTimings.Num(),
 		                       RomanizationWordTimings.Num());
 	}
+};
+
+USTRUCT(BlueprintType)
+struct FDreamMusicLyricProgress
+{
+	GENERATED_BODY()
+
+public:
+	FDreamMusicLyricProgress()
+		: CurrentWordIndex(-1)
+		  , LineProgress(0.0f)
+		  , bIsActive(false)
+	{
+	}
+
+	// Current word index being played (-1 if none)
+	UPROPERTY(BlueprintReadOnly)
+	int32 CurrentWordIndex;
+
+	// Progress within the current line (0.0 to 1.0)
+	UPROPERTY(BlueprintReadOnly)
+	float LineProgress;
+
+	// Whether this line is currently active
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsActive;
+
+	// Current word being played (if any)
+	UPROPERTY(BlueprintReadOnly)
+	FDreamMusicLyricWord CurrentWord;
 };
 
 USTRUCT(BlueprintType)

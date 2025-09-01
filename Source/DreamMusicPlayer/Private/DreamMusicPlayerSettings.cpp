@@ -5,12 +5,6 @@
 
 UDreamMusicPlayerSettings::UDreamMusicPlayerSettings()
 {
-	static ConstructorHelpers::FObjectFinder<UMaterialInterface> DefaultMaterialAsset(TEXT("Material'/DreamMusicPlayer/Asset/Material/M_KMeansTexture.M_KMeansTexture'"));
-    
-	if (DefaultMaterialAsset.Succeeded())
-	{
-		KMeansTextureMaterial = DefaultMaterialAsset.Object;
-	}
 }
 
 UDreamMusicPlayerSettings* UDreamMusicPlayerSettings::Get()
