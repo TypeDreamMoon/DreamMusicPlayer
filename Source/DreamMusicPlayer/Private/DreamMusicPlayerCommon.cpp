@@ -1,60 +1,54 @@
 #include "DreamMusicPlayerCommon.h"
 
-#include "ConstantQNRT.h"
-#include "DreamMusicPlayerLog.h"
-#include "LoudnessNRT.h"
-#include "Engine/ObjectLibrary.h"
-
 bool FDreamMusicLyricTimestamp::operator==(const FDreamMusicLyricTimestamp& Target) const
 {
-	return Millisecond == Target.Millisecond && Minute == Target.Minute && Seconds == Target.Seconds;
+	return Target.ToMilliseconds() == ToMilliseconds();
 }
 
 bool FDreamMusicLyricTimestamp::operator>=(const FDreamMusicLyricTimestamp& Target) const
 {
-	if (Minute >= Target.Minute)
-		return true;
-	else if (Seconds >= Target.Seconds)
-		return true;
-	else if (Millisecond >= Target.Millisecond)
-		return true;
-	return false;
+	return ToMilliseconds() >= Target.ToMilliseconds();
 }
 
 bool FDreamMusicLyricTimestamp::operator>(const FDreamMusicLyricTimestamp& Target) const
 {
-	if (Minute > Target.Minute)
-		return true;
-	else if (Seconds > Target.Seconds)
-		return true;
-	else if (Millisecond > Target.Millisecond)
-		return true;
-	else
-		return false;
+	return ToMilliseconds() > Target.ToMilliseconds();
 }
 
 bool FDreamMusicLyricTimestamp::operator<=(const FDreamMusicLyricTimestamp& Target) const
 {
-	if (Minute <= Target.Minute)
-		return true;
-	else if (Seconds <= Target.Seconds)
-		return true;
-	else if (Millisecond <= Target.Millisecond)
-		return true;
-	else
-		return false;
+	return ToMilliseconds() <= Target.ToMilliseconds();
 }
 
 bool FDreamMusicLyricTimestamp::operator<(const FDreamMusicLyricTimestamp& Target) const
 {
-	if (Minute < Target.Minute)
-		return true;
-	else if (Seconds < Target.Seconds)
-		return true;
-	else if (Millisecond < Target.Millisecond)
-		return true;
-	else
-		return false;
+	return ToMilliseconds() < Target.ToMilliseconds();
+}
+
+const FDreamMusicLyricTimestamp* FDreamMusicLyricTimestamp::FromSeconds(float InSeconds)
+{
+	Seconds = FMath::FloorToInt(InSeconds);
+	Millisecond = FMath::RoundToInt((InSeconds - Seconds) * 1000);
+	Hours = Seconds / 3600;
+	Seconds %= 3600;
+	Minute = Seconds / 60;
+	Seconds = Seconds % 60;
+	return this;
+}
+
+int FDreamMusicLyricTimestamp::ToMilliseconds() const
+{
+	return Hours * 3600000 + Minute * 60000 + Seconds * 1000 + Millisecond;
+}
+
+float FDreamMusicLyricTimestamp::ToSeconds() const
+{
+	float TotalSeconds = Hours * 3600.0f;
+	TotalSeconds += Minute * 60.0f;
+	TotalSeconds += Seconds;
+	TotalSeconds += Millisecond / 1000.0f;
+
+	return TotalSeconds;
 }
 
 FDreamMusicLyric::FDreamMusicLyric(FString Line)

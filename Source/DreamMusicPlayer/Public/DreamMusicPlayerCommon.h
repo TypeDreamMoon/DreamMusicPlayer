@@ -91,7 +91,7 @@ enum class EDreamMusicPlayerLyricParseLineType: uint8
 };
 
 USTRUCT(BlueprintType)
-struct FDreamMusicLyricTimestamp
+struct DREAMMUSICPLAYER_API FDreamMusicLyricTimestamp
 {
 	GENERATED_BODY()
 
@@ -130,10 +130,7 @@ public:
 	bool operator<=(const FDreamMusicLyricTimestamp& Target) const;
 	bool operator<(const FDreamMusicLyricTimestamp& Target) const;
 
-	int TotalMilliseconds() const
-	{
-		return Hours * 3600000 + Minute * 60000 + Seconds * 1000 + Millisecond;
-	}
+	
 
 	static FDreamMusicLyricTimestamp Parse(const FString& TimestampStr)
 	{
@@ -189,6 +186,10 @@ public:
 	{
 		return FString::Printf(TEXT("%02d:%02d:%02d.%03d"), Hours, Minute, Seconds, Millisecond);
 	}
+
+	inline const FDreamMusicLyricTimestamp* FromSeconds(float InSeconds);
+	inline float ToSeconds() const;
+	inline int ToMilliseconds() const;
 };
 
 USTRUCT(BlueprintType)
@@ -267,7 +268,7 @@ public:
 
 	bool IsNotEmpty() const
 	{
-		return Timestamp.TotalMilliseconds() > 0 || !Content.IsEmpty() || !Translate.IsEmpty();
+		return Timestamp.ToMilliseconds() > 0 || !Content.IsEmpty();
 	}
 
 	static FDreamMusicLyric EMPTY()

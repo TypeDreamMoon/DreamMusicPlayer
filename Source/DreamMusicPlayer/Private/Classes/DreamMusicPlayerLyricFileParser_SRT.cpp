@@ -21,7 +21,7 @@ void FDreamMusicPlayerLyricFileParser_SRT::Parse()
 
 		if (Line.IsEmpty())
 		{
-			if (Lyric.Timestamp.TotalMilliseconds() != 0 || Lyric.EndTimestamp.TotalMilliseconds() != 0)
+			if (Lyric.Timestamp.ToMilliseconds() != 0 || Lyric.EndTimestamp.ToMilliseconds() != 0)
 			{
 				ProcessText(Lyric);
 				ParsedLyrics.Add(Lyric);
@@ -57,7 +57,7 @@ void FDreamMusicPlayerLyricFileParser_SRT::Parse()
 		}
 	}
 
-	if (Lyric.Timestamp.TotalMilliseconds() != 0 || Lyric.EndTimestamp.TotalMilliseconds() != 0)
+	if (Lyric.Timestamp.ToMilliseconds() != 0 || Lyric.EndTimestamp.ToMilliseconds() != 0)
 	{
 		ProcessText(Lyric);
 		ParsedLyrics.Add(Lyric);

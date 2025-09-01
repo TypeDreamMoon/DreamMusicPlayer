@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "DreamLyricGroupProcessor.h"
 #include "DreamMusicPlayerCommon.h"
 
 /**
@@ -120,45 +121,28 @@ struct DREAMMUSICPLAYER_API FDreamMusicPlayerLyricFileParser_LRC : public FDream
 {
 public:
 	FDreamMusicPlayerLyricFileParser_LRC(const FString& InFileContent, const TArray<FString>& InLines, EDreamMusicPlayerLrcLyricType InParseMethod, EDreamMusicPlayerLyricParseLineType InLineType)
-		: FDreamMusicPlayerLyricFileParserBase(InFileContent, InLines, InLineType), ParseMethod(InParseMethod)
+		: FDreamMusicPlayerLyricFileParserBase(InFileContent, InLines, InLineType),
+		  ParseMethod(InParseMethod),
+		  GroupProcessor(InParseMethod, InLineType)
 	{
 	}
 
 protected:
 	EDreamMusicPlayerLrcLyricType ParseMethod;
+	FDreamLyricGroupProcessor GroupProcessor;
 
 public:
 	virtual void Parse() override;
-	virtual void ProcessText(FDreamMusicLyric& Lyric) override;
+
+	// LRC File is not use for processing text
+	virtual void ProcessText(FDreamMusicLyric& Lyric) override
+	{
+	}
 
 protected:
-	void ParseLinesAsTriple(const TArray<FString>& InLines, int32 LyricIndex);
-	void ParseLinesAsPair(const TArray<FString>& InLines, int32 LyricIndex);
-	void ParseLinesAsSingle(const TArray<FString>& InLines);
-
+	// Core functions
 	FDreamMusicLyric CreateLyricFromLine(const FString& Line);
-	FString ExtractContentFromLine(const FString& Line);
-	void ProcessLyricContent(FDreamMusicLyric& Lyric, const FString& Line);
-	void ProcessWordByWordContent(FDreamMusicLyric& Lyric, const FString& Line);
-	void ProcessESLyricContent(FDreamMusicLyric& Lyric, const FString& Line);
-
-	void ProcessTimestampGroup(const TArray<FString>& LinesInGroup);
-
-	void AssignContentByType_RLT(FDreamMusicLyric& Lyric, const TArray<FString>& Lines); // Romanization_Lyric_Translation
-	void AssignContentByType_LRT(FDreamMusicLyric& Lyric, const TArray<FString>& Lines); // Lyric_Romanization_Translation
-	void AssignContentByType_TLR(FDreamMusicLyric& Lyric, const TArray<FString>& Lines); // Translation_Lyric_Romanization
-	void AssignContentByType_RL(FDreamMusicLyric& Lyric, const TArray<FString>& Lines); // Romanization_Lyric
-	void AssignContentByType_LR(FDreamMusicLyric& Lyric, const TArray<FString>& Lines); // Lyric_Romanization
-	void AssignContentByType_TL(FDreamMusicLyric& Lyric, const TArray<FString>& Lines); // Translation_Lyric
-	void AssignContentByType_LT(FDreamMusicLyric& Lyric, const TArray<FString>& Lines); // Lyric_Translation
-	void AssignContentByType_LO(FDreamMusicLyric& Lyric, const TArray<FString>& Lines); // Lyric_Only
-
-	void ProcessESLyricContentForSpecificField(FDreamMusicLyric& Lyric, const FString& Line, const FString& TargetField);
-	void ProcessWordByWordContentForSpecificField(FDreamMusicLyric& Lyric, const FString& Line, const FString& TargetField);
-
 	FString ExtractTimestampFromLine(const FString& Line);
-	int32 GetMainLyricIndex() const;
-
 	bool IsMetadataLine(const FString& Line) const;
 };
 

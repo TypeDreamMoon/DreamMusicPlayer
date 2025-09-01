@@ -12,3 +12,8 @@ UDreamMusicPlayerSettings::UDreamMusicPlayerSettings()
 		KMeansTextureMaterial = DefaultMaterialAsset.Object;
 	}
 }
+
+UDreamMusicPlayerSettings* UDreamMusicPlayerSettings::Get()
+{
+	return GetMutableDefault<UDreamMusicPlayerSettings>();
+}

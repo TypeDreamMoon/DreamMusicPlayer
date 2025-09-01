@@ -40,6 +40,7 @@ public class DreamMusicPlayer : ModuleRules
 				"SlateCore",
 				"AudioSynesthesia",
 				"DeveloperSettings",
+				"AudioExtensions"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

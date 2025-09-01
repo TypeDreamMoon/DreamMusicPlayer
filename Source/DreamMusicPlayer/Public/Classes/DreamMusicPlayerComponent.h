@@ -13,13 +13,16 @@ class UDreamAsyncAction_KMeansTexture;
 /**
  * 
  */
-UCLASS(ClassGroup=DreamComponent, Blueprintable, meta=(BlueprintSpawnableComponent), HideCategories=(Parameters))
+UCLASS(ClassGroup=DreamComponent, Blueprintable, meta=(BlueprintSpawnableComponent),
+	HideCategories=(Parameters,ComponentTick,ComponentReplication), AutoCollapseCategories=(State))
 class DREAMMUSICPLAYER_API UDreamMusicPlayerComponent : public UActorComponent
 {
 	GENERATED_BODY()
-public:
-	virtual void BeginPlay() override;
 
+public:
+	UDreamMusicPlayerComponent();
+	virtual void BeginPlay() override;
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 public:
 	/** Delegates **/
 
@@ -42,7 +45,7 @@ public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMusicPlayerPlayModeDelegate, EDreamMusicPlayerPlayMode, Mode);
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMusicPlayerTick, float, Time);
-	
+
 	/**
 	 * Music Data Changed
 	 */
@@ -112,15 +115,15 @@ public:
 public:
 	/** Propertys **/
 
-	// Components
-
 	// A Audio Component
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Components")
+	UPROPERTY(BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UAudioComponent> SubAudioComponentA = nullptr;
 
 	// B Audio Component
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Components")
+	UPROPERTY(BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UAudioComponent> SubAudioComponentB = nullptr;
+
+#pragma region State
 
 	// State
 
@@ -200,39 +203,49 @@ public:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
 	bool CurrentActiveAudioComponent = false;
 
-	// Data And Settings
+#pragma endregion State
+
+#pragma region Data
 
 	// Song List
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data", meta=(RequiredAssetDataTags="RowStructure=/Script/DreamMusicPlayer.DreamMusicDataStruct"))
 	TObjectPtr<UDataTable> SongList;
 
 	// Music Data List
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data")
+	UPROPERTY(BlueprintReadWrite, Category = "Data")
 	TArray<FDreamMusicDataStruct> MusicDataList;
 
-	// Music Timer Update Time
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	float UpdateTime = 0.01f;
+#pragma endregion Data
+
+#pragma region Settings
 
 	// Lyric Offset
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	float LyricOffset = 0.0f;
 
-	// Cover Theme Color Count
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	bool bUseThemeColorExtension = false;
+
+	// Cover Theme Color Count
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", meta=(EditCondition="bUseThemeColorExtension"))
 	int CoverThemeColorCount = 3;
 
 	// Max Iterations Count
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", meta=(EditCondition="bUseThemeColorExtension"))
 	int MaxIterationsCount = 3;
 
 	// Fade Audio Setting
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	FDreamMusicPlayerFadeAudioSetting FadeAudioSetting;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Settings")
+	USoundClass* SoundClass;
+
+#pragma endregion Settings
+
 private:
-	FTimerHandle TimerHandle;
 	FTimerHandle StopTimerHandle;
+
 public:
 	/**
 	 * Set Music Player Play Mode
@@ -379,10 +392,9 @@ public:
 	UAudioComponent* GetLastActiveAudioComponent() const;
 
 public:
-	
 	UFUNCTION()
 	TArray<FString> GetNames() const;
-	
+
 private:
 	/**
 	 * Start Music Native
@@ -431,7 +443,7 @@ private:
 	/**
 	 * Music Timer Tick
 	 */
-	void MusicTick();
+	void MusicTick(float DeltaTime);
 
 	/**
 	 * Toggle Active Audio Component

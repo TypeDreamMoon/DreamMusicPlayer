@@ -50,7 +50,7 @@ void FDreamMusicPlayerLyricFileParser_ASS::Parse()
 			FDreamMusicLyricTimestamp EndTimestamp = ParseASSTimestamp(EndTimeStr);
 
 			DMP_LOG(Log, TEXT("Parsed Timestamps - Start ms: %d, End ms: %d"),
-			        StartTimestamp.TotalMilliseconds(), EndTimestamp.TotalMilliseconds());
+			        StartTimestamp.ToMilliseconds(), EndTimestamp.ToMilliseconds());
 
 			// 根据样式类型处理
 			if (Style == TEXT("orig"))
@@ -59,7 +59,7 @@ void FDreamMusicPlayerLyricFileParser_ASS::Parse()
 				FDreamMusicLyric* ExistingLyric = nullptr;
 				for (FDreamMusicLyric& Lyric : ParsedLyrics)
 				{
-					if (Lyric.Timestamp.TotalMilliseconds() == StartTimestamp.TotalMilliseconds())
+					if (Lyric.Timestamp.ToMilliseconds() == StartTimestamp.ToMilliseconds())
 					{
 						ExistingLyric = &Lyric;
 						break;
@@ -88,7 +88,7 @@ void FDreamMusicPlayerLyricFileParser_ASS::Parse()
 				bool bFound = false;
 				for (FDreamMusicLyric& Lyric : ParsedLyrics)
 				{
-					if (Lyric.Timestamp.TotalMilliseconds() == StartTimestamp.TotalMilliseconds())
+					if (Lyric.Timestamp.ToMilliseconds() == StartTimestamp.ToMilliseconds())
 					{
 						Lyric.Translate = Text;
 						bFound = true;
@@ -112,7 +112,7 @@ void FDreamMusicPlayerLyricFileParser_ASS::Parse()
 				bool bFound = false;
 				for (FDreamMusicLyric& Lyric : ParsedLyrics)
 				{
-					if (Lyric.Timestamp.TotalMilliseconds() == StartTimestamp.TotalMilliseconds())
+					if (Lyric.Timestamp.ToMilliseconds() == StartTimestamp.ToMilliseconds())
 					{
 						Lyric.Romanization = Text;
 						// 同时处理罗马音的卡拉OK标签
@@ -217,7 +217,7 @@ void FDreamMusicPlayerLyricFileParser_ASS::ProcessKaraokeTags(FDreamMusicLyric& 
 	FRegexPattern Pattern(TEXT("\\{\\\\kf(\\d+)\\}([^\\{]*)"));
 	FRegexMatcher Matcher(Pattern, Text);
 
-	int32 CurrentTimeMs = Lyric.Timestamp.TotalMilliseconds();
+	int32 CurrentTimeMs = Lyric.Timestamp.ToMilliseconds();
 
 	// 清除已存在的单词时间信息
 	Lyric.WordTimings.Empty();
@@ -282,7 +282,7 @@ void FDreamMusicPlayerLyricFileParser_ASS::ProcessRomanizationKaraokeTags(FDream
 	FRegexPattern Pattern(TEXT("\\{\\\\kf(\\d+)\\}([^\\{]*)"));
 	FRegexMatcher Matcher(Pattern, Text);
 
-	int32 CurrentTimeMs = Lyric.Timestamp.TotalMilliseconds();
+	int32 CurrentTimeMs = Lyric.Timestamp.ToMilliseconds();
 
 	// 清除已存在的罗马音单词时间信息
 	Lyric.RomanizationWordTimings.Empty();

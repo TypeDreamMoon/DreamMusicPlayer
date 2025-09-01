@@ -12,10 +12,10 @@ TArray<FString> UDreamMusicPlayerBlueprint::GetLyricFileNames()
 
 float UDreamMusicPlayerBlueprint::ConvLyricTimestampToFloat(FDreamMusicLyricTimestamp InTimestamp)
 {
-	return FDreamMusicPlayerLyricTools::Conv_FloatFromTimestamp(InTimestamp);
+	return InTimestamp.ToSeconds();
 }
 
 FDreamMusicLyricTimestamp UDreamMusicPlayerBlueprint::ConvFloatToLyricTimestamp(float InFloat)
 {
-	return FDreamMusicPlayerLyricTools::Conv_TimestampFromFloat(InFloat);
+	return *FDreamMusicLyricTimestamp().FromSeconds(InFloat);
 }

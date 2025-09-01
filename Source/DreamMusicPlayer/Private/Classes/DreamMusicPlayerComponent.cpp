@@ -5,13 +5,20 @@
 
 #include "ConstantQNRT.h"
 #include "DreamMusicPlayerBlueprint.h"
+#include "DreamMusicPlayerDebugLog.h"
 #include "Algo/RandomShuffle.h"
 #include "Containers/Array.h"
 #include "DreamMusicPlayerLog.h"
 #include "LoudnessNRT.h"
+#include "Classes/DreamLyricParser.h"
 #include "Classes/DreamMusicData.h"
 #include "Classes/DreamMusicPlayerLyricTools.h"
 #include "Kismet/KismetMathLibrary.h"
+
+UDreamMusicPlayerComponent::UDreamMusicPlayerComponent()
+{
+	PrimaryComponentTick.bCanEverTick = true;
+}
 
 void UDreamMusicPlayerComponent::BeginPlay()
 {
@@ -31,6 +38,16 @@ void UDreamMusicPlayerComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
+void UDreamMusicPlayerComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (bIsPlaying && !bIsPaused)
+	{
+		MusicTick(DeltaTime);
+	}
+}
+
 void UDreamMusicPlayerComponent::SetPlayMode(EDreamMusicPlayerPlayMode InPlayMode)
 {
 	PlayMode = InPlayMode;
@@ -46,11 +63,11 @@ void UDreamMusicPlayerComponent::InitializeLyricList()
 	}
 	DMP_LOG(Log, TEXT("InitializeLyricList - Begin"));
 	CurrentMusicLyricList.Empty();
-	
-	FDreamMusicPlayerLyricParser Parser(FDreamMusicPlayerLyricTools::GetLyricFilePath(CurrentMusicData.Data.LyricFileName),
-	                                    CurrentMusicData.Data.LyricParseFileType,
-	                                    CurrentMusicData.Data.LyricParseLineType,
-	                                    CurrentMusicData.Data.LrcLyricType);
+
+	FDreamLyricParser Parser(FDreamMusicPlayerLyricTools::GetLyricFilePath(CurrentMusicData.Data.LyricFileName),
+	                         CurrentMusicData.Data.LyricParseFileType,
+	                         CurrentMusicData.Data.LyricParseLineType,
+	                         CurrentMusicData.Data.LrcLyricType);
 
 	CurrentMusicLyricList = Parser.GetLyrics();
 
@@ -143,7 +160,7 @@ void UDreamMusicPlayerComponent::PlayMusicWithLyric(FDreamMusicLyric InLyric)
 {
 	if (CurrentMusicLyricList.Contains(InLyric))
 	{
-		float Time = FDreamMusicPlayerLyricTools::Conv_FloatFromTimestamp(InLyric.Timestamp);
+		float Time = InLyric.Timestamp.ToSeconds();
 		Time = UKismetMathLibrary::NormalizeToRange(Time, 0.0f, CurrentMusicDuration);
 		SetMusicPercent(Time);
 	}
@@ -280,6 +297,7 @@ void UDreamMusicPlayerComponent::StartMusic()
 
 	// Play Music
 	CurrentMusicDuration = SoundWave->Duration;
+
 	GetActiveAudioComponent()->SetSound(SoundWave);
 	GetActiveAudioComponent()->Play();
 
@@ -289,13 +307,6 @@ void UDreamMusicPlayerComponent::StartMusic()
 	bIsPaused = false;
 	bIsPlaying = true;
 	SetPlayState(EDreamMusicPlayerPlayState::EDMPPS_Playing);
-
-	// Clean Timer And Start Timer
-	GetOwner()->GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
-	GetOwner()->GetWorld()->GetTimerManager().SetTimer(
-		TimerHandle, this, &UDreamMusicPlayerComponent::MusicTick,
-		UpdateTime, true
-	);
 
 	// Callback
 	OnMusicPlay.Broadcast(CurrentMusicData);
@@ -321,9 +332,6 @@ void UDreamMusicPlayerComponent::EndMusic(bool Native)
 	bIsPaused = false;
 	bIsPlaying = false;
 	SetPlayState(EDreamMusicPlayerPlayState::EDMPPS_Stop);
-
-	// Clear Timer
-	GetOwner()->GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
 
 	// Free Memory
 	CurrentDuration = 0.0f;
@@ -359,7 +367,6 @@ void UDreamMusicPlayerComponent::EndMusic(bool Native)
 void UDreamMusicPlayerComponent::PauseMusic()
 {
 	GetActiveAudioComponent()->SetPaused(true);
-	GetOwner()->GetWorld()->GetTimerManager().PauseTimer(TimerHandle);
 	SetPlayState(EDreamMusicPlayerPlayState::EDMPPS_Paused);
 	bIsPaused = true;
 	OnMusicPause.Broadcast();
@@ -368,7 +375,6 @@ void UDreamMusicPlayerComponent::PauseMusic()
 void UDreamMusicPlayerComponent::UnPauseMusic()
 {
 	GetActiveAudioComponent()->SetPaused(false);
-	GetOwner()->GetWorld()->GetTimerManager().UnPauseTimer(TimerHandle);
 	SetPlayState(EDreamMusicPlayerPlayState::EDMPPS_Playing);
 	bIsPaused = false;
 	OnMusicUnPause.Broadcast();
@@ -396,7 +402,7 @@ void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
 	InPercent = FMath::Clamp(InPercent, 0.0f, 1.0f);
 	CurrentMusicPercent = InPercent;
 	CurrentDuration = CurrentMusicDuration * InPercent;
-	CurrentTimestamp = FDreamMusicPlayerLyricTools::Conv_TimestampFromFloat(
+	CurrentTimestamp = *FDreamMusicLyricTimestamp().FromSeconds(
 		CurrentDuration + LyricOffset);
 	GetActiveAudioComponent()->Play(CurrentDuration);
 	DMP_LOG(Log, TEXT("Set Music Percent : %f Time : %02d:%02d.%02d"), CurrentMusicPercent, CurrentTimestamp.Minute,
@@ -405,7 +411,7 @@ void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
 
 void UDreamMusicPlayerComponent::SetMusicPercentFromTimestamp(FDreamMusicLyricTimestamp InTimestamp)
 {
-	SetMusicPercent(FDreamMusicPlayerLyricTools::Conv_FloatFromTimestamp(InTimestamp) / CurrentMusicDuration);
+	SetMusicPercent(InTimestamp.ToSeconds() / CurrentMusicDuration);
 }
 
 
@@ -415,7 +421,7 @@ void UDreamMusicPlayerComponent::SetCurrentLyric(FDreamMusicLyric InLyric)
 	{
 		CurrentLyric = InLyric;
 		OnLyricChanged.Broadcast(CurrentLyric, CurrentMusicLyricList.Find(CurrentLyric));
-		DMP_LOG(Log, TEXT("Lyric : Set : Time : %02d-%02d.%02d Content : %s"),
+		DMP_LOG_DEBUG(Log, "Lyric", TEXT("Set : Time : %02d:%02d.%02d Content : %s"),
 		        InLyric.Timestamp.Minute, InLyric.Timestamp.Seconds, InLyric.Timestamp.Millisecond, *InLyric.Content);
 	}
 }
@@ -429,7 +435,7 @@ void UDreamMusicPlayerComponent::LoadAudioNrt()
 	DMP_LOG(Log, TEXT("Load Audio NRT Done."))
 }
 
-void UDreamMusicPlayerComponent::MusicTick()
+void UDreamMusicPlayerComponent::MusicTick(float DeltaTime)
 {
 	// Check Music Is Ended
 
@@ -445,11 +451,11 @@ void UDreamMusicPlayerComponent::MusicTick()
 
 	// Begin Music Tick
 
-	CurrentDuration += UpdateTime;
+	CurrentDuration += DeltaTime;
 	CurrentMusicPercent = CurrentDuration / CurrentMusicDuration;
-	CurrentTimestamp = FDreamMusicPlayerLyricTools::Conv_TimestampFromFloat(
+	CurrentTimestamp = *FDreamMusicLyricTimestamp().FromSeconds(
 		CurrentDuration + LyricOffset);
-	SetCurrentLyric(FDreamMusicPlayerLyricTools::GetCurrentLyric(CurrentTimestamp, CurrentMusicLyricList));
+	SetCurrentLyric(FDreamMusicPlayerLyricTools::GetLyricAtTimestamp(CurrentTimestamp, CurrentMusicLyricList));
 	if (ConstantQ)
 	{
 		ConstantQ.Get()->GetNormalizedChannelConstantQAtTime(CurrentDuration, 0, ConstantQDataL);
@@ -461,7 +467,7 @@ void UDreamMusicPlayerComponent::MusicTick()
 	}
 	OnMusicTick.Broadcast(CurrentDuration);
 
-	// DMP_LOG(Log, TEXT("Music Tick - Time : %02d-%02d.%02d"), Timestamp.Minute, Timestamp.Seconds, Timestamp.Millisecond)
+	DMP_LOG_DEBUG_TICK(Log, TEXT("Time: %s DeltaTime: %f P: %f"), *CurrentTimestamp.ToString(), DeltaTime, CurrentMusicPercent)
 }
 
 bool UDreamMusicPlayerComponent::ToggleActiveAudioComponent()
