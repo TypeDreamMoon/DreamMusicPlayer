@@ -252,6 +252,9 @@ public:
 	FString Romanization;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FDreamMusicLyricWord> RomanizationWordTimings;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FDreamMusicLyricWord> WordTimings;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -276,7 +279,14 @@ public:
 
 	FString ToString() const
 	{
-		return FString::Printf(TEXT("Content: %s Start: %s End: %s"), *Content, *Timestamp.ToString(), *EndTimestamp.ToString());
+		return FString::Printf(TEXT("Content: %s Translation: %s Romanization: %s Start: %s End: %s WordTimings: %d RomanizationTimings: %d"),
+		                       *Content,
+		                       *Translate,
+		                       *Romanization,
+		                       *Timestamp.ToString(),
+		                       *EndTimestamp.ToString(),
+		                       WordTimings.Num(),
+		                       RomanizationWordTimings.Num());
 	}
 };
 

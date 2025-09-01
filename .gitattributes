@@ -1,4 +1,0 @@
-*.uasset filter=lfs merge=lfs -text
-*.lrc filter=lfs merge=lfs -text
-Tools/* filter=lfs diff=lfs merge=lfs -text
-*.png filter=lfs merge=lfs -text
