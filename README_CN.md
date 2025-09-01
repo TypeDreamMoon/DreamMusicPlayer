@@ -13,9 +13,10 @@
 ## 开发者引擎 :
 
 | 插件版本  | 引擎版本 |
-| ----- | ---- |
+|-------|------|
 | 1.1.0 | 5.0  |
 | 1.1.1 | 5.5  |
+| 2.0.0 | 5.6  |
 
 ---
 
@@ -36,6 +37,8 @@
 7. 模块化
 
 8. 点击歌词播放
+9. 逐字歌词
+10. 歌词文件解析(lrc`WordByWord``LineByLine``ESLyric`, ass, srt)
 
 9. ...以后可能支持网络歌曲播放
 
@@ -43,9 +46,7 @@
 
 ## 第三方工具 :
 
-1. [GitHub - jitwxs/163MusicLyrics: Windows 云音乐歌词获取【网易云、QQ音乐】](https://github.com/jitwxs/163MusicLyrics)
-2. [音乐标签pc版 - vinlxc - 博客园](https://www.cnblogs.com/vinlxc/p/11347744.html)
-3. LyricDownloader
+1. [音乐标签pc版 - vinlxc - 博客园](https://www.cnblogs.com/vinlxc/p/11347744.html)
 
 ---
 
@@ -89,11 +90,11 @@
 
 ## 教程
 
-| 教程         | YouTube                                 | Bilibili                                                                                                                      |
+|     教程     |                 YouTube                 |                                                           Bilibili                                                            |
 |:----------:|:---------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------:|
-| P1 预览      | [YouTube](https://youtu.be/1s6l5LL4gdM) | [Bilibili](https://www.bilibili.com/video/BV1rk6RYPEvc/?share_source=copy_web&vd_source=a81e6aca9f64409a68ec31aa70046f0c)     |
-| P2 基本      | [YouTube](https://youtu.be/sttFgOPDo1g) | [Bilibili](https://www.bilibili.com/video/BV1rk6RYPEvc/?p=2&share_source=copy_web&vd_source=a81e6aca9f64409a68ec31aa70046f0c) |
-| P3 歌词开发    | [YouTube](https://youtu.be/lvammFAA8II) | [Bilibili](https://www.bilibili.com/video/BV1rk6RYPEvc/?p=3&share_source=copy_web&vd_source=a81e6aca9f64409a68ec31aa70046f0c) |
+|   P1 预览    | [YouTube](https://youtu.be/1s6l5LL4gdM) |   [Bilibili](https://www.bilibili.com/video/BV1rk6RYPEvc/?share_source=copy_web&vd_source=a81e6aca9f64409a68ec31aa70046f0c)   |
+|   P2 基本    | [YouTube](https://youtu.be/sttFgOPDo1g) | [Bilibili](https://www.bilibili.com/video/BV1rk6RYPEvc/?p=2&share_source=copy_web&vd_source=a81e6aca9f64409a68ec31aa70046f0c) |
+|  P3 歌词开发   | [YouTube](https://youtu.be/lvammFAA8II) | [Bilibili](https://www.bilibili.com/video/BV1rk6RYPEvc/?p=3&share_source=copy_web&vd_source=a81e6aca9f64409a68ec31aa70046f0c) |
 | P4 音频可视化开发 | [YouTube](https://youtu.be/7b-o5JEmOmE) | [Bilibili](https://www.bilibili.com/video/BV1rk6RYPEvc/?p=4&share_source=copy_web&vd_source=a81e6aca9f64409a68ec31aa70046f0c) |
 
 ![Icon128](Resources/Icon128.png "Icon128")
