@@ -88,6 +88,12 @@ FDreamMusicPlayerLyricParser::FDreamMusicPlayerLyricParser(FString InFilePath, E
 	FileType = InFileType;
 	LineType = InLineType;
 	LrcParseMethod = InLrcParseMethod;
+
+	DMP_LOG_DEBUG(Log, TEXT("Initialize: FIlePath: %s FileType: %s LineType: %s LRC Parse Method: %s"),
+		*FilePath,
+		*UEnum::GetValueAsString(FileType),
+		*UEnum::GetValueAsString(LineType),
+		*UEnum::GetValueAsString(LrcParseMethod))
 	
 	BeginDecodeFile();
 }
@@ -129,6 +135,11 @@ void FDreamMusicPlayerLyricParser::BeginDecodeFile()
 	{
 		Parser->Parse();
 		Lyrics = Parser->GetParsedLyrics();
+
+		for (const FDreamMusicLyric& Lyric : Lyrics)
+		{
+			DMP_LOG_DEBUG(Log, TEXT("Lyric : %s"), *Lyric.ToString())
+		}
 
 		// Sort lyrics by timestamp
 		SortLyricsByTimestamp();

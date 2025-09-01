@@ -144,8 +144,6 @@ void FDreamMusicPlayerLyricFileParser_ASS::Parse()
 		{
 			ProcessKaraokeTags(Lyric);
 		}
-
-		DMP_LOG(Log, TEXT("Final Lyric: %s"), *Lyric.ToString());
 	}
 }
 
