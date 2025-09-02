@@ -23,13 +23,30 @@ UDreamMusicPlayerComponent::UDreamMusicPlayerComponent()
 
 void UDreamMusicPlayerComponent::BeginPlay()
 {
+	// Create audio components with better configuration
 	SubAudioComponentA = NewObject<UAudioComponent>(GetOwner(), TEXT("MusicPlayerAudioComponentA"));
-	SubAudioComponentA->SetupAttachment(GetOwner()->GetRootComponent());
-	SubAudioComponentA->RegisterComponent();
+	if (SubAudioComponentA)
+	{
+		SubAudioComponentA->SetupAttachment(GetOwner()->GetRootComponent());
+		SubAudioComponentA->bAutoActivate = false; // Prevent auto-activation
+		if (SoundClass)
+		{
+			SubAudioComponentA->SoundClassOverride = SoundClass;
+		}
+		SubAudioComponentA->RegisterComponent();
+	}
 
 	SubAudioComponentB = NewObject<UAudioComponent>(GetOwner(), TEXT("MusicPlayerAudioComponentB"));
-	SubAudioComponentB->SetupAttachment(GetOwner()->GetRootComponent());
-	SubAudioComponentB->RegisterComponent();
+	if (SubAudioComponentB)
+	{
+		SubAudioComponentB->SetupAttachment(GetOwner()->GetRootComponent());
+		SubAudioComponentB->bAutoActivate = false; // Prevent auto-activation
+		if (SoundClass)
+		{
+			SubAudioComponentB->SoundClassOverride = SoundClass;
+		}
+		SubAudioComponentB->RegisterComponent();
+	}
 
 	if (SongList)
 	{
@@ -37,6 +54,40 @@ void UDreamMusicPlayerComponent::BeginPlay()
 	}
 
 	Super::BeginPlay();
+}
+
+void UDreamMusicPlayerComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// Stop any playing music
+	if (bIsPlaying)
+	{
+		EndMusic(true);
+	}
+
+	// Clean up timers
+	if (GWorld && GWorld->GetTimerManager().TimerExists(StopTimerHandle))
+	{
+		GWorld->GetTimerManager().ClearTimer(StopTimerHandle);
+	}
+
+	// Cancel any pending async operations
+	if (CurrentKMeansTask && CurrentKMeansTask->IsValidLowLevel())
+	{
+		CurrentKMeansTask->Cancel();
+		CurrentKMeansTask = nullptr;
+	}
+
+	// Clean up audio components
+	if (SubAudioComponentA && SubAudioComponentA->IsValidLowLevel())
+	{
+		SubAudioComponentA->Stop();
+	}
+	if (SubAudioComponentB && SubAudioComponentB->IsValidLowLevel())
+	{
+		SubAudioComponentB->Stop();
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void UDreamMusicPlayerComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -79,9 +130,9 @@ void UDreamMusicPlayerComponent::InitializeLyricList()
 void UDreamMusicPlayerComponent::InitializeMusicList()
 {
 	DMP_LOG(Log, TEXT("InitializeMusicList - Begin"));
-	TArray<FDreamMusicPlayerSondList*> BufferList;
+	TArray<FDreamMusicPlayerSongList*> BufferList;
 	MusicDataList.Empty();
-	SongList->GetAllRows<FDreamMusicPlayerSondList>("", BufferList);
+	SongList->GetAllRows<FDreamMusicPlayerSongList>("", BufferList);
 	for (auto Element : BufferList)
 	{
 		if (Element)
@@ -266,12 +317,15 @@ void UDreamMusicPlayerComponent::GetAudioNrtData(bool bConstantReverse, TArray<f
 
 UAudioComponent* UDreamMusicPlayerComponent::GetActiveAudioComponent() const
 {
-	return CurrentActiveAudioComponent ? SubAudioComponentB : SubAudioComponentA;
+	UAudioComponent* Component = CurrentActiveAudioComponent ? SubAudioComponentB : SubAudioComponentA;
+	return IsAudioComponentReady(Component) ? Component : nullptr;
 }
+
 
 UAudioComponent* UDreamMusicPlayerComponent::GetLastActiveAudioComponent() const
 {
-	return CurrentActiveAudioComponent ? SubAudioComponentA : SubAudioComponentB;
+	UAudioComponent* Component = CurrentActiveAudioComponent ? SubAudioComponentA : SubAudioComponentB;
+	return IsAudioComponentReady(Component) ? Component : nullptr;
 }
 
 FDreamMusicLyricProgress UDreamMusicPlayerComponent::GetCurrentLyricWordProgress(float CurrentTime, const FDreamMusicLyric& InLyric) const
@@ -336,18 +390,21 @@ FDreamMusicLyricProgress UDreamMusicPlayerComponent::GetCurrentLyricLineProgress
 
 void UDreamMusicPlayerComponent::ExtractCoverThemeColors(int32 ClusterCount, int32 MaxIterations)
 {
-	if (!Cover)
+	if (!Cover || !Cover->IsValidLowLevel())
 	{
-		DMP_LOG(Warning, TEXT("No cover image available for theme color extraction"));
+		DMP_LOG(Warning, TEXT("No valid cover image available for theme color extraction"));
 		OnThemeColorChanged.Broadcast(TArray<FKMeansColorCluster>(), false);
 		return;
 	}
 
-	// 检查是否在快速切换歌曲时存在未完成的任务
+	// Clean up existing task more safely
 	if (CurrentKMeansTask)
 	{
-		DMP_LOG(Warning, TEXT("Cancelling previous K-Means task before starting new one"));
-		CurrentKMeansTask->Cancel();
+		if (CurrentKMeansTask->IsValidLowLevel() && !CurrentKMeansTask->IsCompletedOrCancelled())
+		{
+			DMP_LOG(Log, TEXT("Cancelling previous K-Means task before starting new one"));
+			CurrentKMeansTask->Cancel();
+		}
 		CurrentKMeansTask = nullptr;
 	}
 
@@ -357,29 +414,23 @@ void UDreamMusicPlayerComponent::ExtractCoverThemeColors(int32 ClusterCount, int
 
 void UDreamMusicPlayerComponent::ExtractTextureThemeColors(UTexture2D* Texture, int32 ClusterCount, int32 MaxIterations)
 {
-	if (!Texture)
+	if (!Texture || !Texture->IsValidLowLevel())
 	{
-		DMP_LOG(Warning, TEXT("Invalid texture for theme color extraction - Texture is null"));
+		DMP_LOG(Warning, TEXT("Invalid texture for theme color extraction - Texture is null or invalid"));
 		OnThemeColorChanged.Broadcast(TArray<FKMeansColorCluster>(), false);
 		return;
 	}
 
-	// 添加更多验证
-	if (!Texture->GetPlatformData())
+	// Enhanced texture validation
+	const FTexturePlatformData* PlatformData = Texture->GetPlatformData();
+	if (!PlatformData || PlatformData->Mips.Num() == 0)
 	{
-		DMP_LOG(Warning, TEXT("Invalid texture for theme color extraction - No platform data"));
+		DMP_LOG(Warning, TEXT("Invalid texture for theme color extraction - No platform data or mips"));
 		OnThemeColorChanged.Broadcast(TArray<FKMeansColorCluster>(), false);
 		return;
 	}
 
-	if (Texture->GetPlatformData()->Mips.Num() == 0)
-	{
-		DMP_LOG(Warning, TEXT("Invalid texture for theme color extraction - No mip levels"));
-		OnThemeColorChanged.Broadcast(TArray<FKMeansColorCluster>(), false);
-		return;
-	}
-
-	FTexture2DMipMap& MipMap = Texture->GetPlatformData()->Mips[0];
+	const FTexture2DMipMap& MipMap = PlatformData->Mips[0];
 	if (MipMap.BulkData.GetBulkDataSize() == 0)
 	{
 		DMP_LOG(Warning, TEXT("Invalid texture for theme color extraction - Empty bulk data"));
@@ -387,29 +438,31 @@ void UDreamMusicPlayerComponent::ExtractTextureThemeColors(UTexture2D* Texture, 
 		return;
 	}
 
-	// Cancel any existing task
+	// Clean up existing task safely
 	if (CurrentKMeansTask)
 	{
-		DMP_LOG(Log, TEXT("Cancelling existing K-Means task"));
-		CurrentKMeansTask->Cancel();
+		if (CurrentKMeansTask->IsValidLowLevel() && !CurrentKMeansTask->IsCompletedOrCancelled())
+		{
+			DMP_LOG(Log, TEXT("Cancelling existing K-Means task"));
+			CurrentKMeansTask->Cancel();
+		}
 		CurrentKMeansTask = nullptr;
 	}
 
-	// Start new K-Means analysis
+	// Create new task with clamped parameters
 	CurrentKMeansTask = UDreamAsyncAction_KMeansTexture::KMeansTextureAnalysis(
 		Texture,
 		FMath::Clamp(ClusterCount, 1, CoverThemeColorCount),
 		FMath::Clamp(MaxIterations, 1, MaxIterationsCount),
-		0.25f, // Sample 25% of pixels for performance
-		true, // Ignore transparent pixels
-		0.5f // Alpha threshold
+		FMath::Clamp(SampleRate, 0.1f, 1.0f),
+		bIgnoreTransparent,
+		FMath::Clamp(AlphaThreshold, 0.0f, 1.0f)
 	);
 
-	if (CurrentKMeansTask)
+	if (CurrentKMeansTask && CurrentKMeansTask->IsValidLowLevel())
 	{
-		// 添加任务开始前的调试信息
 		DMP_LOG(Log, TEXT("Creating K-Means analysis task for texture: %s (Size: %dx%d, Format: %d)"),
-		        *Texture->GetName(), Texture->GetSizeX(), Texture->GetSizeY(), (int)Texture->GetPixelFormat());
+			*Texture->GetName(), Texture->GetSizeX(), Texture->GetSizeY(), (int)Texture->GetPixelFormat());
 
 		CurrentKMeansTask->OnCompleted.AddDynamic(this, &UDreamMusicPlayerComponent::OnThemeColorsExtracted);
 		CurrentKMeansTask->Activate();
@@ -423,10 +476,18 @@ void UDreamMusicPlayerComponent::ExtractTextureThemeColors(UTexture2D* Texture, 
 	}
 }
 
+bool UDreamMusicPlayerComponent::IsAudioComponentReady(UAudioComponent* Component) const
+{
+	return Component && 
+		   Component->IsValidLowLevel() && 
+		   Component->IsRegistered() && 
+		   !Component->HasAnyFlags(RF_BeginDestroyed | RF_FinishDestroyed);
+}
+
 
 void UDreamMusicPlayerComponent::OnThemeColorsExtracted(const TArray<FKMeansColorCluster>& ColorClusters, bool bSuccess)
 {
-	// 保存当前任务指针以便调试
+	// Safely clear the current task reference
 	UDreamAsyncAction_KMeansTexture* CompletedTask = CurrentKMeansTask;
 	CurrentKMeansTask = nullptr;
 
@@ -434,36 +495,32 @@ void UDreamMusicPlayerComponent::OnThemeColorsExtracted(const TArray<FKMeansColo
 	{
 		DMP_LOG(Log, TEXT("Theme color extraction completed successfully. Found %d colors"), ColorClusters.Num());
 
-		// Log the extracted colors for debugging
+		// Log extracted colors for debugging
 		for (int32 i = 0; i < ColorClusters.Num(); ++i)
 		{
 			const FKMeansColorCluster& Cluster = ColorClusters[i];
 			DMP_LOG(Log, TEXT("Color %d: R=%.3f G=%.3f B=%.3f Weight=%.3f PixelCount=%d"),
-			        i, Cluster.Color.R, Cluster.Color.G, Cluster.Color.B, Cluster.Weight, Cluster.PixelCount);
+				i, Cluster.Color.R, Cluster.Color.G, Cluster.Color.B, Cluster.Weight, Cluster.PixelCount);
 		}
 	}
 	else
 	{
-		// 添加更详细的错误信息
+		// Enhanced error reporting
 		if (!bSuccess)
 		{
-			DMP_LOG(Warning, TEXT("Theme color extraction failed or was cancelled. Task may have been cancelled or encountered an error."));
-		}
-		else if (ColorClusters.Num() == 0)
-		{
-			DMP_LOG(Warning, TEXT("Theme color extraction completed but found no colors. This may indicate an issue with the texture or sampling."));
+			DMP_LOG(Warning, TEXT("Theme color extraction failed or was cancelled"));
 		}
 		else
 		{
-			DMP_LOG(Warning, TEXT("Theme color extraction failed for unknown reasons."));
+			DMP_LOG(Warning, TEXT("Theme color extraction found no colors"));
 		}
 
-		// 添加调试信息
-		if (CompletedTask)
+		// Additional debugging info if task is available
+		if (CompletedTask && CompletedTask->IsValidLowLevel())
 		{
-			DMP_LOG(Warning, TEXT("Task details - IsCancelled: %s, SampledPixels: %d"),
-			        CompletedTask->bIsCancelled ? TEXT("true") : TEXT("false"),
-			        CompletedTask->GetSamplePixelNum());
+			DMP_LOG(Warning, TEXT("Task details - Texture: %s, SampledPixels: %d"),
+				CompletedTask->GetTargetTexture() ? *CompletedTask->GetTargetTexture()->GetName() : TEXT("NULL"),
+				CompletedTask->GetSamplePixelNum());
 		}
 	}
 
@@ -480,31 +537,40 @@ FDreamMusicLyricProgress UDreamMusicPlayerComponent::CalculateWordProgress(float
 		return Progress;
 	}
 
-	// WordTimings use absolute timestamps from song start, so use CurrentTime directly
-
-	// Find the current word
+	// Find the current word with improved timing logic
 	int32 CurrentWordIndex = -1;
+	float CurrentWordStartTime = 0.0f;
+	float CurrentWordEndTime = 0.0f;
+
 	for (int32 i = 0; i < WordTimings.Num(); ++i)
 	{
 		float WordStartTime = WordTimings[i].StartTimestamp.ToSeconds();
 		float WordEndTime = WordTimings[i].EndTimestamp.ToSeconds();
 
-		// If EndTimestamp is not set, use start of next word or estimate
+		// Improved end time calculation
 		if (WordEndTime <= WordStartTime)
 		{
 			if (i + 1 < WordTimings.Num())
 			{
+				// Use next word's start time
 				WordEndTime = WordTimings[i + 1].StartTimestamp.ToSeconds();
 			}
 			else
 			{
-				WordEndTime = WordStartTime + 0.5f; // Estimate 0.5 seconds per word
+				// For the last word, use content-based estimation with minimum duration
+				float ContentBasedDuration = FMath::Max(0.3f, WordTimings[i].Content.Len() * 0.08f + 0.2f);
+				WordEndTime = WordStartTime + ContentBasedDuration;
 			}
 		}
 
-		if (CurrentTime >= WordStartTime && CurrentTime < WordEndTime)
+		// Use slightly overlapping ranges to prevent gaps between words
+		float WordEndTimeWithBuffer = (i == WordTimings.Num() - 1) ? WordEndTime + 0.15f : WordEndTime + 0.05f;
+
+		if (CurrentTime >= WordStartTime && CurrentTime < WordEndTimeWithBuffer)
 		{
 			CurrentWordIndex = i;
+			CurrentWordStartTime = WordStartTime;
+			CurrentWordEndTime = WordEndTime;
 			Progress.CurrentWord = WordTimings[i];
 			break;
 		}
@@ -512,39 +578,58 @@ FDreamMusicLyricProgress UDreamMusicPlayerComponent::CalculateWordProgress(float
 
 	Progress.CurrentWordIndex = CurrentWordIndex;
 
-	// Calculate overall line progress based on word timings
-	if (WordTimings.Num() > 0)
+	// Calculate overall line progress with better end time handling
+	float LineStartTime_Local = WordTimings[0].StartTimestamp.ToSeconds();
+	float LineEndTime_Local;
+
+	// Determine line end time more accurately
+	const FDreamMusicLyricWord& LastWord = WordTimings.Last();
+	if (LastWord.EndTimestamp.ToSeconds() > LastWord.StartTimestamp.ToSeconds())
 	{
-		float LineStartTime_Local = WordTimings[0].StartTimestamp.ToSeconds();
-		float LineEndTime_Local;
+		LineEndTime_Local = LastWord.EndTimestamp.ToSeconds();
+	}
+	else
+	{
+		// Improved estimation for undefined end times
+		float LastWordDuration = FMath::Max(0.5f, LastWord.Content.Len() * 0.08f + 0.3f);
+		LineEndTime_Local = LastWord.StartTimestamp.ToSeconds() + LastWordDuration;
+	}
 
-		// Get the end time of the last word
-		if (WordTimings.Last().EndTimestamp.ToSeconds() > WordTimings.Last().StartTimestamp.ToSeconds())
-		{
-			LineEndTime_Local = WordTimings.Last().EndTimestamp.ToSeconds();
-		}
-		else
-		{
-			// Estimate end time if not provided
-			LineEndTime_Local = WordTimings.Last().StartTimestamp.ToSeconds() + 0.5f;
-		}
+	// Add adaptive buffer based on line content
+	float AdaptiveBuffer = FMath::Clamp(WordTimings.Num() * 0.05f, 0.1f, 0.4f);
+	LineEndTime_Local += AdaptiveBuffer;
 
-		if (CurrentTime >= LineStartTime_Local && CurrentTime <= LineEndTime_Local)
+	// Set line activity and progress
+	if (CurrentTime >= LineStartTime_Local)
+	{
+		if (CurrentTime <= LineEndTime_Local)
 		{
 			Progress.bIsActive = true;
-			Progress.LineProgress = (CurrentTime - LineStartTime_Local) / (LineEndTime_Local - LineStartTime_Local);
-			Progress.LineProgress = FMath::Clamp(Progress.LineProgress, 0.0f, 1.0f);
-		}
-		else if (CurrentTime < LineStartTime_Local)
-		{
-			Progress.bIsActive = false;
-			Progress.LineProgress = 0.0f;
+			float RawProgress = (CurrentTime - LineStartTime_Local) / (LineEndTime_Local - LineStartTime_Local);
+
+			// Prevent premature completion of last word
+			if (CurrentWordIndex == WordTimings.Num() - 1 && RawProgress > 0.9f)
+			{
+				// Ensure last word has enough time to complete
+				float LastWordCompletionTime = CurrentWordEndTime + 0.1f;
+				if (CurrentTime < LastWordCompletionTime)
+				{
+					RawProgress = FMath::Min(RawProgress, 0.9f);
+				}
+			}
+
+			Progress.LineProgress = FMath::Clamp(RawProgress, 0.0f, 1.0f);
 		}
 		else
 		{
 			Progress.bIsActive = false;
 			Progress.LineProgress = 1.0f;
 		}
+	}
+	else
+	{
+		Progress.bIsActive = false;
+		Progress.LineProgress = 0.0f;
 	}
 
 	return Progress;
@@ -563,77 +648,173 @@ void UDreamMusicPlayerComponent::StartMusic()
 		return;
 	}
 
+	// Clear any existing timers to prevent conflicts
+	if (GWorld && GWorld->GetTimerManager().TimerExists(StopTimerHandle))
+	{
+		GWorld->GetTimerManager().ClearTimer(StopTimerHandle);
+	}
+
 	// Initialize State
 	CurrentMusicDuration = 0.0f;
 	CurrentMusicPercent = 0.0f;
 	CurrentDuration = 0.0f;
 	CurrentTimestamp = FDreamMusicLyricTimestamp();
+	
+	// Switch audio components for seamless crossfading
 	ToggleActiveAudioComponent();
 
 	InitializeLyricList();
 
-	// Play Music
+	// Validate SoundWave before playing
+	if (!SoundWave || !SoundWave->IsValidLowLevel())
+	{
+		DMP_LOG(Error, TEXT("Invalid SoundWave for music: %s"), *CurrentMusicData.Information.Title);
+		return;
+	}
+
+	// Set up audio component
+	UAudioComponent* ActiveComponent = GetActiveAudioComponent();
+	if (!ActiveComponent)
+	{
+		DMP_LOG(Error, TEXT("No valid audio component available"));
+		return;
+	}
+
+	// Play Music with improved setup
 	CurrentMusicDuration = SoundWave->Duration;
+	ActiveComponent->SetSound(SoundWave);
+	
+	// Set volume to 0 before playing if fade-in is enabled
+	if (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeInDuration > 0.0f)
+	{
+		ActiveComponent->SetVolumeMultiplier(0.0f);
+	}
+	
+	ActiveComponent->Play();
 
-	GetActiveAudioComponent()->SetSound(SoundWave);
-	GetActiveAudioComponent()->Play();
+	// Apply fade in
+	if (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeInDuration > 0.0f)
+	{
+		ActiveComponent->FadeIn(FadeAudioSetting.FadeInDuration, 1.0f);
+	}
 
-	// Fade In
-	GetActiveAudioComponent()->FadeIn(FadeAudioSetting.bEnableFadeAudio ? FadeAudioSetting.FadeInDuration : 0.0f);
-
+	// Update state
 	bIsPaused = false;
 	bIsPlaying = true;
 	SetPlayState(EDreamMusicPlayerPlayState::EDMPPS_Playing);
 
 	// Callback
 	OnMusicPlay.Broadcast(CurrentMusicData);
-	DMP_LOG(Log, TEXT("Play Music : Name : %-15s Duration : %f"), *CurrentMusicData.Information.Title,
-	        CurrentMusicDuration)
+	DMP_LOG(Log, TEXT("Play Music : Name : %-15s Duration : %f"), *CurrentMusicData.Information.Title, CurrentMusicDuration);
 }
 
 void UDreamMusicPlayerComponent::EndMusic(bool Native)
 {
-	// Stop Music
-	GetActiveAudioComponent()->FadeOut(FadeAudioSetting.bEnableFadeAudio ? FadeAudioSetting.FadeOutDuration : 0.0f,
-	                                   0.0f);
-	if (GWorld->GetTimerManager().TimerExists(StopTimerHandle))
+	if (!bIsPlaying)
+	{
+		return; // Already stopped
+	}
+
+	UAudioComponent* ActiveComponent = GetActiveAudioComponent();
+	if (!ActiveComponent)
+	{
+		DMP_LOG(Warning, TEXT("No active audio component to stop"));
+		return;
+	}
+
+	// Clear any existing stop timer
+	if (GWorld && GWorld->GetTimerManager().TimerExists(StopTimerHandle))
 	{
 		GWorld->GetTimerManager().ClearTimer(StopTimerHandle);
-		GetActiveAudioComponent()->Stop();
+	}
+
+	// Calculate fade out duration
+	float FadeOutDuration = (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeOutDuration > 0.0f) 
+		? FadeAudioSetting.FadeOutDuration : 0.0f;
+
+	// Start fade out
+	if (FadeOutDuration > 0.0f)
+	{
+		ActiveComponent->FadeOut(FadeOutDuration, 0.0f);
+		
+		// Schedule stop after fade completes
+		if (GWorld)
+		{
+			GWorld->GetTimerManager().SetTimer(
+				StopTimerHandle,
+				[this, ActiveComponent]()
+				{
+					if (ActiveComponent && ActiveComponent->IsValidLowLevel())
+					{
+						ActiveComponent->Stop();
+					}
+				},
+				FadeOutDuration,
+				false
+			);
+		}
 	}
 	else
 	{
-		GWorld->GetTimerManager().SetTimer(StopTimerHandle, GetActiveAudioComponent(), &UAudioComponent::Stop,
-		                                   FadeAudioSetting.bEnableFadeAudio ? FadeAudioSetting.FadeOutDuration : 0.0f);
+		// Stop immediately if no fade
+		ActiveComponent->Stop();
 	}
+
+	// Update state immediately
 	bIsPaused = false;
 	bIsPlaying = false;
 	SetPlayState(EDreamMusicPlayerPlayState::EDMPPS_Stop);
 
-	// Free Memory
+	// Clean up state
 	CurrentDuration = 0.0f;
 	CurrentMusicDuration = 0.0f;
 	CurrentMusicPercent = 0.0f;
 	ConstantQDataL.Empty();
 	ConstantQDataR.Empty();
 	LoudnessValue = 0.0f;
+	
+	// Safely clear references
 	ConstantQ = nullptr;
 	Loudness = nullptr;
+
+	// Cancel any pending theme color extraction
+	if (CurrentKMeansTask && CurrentKMeansTask->IsValidLowLevel())
+	{
+		CurrentKMeansTask->Cancel();
+		CurrentKMeansTask = nullptr;
+	}
+
 	OnMusicEnd.Broadcast();
 	DMP_LOG(Log, TEXT("Music End : Name : %-15s Play Mode : %d"), *CurrentMusicData.Information.Title, (int)PlayMode);
-	DMP_LOG(Log, TEXT("Music End : Name : %-15s Play Mode : %d"), *CurrentMusicData.Information.Title, (int)PlayMode);
 
+	// Handle auto-play logic only if not manually stopped
 	if (!Native)
+	{
+		// Add small delay to ensure clean transition
+		if (GWorld)
+		{
+			GWorld->GetTimerManager().SetTimerForNextTick([this]()
+			{
+				HandleAutoPlayTransition();
+			});
+		}
+	}
+}
+
+void UDreamMusicPlayerComponent::HandleAutoPlayTransition()
+{
+	if (!bIsPlaying) // Ensure we're still in stopped state
 	{
 		switch (PlayMode)
 		{
 		case EDreamMusicPlayerPlayMode::EDMPPS_Loop:
-			SetMusicData(CurrentMusicData);
-			StartMusic();
+			if (CurrentMusicData.IsVaild())
+			{
+				SetMusicData(CurrentMusicData);
+				StartMusic();
+			}
 			break;
 		case EDreamMusicPlayerPlayMode::EDMPPS_Normal:
-			PlayNextMusic();
-			break;
 		case EDreamMusicPlayerPlayMode::EDMPPS_Random:
 			PlayNextMusic();
 			break;
@@ -665,7 +846,8 @@ void UDreamMusicPlayerComponent::SetMusicData(FDreamMusicDataStruct InData)
 	SoundWave = CurrentMusicData.Data.Music.LoadSynchronous();
 	Cover = CurrentMusicData.Information.Cover.LoadSynchronous();
 
-	ExtractCoverThemeColors(4, 10);
+	if (bUseThemeColorExtension)
+		ExtractCoverThemeColors(4, 10);
 
 	OnMusicDataChanged.Broadcast(CurrentMusicData);
 }
@@ -678,14 +860,37 @@ void UDreamMusicPlayerComponent::SetPlayState(EDreamMusicPlayerPlayState InState
 
 void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
 {
+	if (!bIsPlaying || !GetActiveAudioComponent())
+	{
+		DMP_LOG(Warning, TEXT("Cannot set music percent when not playing or no active component"));
+		return;
+	}
+
 	InPercent = FMath::Clamp(InPercent, 0.0f, 1.0f);
 	CurrentMusicPercent = InPercent;
 	CurrentDuration = CurrentMusicDuration * InPercent;
-	CurrentTimestamp = *FDreamMusicLyricTimestamp().FromSeconds(
-		CurrentDuration + LyricOffset);
-	GetActiveAudioComponent()->Play(CurrentDuration);
-	DMP_LOG(Log, TEXT("Set Music Percent : %f Time : %02d:%02d.%02d"), CurrentMusicPercent, CurrentTimestamp.Minute,
-	        CurrentTimestamp.Seconds, CurrentTimestamp.Millisecond);
+	CurrentTimestamp = *FDreamMusicLyricTimestamp().FromSeconds(CurrentDuration + LyricOffset);
+	
+	// Stop current playback before seeking
+	UAudioComponent* ActiveComponent = GetActiveAudioComponent();
+	bool WasPlaying = ActiveComponent->IsPlaying();
+	
+	if (WasPlaying)
+	{
+		ActiveComponent->Stop();
+	}
+	
+	// Seek to new position
+	ActiveComponent->Play(CurrentDuration);
+	
+	// Restore pause state if needed
+	if (bIsPaused)
+	{
+		ActiveComponent->SetPaused(true);
+	}
+
+	DMP_LOG(Log, TEXT("Set Music Percent : %f Time : %02d:%02d.%02d"), 
+		CurrentMusicPercent, CurrentTimestamp.Minute, CurrentTimestamp.Seconds, CurrentTimestamp.Millisecond);
 }
 
 void UDreamMusicPlayerComponent::SetMusicPercentFromTimestamp(FDreamMusicLyricTimestamp InTimestamp)
@@ -716,52 +921,56 @@ void UDreamMusicPlayerComponent::LoadAudioNrt()
 
 void UDreamMusicPlayerComponent::MusicTick(float DeltaTime)
 {
-	// Check Music Is Ended
-
-	if (CurrentDuration >= CurrentMusicDuration - (FadeAudioSetting.bEnableFadeAudio
-		                                               ? FadeAudioSetting.FadeOutDuration
-		                                               : 0.0f))
+	// Improved end detection with fade consideration
+	float EffectiveEndTime = CurrentMusicDuration;
+	if (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeOutDuration > 0.0f)
 	{
-		DMP_LOG(Log, TEXT("Music Tick Music Name : %s - End"), *CurrentMusicData.Information.Title)
-		EndMusic();
+		EffectiveEndTime -= FadeAudioSetting.FadeOutDuration;
+	}
+	
+	// Add small buffer to prevent premature ending
+	EffectiveEndTime -= 0.1f;
 
+	if (CurrentDuration >= EffectiveEndTime)
+	{
+		DMP_LOG(Log, TEXT("Music Tick Music Name : %s - End"), *CurrentMusicData.Information.Title);
+		EndMusic();
 		return;
 	}
 
-	// Begin Music Tick
-
+	// Update timing
 	CurrentDuration += DeltaTime;
-	CurrentMusicPercent = CurrentDuration / CurrentMusicDuration;
-	CurrentTimestamp = *FDreamMusicLyricTimestamp().FromSeconds(
-		CurrentDuration + LyricOffset);
+	CurrentMusicPercent = FMath::Clamp(CurrentDuration / CurrentMusicDuration, 0.0f, 1.0f);
+	CurrentTimestamp = *FDreamMusicLyricTimestamp().FromSeconds(CurrentDuration + LyricOffset);
+	
+	// Update current lyric
 	SetCurrentLyric(FDreamMusicPlayerLyricTools::GetLyricAtTimestamp(CurrentTimestamp, CurrentMusicLyricList));
-	if (ConstantQ)
+	
+	// Update audio analysis data safely
+	if (ConstantQ && ConstantQ->IsValidLowLevel())
 	{
-		ConstantQ.Get()->GetNormalizedChannelConstantQAtTime(CurrentDuration, 0, ConstantQDataL);
-		ConstantQ.Get()->GetNormalizedChannelConstantQAtTime(CurrentDuration, 1, ConstantQDataR);
+		ConstantQ->GetNormalizedChannelConstantQAtTime(CurrentDuration, 0, ConstantQDataL);
+		ConstantQ->GetNormalizedChannelConstantQAtTime(CurrentDuration, 1, ConstantQDataR);
 	}
-	if (Loudness)
+	
+	if (Loudness && Loudness->IsValidLowLevel())
 	{
-		Loudness.Get()->GetNormalizedLoudnessAtTime(CurrentDuration, LoudnessValue);
+		Loudness->GetNormalizedLoudnessAtTime(CurrentDuration, LoudnessValue);
 	}
 
-	if (!CurrentLyric.bIsEmptyLine)
+	// Handle lyric progress tracking
+	if (!CurrentLyric.bIsEmptyLine && CurrentLyric.IsNotEmpty())
 	{
 		FDreamMusicLyricProgress LyricProgress = GetCurrentLyricWordProgress(CurrentDuration, CurrentLyric);
 		FDreamMusicLyricProgress RomanizationProgress = GetCurrentRomanizationProgress(CurrentDuration, CurrentLyric);
 
-		// You can broadcast these or use them for UI updates
-		// OnLyricProgressChanged.Broadcast(LyricProgress);
-		// OnRomanizationProgressChanged.Broadcast(RomanizationProgress);
-
 		DMP_LOG_DEBUG_TICK(Log, TEXT("Lyric Progress: %.2f, Word: %d, Romanization Progress: %.2f, Word: %d"),
-		                   LyricProgress.LineProgress, LyricProgress.CurrentWordIndex,
-		                   RomanizationProgress.LineProgress, RomanizationProgress.CurrentWordIndex);
+			LyricProgress.LineProgress, LyricProgress.CurrentWordIndex,
+			RomanizationProgress.LineProgress, RomanizationProgress.CurrentWordIndex);
 	}
 
 	OnMusicTick.Broadcast(CurrentDuration);
-
-	DMP_LOG_DEBUG_TICK(Log, TEXT("Time: %s DeltaTime: %f P: %f"), *CurrentTimestamp.ToString(), DeltaTime, CurrentMusicPercent)
+	DMP_LOG_DEBUG_TICK(Log, TEXT("Time: %s DeltaTime: %f P: %f"), *CurrentTimestamp.ToString(), DeltaTime, CurrentMusicPercent);
 }
 
 bool UDreamMusicPlayerComponent::ToggleActiveAudioComponent()

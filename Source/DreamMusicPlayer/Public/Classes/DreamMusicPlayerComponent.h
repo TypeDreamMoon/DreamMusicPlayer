@@ -22,6 +22,7 @@ class DREAMMUSICPLAYER_API UDreamMusicPlayerComponent : public UActorComponent
 public:
 	UDreamMusicPlayerComponent();
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
@@ -214,7 +215,7 @@ public:
 #pragma region Data
 
 	// Song List
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data", meta=(RequiredAssetDataTags="RowStructure=/Script/DreamMusicPlayer.DreamMusicDataStruct"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data", meta=(RequiredAssetDataTags="RowStructure=/Script/DreamMusicPlayer.DreamMusicPlayerSongList"))
 	TObjectPtr<UDataTable> SongList;
 
 	// Music Data List
@@ -252,6 +253,9 @@ public:
 	// Fade Audio Setting
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	FDreamMusicPlayerFadeAudioSetting FadeAudioSetting;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	float BackdropMusicVolume = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Settings")
 	USoundClass* SoundClass;
@@ -450,6 +454,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Functions|Theme")
 	void ExtractTextureThemeColors(UTexture2D* Texture, int32 ClusterCount = 5, int32 MaxIterations = 100);
 
+	/**
+	 * Check if audio component is ready for use
+	 */
+	bool IsAudioComponentReady(UAudioComponent* Component) const;
+
 public:
 	UFUNCTION()
 	TArray<FString> GetNames() const;
@@ -465,6 +474,8 @@ private:
 	 * @param Native Whether To Call For A Component
 	 */
 	void EndMusic(bool Native = false);
+
+	void HandleAutoPlayTransition();
 
 	/**
 	 * Pause Native

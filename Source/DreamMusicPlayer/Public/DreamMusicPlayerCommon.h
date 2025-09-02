@@ -438,7 +438,7 @@ public:
 
 // 歌曲数据表
 USTRUCT(BlueprintType)
-struct FDreamMusicPlayerSondList : public FTableRowBase
+struct FDreamMusicPlayerSongList : public FTableRowBase
 {
 	GENERATED_BODY()
 
