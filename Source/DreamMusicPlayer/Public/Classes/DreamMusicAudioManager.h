@@ -12,7 +12,7 @@ class UDreamMusicPlayerComponent;
 /**
  * 播放中间件
  */
-UCLASS(Abstract, Blueprintable, BlueprintType)
+UCLASS(EditInlineNew, Abstract, Blueprintable, BlueprintType)
 class DREAMMUSICPLAYER_API UDreamMusicAudioManager : public UObject
 {
 	GENERATED_BODY()

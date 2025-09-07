@@ -13,7 +13,7 @@ class UDreamMusicPlayerComponent;
 /**
  * 
  */
-UCLASS(Abstract, Blueprintable, BlueprintType)
+UCLASS(EditInlineNew, Abstract, Blueprintable, BlueprintType)
 class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansion : public UObject
 {
 	GENERATED_BODY()

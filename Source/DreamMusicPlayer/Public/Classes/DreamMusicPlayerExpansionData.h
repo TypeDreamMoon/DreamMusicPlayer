@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS(Abstract, Blueprintable, BlueprintType)
+UCLASS(EditInlineNew, Abstract, Blueprintable, BlueprintType)
 class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansionData : public UObject
 {
 	GENERATED_BODY()
