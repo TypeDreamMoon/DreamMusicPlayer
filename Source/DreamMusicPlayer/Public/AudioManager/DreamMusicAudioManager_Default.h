@@ -23,7 +23,7 @@ public:
 	virtual void Initialize(UDreamMusicPlayerComponent* InComponent) override;
 	virtual bool IsPlaying() const override;
 	virtual void Music_Changed(const FDreamMusicDataStruct& InMusicData) override;
-	virtual void Music_Play(float InTime = 0) override;
+	virtual void Music_Play(float InTime = 0.f) override;
 	virtual void Music_Stop() override;
 	virtual void Music_Pause() override;
 	virtual void Music_UnPause() override;

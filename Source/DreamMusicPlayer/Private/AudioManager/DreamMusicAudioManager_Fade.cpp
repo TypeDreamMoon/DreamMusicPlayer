@@ -43,7 +43,7 @@ void UDreamMusicAudioManager_Fade::Deinitialize()
 	{
 		GWorld->GetTimerManager().ClearTimer(StopTimerHandle);
 	}
-	
+
 	if (SubAudioComponentA && SubAudioComponentA->IsValidLowLevel())
 	{
 		SubAudioComponentA->Stop();
@@ -54,54 +54,81 @@ void UDreamMusicAudioManager_Fade::Deinitialize()
 	}
 }
 
+void UDreamMusicAudioManager_Fade::Music_Changed(const FDreamMusicDataStruct& InMusicData)
+{
+	// 设置后台非激活组件音乐
+	GetInactiveAudioComponent()->SetSound(InMusicData.Data.Music.LoadSynchronous());
+}
+
+void UDreamMusicAudioManager_Fade::Music_Play(float InTime)
+{
+	GetActiveAudioComponent()->Play(InTime);
+
+	// Apply fade in
+	if (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeInDuration > 0.0f && InTime == 0.f)
+	{
+		GetActiveAudioComponent()->FadeIn(FadeAudioSetting.FadeInDuration, 1.0f);
+	}
+}
+
+void UDreamMusicAudioManager_Fade::Music_Stop()
+{
+	GetActiveAudioComponent()->Stop();
+}
+
+void UDreamMusicAudioManager_Fade::Music_Pause()
+{
+	GetActiveAudioComponent()->SetPaused(true);
+}
+
+void UDreamMusicAudioManager_Fade::Music_UnPause()
+{
+	GetActiveAudioComponent()->SetPaused(false);
+}
+
 void UDreamMusicAudioManager_Fade::Music_Start()
 {
 	Super::Music_Start();
 
+	// 停止计时器
 	if (GWorld && GWorld->GetTimerManager().TimerExists(StopTimerHandle))
 	{
 		GWorld->GetTimerManager().ClearTimer(StopTimerHandle);
 	}
 
-	UAudioComponent* ActiveComponent = GetAudioComponent();
+	// 切换组件
+	ToggleActiveAudioComponent();
+
+	// 获取组件
+	UAudioComponent* ActiveComponent = GetActiveAudioComponent();
+
+	// 检查组件是否可用
 	if (!ActiveComponent)
 	{
 		DMP_LOG_DEBUG_EXPANSION(Error, TEXT("No valid audio component available"));
 		return;
 	}
-	
+
 	// Set volume to 0 before playing if fade-in is enabled
 	if (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeInDuration > 0.0f)
 	{
-		ActiveComponent->SetVolumeMultiplier(0.0f);
+		ActiveComponent->SetVolumeMultiplier(1.0f);
 	}
-
-	ActiveComponent->Play();
-
-	// Apply fade in
-	if (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeInDuration > 0.0f)
-	{
-		ActiveComponent->FadeIn(FadeAudioSetting.FadeInDuration, 1.0f);
-	}
-
-	ActiveComponent->SetSound(MusicPlayerComponent->SoundWave);
 }
 
 void UDreamMusicAudioManager_Fade::Music_End()
 {
-	Super::Music_End();
-
 	if (GWorld && GWorld->GetTimerManager().TimerExists(StopTimerHandle))
 	{
 		GWorld->GetTimerManager().ClearTimer(StopTimerHandle);
 	}
 
-	UAudioComponent* ActiveComponent = GetAudioComponent();
-	
+	UAudioComponent* ActiveComponent = GetActiveAudioComponent();
+
 	// Calculate fade out duration
 	float FadeOutDuration = (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeOutDuration > 0.0f)
-								? FadeAudioSetting.FadeOutDuration
-								: 0.0f;
+		                        ? FadeAudioSetting.FadeOutDuration
+		                        : 0.0f;
 
 	// Start fade out
 	if (FadeOutDuration > 0.0f)
@@ -140,6 +167,12 @@ UAudioComponent* UDreamMusicAudioManager_Fade::GetAudioComponent()
 UAudioComponent* UDreamMusicAudioManager_Fade::GetActiveAudioComponent() const
 {
 	UAudioComponent* Component = CurrentActiveAudioComponent ? SubAudioComponentB : SubAudioComponentA;
+	return IsAudioComponentReady(Component) ? Component : nullptr;
+}
+
+UAudioComponent* UDreamMusicAudioManager_Fade::GetInactiveAudioComponent() const
+{
+	UAudioComponent* Component = CurrentActiveAudioComponent ? SubAudioComponentA : SubAudioComponentB;
 	return IsAudioComponentReady(Component) ? Component : nullptr;
 }
 

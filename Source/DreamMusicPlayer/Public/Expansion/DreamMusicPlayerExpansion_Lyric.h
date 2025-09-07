@@ -26,10 +26,6 @@ public:
 	// Lyric Offset
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	float LyricOffset = 0.0f;
-
-	// Current Music Cover
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
-	TObjectPtr<UTexture2D> Cover;
 	
 	// Current Music Lyric List
 	UPROPERTY(BlueprintReadOnly, Category = "State")

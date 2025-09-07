@@ -101,6 +101,8 @@ public:
 	{
 	};
 
+	FDreamMusicLyricTimestamp(float InSeconds);
+
 	FDreamMusicLyricTimestamp(int InMinute, int InSeconds, int InMillisecond) :
 		Minute(InMinute), Seconds(InSeconds), Millisecond(InMillisecond)
 	{

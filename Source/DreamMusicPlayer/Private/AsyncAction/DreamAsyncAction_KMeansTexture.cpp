@@ -76,6 +76,8 @@ void UDreamAsyncAction_KMeansTexture::Cancel()
 
 void UDreamAsyncAction_KMeansTexture::ExecuteKMeans()
 {
+	FTaskTagScope TaskTag(ETaskTag::EParallelRenderingThread);
+	
 	DMP_LOG(Log, TEXT("ExecuteKMeans - Starting K-Means analysis"));
 
 	// Sample pixels from texture

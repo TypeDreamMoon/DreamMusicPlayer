@@ -1,5 +1,10 @@
 #include "DreamMusicPlayerCommon.h"
 
+FDreamMusicLyricTimestamp::FDreamMusicLyricTimestamp(float InSeconds)
+{
+	FromSeconds(InSeconds);
+}
+
 bool FDreamMusicLyricTimestamp::operator==(const FDreamMusicLyricTimestamp& Target) const
 {
 	return Target.ToMilliseconds() == ToMilliseconds();

@@ -16,35 +16,6 @@ class DREAMMUSICPLAYER_API UDreamMusicAudioManager_Fade : public UDreamMusicAudi
 	GENERATED_BODY()
 
 public:
-	virtual void Initialize(UDreamMusicPlayerComponent* InComponent) override;
-	virtual void Deinitialize() override;
-	virtual void Music_Start() override;
-	virtual void Music_End() override;
-
-	virtual UAudioComponent* GetAudioComponent() override;
-	
-	/**
-	 * Get Last Active Audio Component
-	 * @return Last Active Audio Component
-	 */
-	UFUNCTION(BlueprintPure, Category = "Functions")
-	virtual UAudioComponent* GetLastActiveAudioComponent() const;
-
-	/**
-	 * Get Current Active Audio Component
-	 * @return Current Active Audio Component
-	 */
-	UFUNCTION(BlueprintPure, Category = "Functions")
-	virtual UAudioComponent* GetActiveAudioComponent() const;
-public:
-	// Fade Audio Setting
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	FDreamMusicPlayerFadeAudioSetting FadeAudioSetting;
-	
-	// If ture SubB else SubA
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
-	bool CurrentActiveAudioComponent = false;
-
 	// A Audio Component
 	UPROPERTY(BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UAudioComponent> SubAudioComponentA = nullptr;
@@ -53,6 +24,43 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UAudioComponent> SubAudioComponentB = nullptr;
 
+public:
+	virtual UAudioComponent* GetAudioComponent() override;
+	virtual void Initialize(UDreamMusicPlayerComponent* InComponent) override;
+	virtual void Deinitialize() override;
+	virtual void Music_Changed(const FDreamMusicDataStruct& InMusicData) override;
+	virtual void Music_Play(float InTime = 0.f) override;
+	virtual void Music_Stop() override;
+	virtual void Music_Pause() override;
+	virtual void Music_UnPause() override;
+	virtual void Music_Start() override;
+	virtual void Music_End() override;
+
+	/**
+	 * Get Current Active Audio Component
+	 * @return Current Active Audio Component
+	 */
+	UFUNCTION(BlueprintPure, Category = "Functions")
+	virtual UAudioComponent* GetActiveAudioComponent() const;
+
+	UFUNCTION(BlueprintPure, Category = "Functions")
+	virtual UAudioComponent* GetInactiveAudioComponent() const;
+
+	/**
+	 * Get Last Active Audio Component
+	 * @return Last Active Audio Component
+	 */
+	UFUNCTION(BlueprintPure, Category = "Functions")
+	virtual UAudioComponent* GetLastActiveAudioComponent() const;
+
+public:
+	// Fade Audio Setting
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	FDreamMusicPlayerFadeAudioSetting FadeAudioSetting;
+
+	// If ture SubB else SubA
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	bool CurrentActiveAudioComponent = false;
 
 protected:
 	/**

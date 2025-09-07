@@ -292,14 +292,14 @@ void UDreamMusicPlayerComponent::StartMusic()
 
 	// Play Music with improved setup
 	CurrentMusicDuration = SoundWave->Duration;
-
-	AudioManager->Music_Play();
-
+	
 	AudioManager->Music_Start();
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
 	{
 		Expansion->MusicStart();
 	}
+
+	AudioManager->Music_Play();
 
 	// Update state
 	bIsPaused = false;
@@ -492,16 +492,18 @@ void UDreamMusicPlayerComponent::SetMusicPercentFromTimestamp(FDreamMusicLyricTi
 
 void UDreamMusicPlayerComponent::MusicTick(float DeltaTime)
 {
-	// 获取更精确的播放时间
 	float AccuratePlayTime = GetAccuratePlayTime();
 
 	// 更新时间状态
 	CurrentDuration = AccuratePlayTime;
 	CurrentMusicPercent = FMath::Clamp(CurrentDuration / CurrentMusicDuration, 0.0f, 1.0f);
+	CurrentTimestamp = *FDreamMusicLyricTimestamp().FromSeconds(CurrentDuration);
 
-	// 应用歌词偏移
-	float LyricTime = CurrentDuration;
-	CurrentTimestamp = *FDreamMusicLyricTimestamp().FromSeconds(LyricTime);
+	// Auto Next
+	if (CurrentTimestamp >= CurrentMusicDuration)
+	{
+		EndMusic();
+	}
 
 	AudioManager->Tick(CurrentTimestamp, DeltaTime);
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
