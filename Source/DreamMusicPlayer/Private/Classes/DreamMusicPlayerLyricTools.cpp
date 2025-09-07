@@ -1,8 +1,7 @@
-#include "Classes/DreamMusicPlayerLyricTools.h"
+#include "LyricParser/DreamMusicPlayerLyricTools.h"
 
-#include "DreamMusicPlayerLog.h"
 #include "DreamMusicPlayerSettings.h"
-#include "Classes/DreamMusicPlayerLyricFileParser.h"
+#include "LyricParser/DreamMusicPlayerLyricFileParser.h"
 
 FDreamMusicLyric FDreamMusicPlayerLyricTools::GetLyricAtTimestamp(FDreamMusicLyricTimestamp Timestamp, const TArray<FDreamMusicLyric>& Lyrics)
 {

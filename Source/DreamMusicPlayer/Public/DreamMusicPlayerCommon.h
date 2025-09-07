@@ -5,6 +5,7 @@
 #include "Kismet/KismetStringLibrary.h"
 #include "DreamMusicPlayerCommon.generated.h"
 
+class UDreamMusicPlayerExpansionData;
 class UDreamMusicData;
 class UConstantQNRT;
 class ULoudnessNRT;
@@ -407,30 +408,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<USoundWave> Music;
 
-	// 歌词解析文件类型
-	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite)
-	EDreamMusicPlayerLyricParseFileType LyricParseFileType = EDreamMusicPlayerLyricParseFileType::LRC;
-
-	// LRC歌词类型
-	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite, meta=(EditConditionHides, EditCondition="LyricParseFileType == EDreamMusicPlayerLyricParseFileType::LRC"))
-	EDreamMusicPlayerLrcLyricType LrcLyricType = EDreamMusicPlayerLrcLyricType::None;
-
-	// 歌词行类型
-	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite)
-	EDreamMusicPlayerLyricParseLineType LyricParseLineType = EDreamMusicPlayerLyricParseLineType::Romanization_Lyric;
-
-	// 内容路径请在ProjectSetting -> DreamPlugins -> Musicplayer -> LyricContentPath 中配置
-	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite, meta=(GetOptions = "DreamMusicPlayer.DreamMusicPlayerBlueprint.GetLyricFileNames"))
-	FString LyricFileName;
-
-	// 频谱可视化对象
-	UPROPERTY(Category="Visual", EditAnywhere, BlueprintReadWrite, meta=(MetaClass = "ConstantQNRT"))
-	FSoftObjectPath ConstantQ;
-
-	// 响度可视化对象
-	UPROPERTY(Category="Visual", EditAnywhere, BlueprintReadWrite, meta=(MetaClass = "LoudnessNRT"))
-	FSoftObjectPath Loudness;
-
 public:
 	bool IsValid() const;
 	bool operator==(const FDreamMusicInformationData& Target) const;
@@ -438,7 +415,7 @@ public:
 
 // 歌曲数据表
 USTRUCT(BlueprintType)
-struct FDreamMusicDataStruct : public FTableRowBase
+struct FDreamMusicDataStruct
 {
 	GENERATED_BODY()
 
@@ -459,9 +436,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FDreamMusicInformationData Data;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
+	UDreamMusicPlayerExpansionData* ExpansionData;
 public:
-	bool IsVaild() const;
+	bool IsValid() const;
 	bool operator==(const FDreamMusicDataStruct& Target) const;
+
+	template <typename  T>
+	T* GetExpansionData() const
+	{
+		return Cast<T>(ExpansionData);
+	}
 };
 
 // 歌曲数据表

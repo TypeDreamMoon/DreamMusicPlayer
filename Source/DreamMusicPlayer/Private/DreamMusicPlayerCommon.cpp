@@ -83,10 +83,10 @@ bool FDreamMusicInformationData::IsValid() const
 
 bool FDreamMusicInformationData::operator==(const FDreamMusicInformationData& Target) const
 {
-	return Music == Target.Music && ConstantQ == Target.ConstantQ && Loudness == Target.Loudness;
+	return Music == Target.Music;
 }
 
-bool FDreamMusicDataStruct::IsVaild() const
+bool FDreamMusicDataStruct::IsValid() const
 {
 	return Information.IsValid() && Data.IsValid();
 }

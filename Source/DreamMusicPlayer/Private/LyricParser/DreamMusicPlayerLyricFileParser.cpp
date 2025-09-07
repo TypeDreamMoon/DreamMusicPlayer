@@ -1,4 +1,4 @@
-﻿#include "Classes/DreamMusicPlayerLyricFileParser.h"
+﻿#include "LyricParser/DreamMusicPlayerLyricFileParser.h"
 
 void FDreamMusicPlayerLyricFileParserBase::Parse()
 {

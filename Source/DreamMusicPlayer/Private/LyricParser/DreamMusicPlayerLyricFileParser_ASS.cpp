@@ -1,5 +1,5 @@
 ﻿#include "DreamMusicPlayerLog.h"
-#include "Classes/DreamMusicPlayerLyricFileParser.h"
+#include "LyricParser/DreamMusicPlayerLyricFileParser.h"
 
 void FDreamMusicPlayerLyricFileParser_ASS::Parse()
 {

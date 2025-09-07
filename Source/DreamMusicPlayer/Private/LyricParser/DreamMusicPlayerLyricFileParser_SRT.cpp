@@ -1,4 +1,4 @@
-﻿#include "Classes/DreamMusicPlayerLyricFileParser.h"
+﻿#include "LyricParser/DreamMusicPlayerLyricFileParser.h"
 #include "DreamMusicPlayerCommon.h"
 #include "DreamMusicPlayerLog.h"
 #include "Engine/Engine.h"

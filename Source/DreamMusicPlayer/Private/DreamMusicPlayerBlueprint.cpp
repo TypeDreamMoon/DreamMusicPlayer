@@ -3,7 +3,7 @@
 
 #include "DreamMusicPlayerBlueprint.h"
 
-#include "Classes/DreamMusicPlayerLyricTools.h"
+#include "LyricParser/DreamMusicPlayerLyricTools.h"
 
 TArray<FString> UDreamMusicPlayerBlueprint::GetLyricFileNames()
 {

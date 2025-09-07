@@ -36,7 +36,10 @@ public:
 	UPROPERTY(EditAnywhere, DisplayName="启用调试模式", Category="Debug", Config)
 	bool bEnableDebugMode = false;
 
-	UPROPERTY(EditAnywhere, DisplayName="启用播放器Tick调试", Category="Debug", Config)
+	UPROPERTY(EditAnywhere, DisplayName="启用拓展调试", Category="Debug", Config, meta=(EditConditionHides, EditCondition="bEnableDebugMode"))
+	bool bEnableDebugExpansionMode = false;
+
+	UPROPERTY(EditAnywhere, DisplayName="启用播放器Tick调试", Category="Debug", Config, meta=(EditConditionHides, EditCondition="bEnableDebugMode"))
 	bool bEnableTickDebugMode = false;
 
 	UPROPERTY(EditAnywhere, DisplayName="启用解析器调试模式", Category="Debug", Config, meta=(EditConditionHides, EditCondition="bEnableDebugMode"))

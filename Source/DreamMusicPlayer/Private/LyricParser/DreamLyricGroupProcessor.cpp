@@ -1,4 +1,4 @@
-﻿#include "Classes/DreamLyricGroupProcessor.h"
+﻿#include "LyricParser/DreamLyricGroupProcessor.h"
 
 void FDreamLyricGroupProcessor::ProcessGroup(const TArray<FString>& LinesInGroup, FDreamMusicLyric& OutLyric)
 {

@@ -1,6 +1,6 @@
-﻿#include "Classes/DreamLyricParser.h"
-#include "Classes/DreamMusicPlayerLyricFileParser.h"
-#include "Classes/DreamMusicPlayerLyricTools.h"
+﻿#include "LyricParser/DreamLyricParser.h"
+#include "LyricParser/DreamMusicPlayerLyricFileParser.h"
+#include "LyricParser/DreamMusicPlayerLyricTools.h"
 #include "DreamMusicPlayerDebugLog.h"
 
 #define DMP_DEBUG_CHANNEL "Parser"
