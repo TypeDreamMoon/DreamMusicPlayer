@@ -11,7 +11,7 @@ struct FKMeansColorCluster;
 /**
  * 
  */
-UCLASS(DisplayName = "Calculation Theme Colors")
+UCLASS(DisplayName = "Theme Colors")
 class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansion_ThemeColors : public UDreamMusicPlayerExpansion
 {
 	GENERATED_BODY()

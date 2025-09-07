@@ -3,6 +3,7 @@
 
 #include "AudioManager/DreamMusicAudioManager_Default.h"
 
+#include "DreamMusicPlayerCommon.h"
 #include "Components/AudioComponent.h"
 
 UAudioComponent* UDreamMusicAudioManager_Default::GetAudioComponent()
@@ -12,12 +13,18 @@ UAudioComponent* UDreamMusicAudioManager_Default::GetAudioComponent()
 
 void UDreamMusicAudioManager_Default::Initialize(UDreamMusicPlayerComponent* InComponent)
 {
+	Super::Initialize(InComponent);
 	AudioComponent = NewObject<UAudioComponent>(GetOwner(), FName("DMP_AudioComponent"));
 }
 
 bool UDreamMusicAudioManager_Default::IsPlaying() const
 {
 	return AudioComponent->IsPlaying();
+}
+
+void UDreamMusicAudioManager_Default::Music_Changed(const FDreamMusicDataStruct& InMusicData)
+{
+	AudioComponent->SetSound(InMusicData.Data.Music.LoadSynchronous());
 }
 
 void UDreamMusicAudioManager_Default::Music_Play(float InTime)

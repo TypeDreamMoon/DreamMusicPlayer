@@ -10,7 +10,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(DisplayName = "Lyric")
 class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansionData_Lyric : public UDreamMusicPlayerExpansionData
 {
 	GENERATED_BODY()

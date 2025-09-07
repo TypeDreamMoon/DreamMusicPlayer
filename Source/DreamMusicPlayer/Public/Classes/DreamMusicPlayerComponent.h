@@ -288,8 +288,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Functions")
 	FDreamMusicDataStruct GetLastMusicData(FDreamMusicDataStruct InData);
 
-	UFUNCTION(BlueprintPure, Category = "Functions|Expansion")
-	UDreamMusicPlayerExpansion* GetExpansionByClass(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass) const;
+	UFUNCTION(BlueprintPure, Category = "Functions|Expansion", Meta = (DeterminesOutputType="InExpansionClass", DynamicOutputParam="OutExpansion"))
+	void GetExpansionByClass(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass, UDreamMusicPlayerExpansion*& OutExpansion) const;
 
 public:
 	UFUNCTION()

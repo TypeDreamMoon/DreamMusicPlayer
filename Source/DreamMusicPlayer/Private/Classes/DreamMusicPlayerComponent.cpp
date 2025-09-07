@@ -222,17 +222,15 @@ FDreamMusicDataStruct UDreamMusicPlayerComponent::GetLastMusicData(FDreamMusicDa
 		                     : MusicDataList.Find(InData) - 1];
 }
 
-UDreamMusicPlayerExpansion* UDreamMusicPlayerComponent::GetExpansionByClass(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass) const
+void UDreamMusicPlayerComponent::GetExpansionByClass(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass, UDreamMusicPlayerExpansion*& OutExpansion) const
 {
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
 	{
 		if (Expansion->GetClass() == InExpansionClass)
 		{
-			return Expansion;
+			OutExpansion = Expansion;
 		}
 	}
-
-	return nullptr;
 }
 
 float UDreamMusicPlayerComponent::GetAccuratePlayTime() const
@@ -294,6 +292,8 @@ void UDreamMusicPlayerComponent::StartMusic()
 
 	// Play Music with improved setup
 	CurrentMusicDuration = SoundWave->Duration;
+
+	AudioManager->Music_Play();
 
 	AudioManager->Music_Start();
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
@@ -471,7 +471,7 @@ void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
 	}
 
 	// 从新位置开始播放
-	AudioManager->Music_Play();
+	AudioManager->Music_Play(TargetTime);
 
 	// 恢复暂停状态
 	if (bIsPaused)

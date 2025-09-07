@@ -59,8 +59,11 @@ void UDreamMusicPlayerExpansion_AudioAnalysis::BP_Tick_Implementation(const FDre
 
 void UDreamMusicPlayerExpansion_AudioAnalysis::LoadAudioNrt()
 {
-	FSoftObjectPath CQ = CurrentMusicData.GetExpansionData<UDreamMusicPlayerExpansionData_AudioAnalysis>()->ConstantQ;
-	FSoftObjectPath LN = CurrentMusicData.GetExpansionData<UDreamMusicPlayerExpansionData_AudioAnalysis>()->Loudness;
+	UDreamMusicPlayerExpansionData_AudioAnalysis* MusicData = CurrentMusicData.GetExpansionData<UDreamMusicPlayerExpansionData_AudioAnalysis>();
+	if (!MusicData) return;
+	
+	FSoftObjectPath CQ = MusicData->ConstantQ;
+	FSoftObjectPath LN = MusicData->Loudness;
 	if (CQ.IsValid())
 		ConstantQ = Cast<UConstantQNRT>(CQ.TryLoad());
 	if (LN.IsValid())

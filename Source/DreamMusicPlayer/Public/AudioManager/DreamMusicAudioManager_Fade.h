@@ -10,7 +10,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(DisplayName = "Fade")
 class DREAMMUSICPLAYER_API UDreamMusicAudioManager_Fade : public UDreamMusicAudioManager
 {
 	GENERATED_BODY()

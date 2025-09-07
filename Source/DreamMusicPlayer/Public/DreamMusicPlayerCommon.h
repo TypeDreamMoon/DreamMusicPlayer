@@ -437,15 +437,23 @@ public:
 	FDreamMusicInformationData Data;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
-	UDreamMusicPlayerExpansionData* ExpansionData;
+	TArray<UDreamMusicPlayerExpansionData*> ExpansionDatas;
+
 public:
 	bool IsValid() const;
 	bool operator==(const FDreamMusicDataStruct& Target) const;
 
-	template <typename  T>
+	template <typename T>
 	T* GetExpansionData() const
 	{
-		return Cast<T>(ExpansionData);
+		for (auto ExpansionData : ExpansionDatas)
+		{
+			if (auto CastedExpansionData = Cast<T>(ExpansionData))
+			{
+				return CastedExpansionData;
+			}
+		}
+		return nullptr;
 	}
 };
 
