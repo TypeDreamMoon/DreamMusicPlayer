@@ -1,8 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
-#include "Classes/DreamMusicPlayerComponent.h"
 #include "AudioManager/DreamMusicAudioManager_Fade.h"
+#include "Classes/DreamMusicPlayerComponent.h"
 
 #include "DreamMusicPlayerDebugLog.h"
 #include "Components/AudioComponent.h"

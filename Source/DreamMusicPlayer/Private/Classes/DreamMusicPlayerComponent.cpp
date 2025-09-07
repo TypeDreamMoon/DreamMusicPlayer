@@ -11,7 +11,7 @@
 #include "LyricParser/DreamLyricParser.h"
 #include "Classes/DreamMusicData.h"
 #include "Classes/DreamMusicPlayerExpansion.h"
-#include "Classes/UDreamMusicAudioManager.h"
+#include "Classes/DreamMusicAudioManager.h"
 
 UDreamMusicPlayerComponent::UDreamMusicPlayerComponent()
 {

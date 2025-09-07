@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Classes/UDreamMusicAudioManager.h"
+#include "Classes/DreamMusicAudioManager.h"
 #include "DreamMusicAudioManager_Default.generated.h"
 
 /**

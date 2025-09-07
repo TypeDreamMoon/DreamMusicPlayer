@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "DreamMusicPlayerCommon.h"
-#include "Classes/UDreamMusicAudioManager.h"
+#include "Classes/DreamMusicAudioManager.h"
 #include "DreamMusicAudioManager_Fade.generated.h"
 
 /**

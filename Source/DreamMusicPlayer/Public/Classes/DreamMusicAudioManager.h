@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "UDreamMusicAudioManager.generated.h"
+#include "DreamMusicAudioManager.generated.h"
 
 struct FDreamMusicLyricTimestamp;
 struct FDreamMusicDataStruct;
@@ -12,7 +12,7 @@ class UDreamMusicPlayerComponent;
 /**
  * 播放中间件
  */
-UCLASS(Abstract)
+UCLASS(Abstract, Blueprintable, BlueprintType)
 class DREAMMUSICPLAYER_API UDreamMusicAudioManager : public UObject
 {
 	GENERATED_BODY()
