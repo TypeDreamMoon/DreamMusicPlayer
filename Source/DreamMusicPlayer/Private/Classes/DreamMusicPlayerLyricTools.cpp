@@ -20,11 +20,11 @@ FDreamMusicLyric FDreamMusicPlayerLyricTools::GetLyricAtTimestamp(FDreamMusicLyr
 		int Mid = (Low + High) / 2;
 		const FDreamMusicLyric& Lyric = Lyrics[Mid];
 
-		if (Lyric.Timestamp == Timestamp)
+		if (Lyric.StartTimestamp == Timestamp)
 		{
 			return Lyric; // 精确匹配时间戳，返回对应的歌词
 		}
-		else if (Lyric.Timestamp < Timestamp)
+		else if (Lyric.StartTimestamp < Timestamp)
 		{
 			ResultIndex = Mid; // 记录小于目标时间戳的最大时间戳位置
 			Low = Mid + 1; // 时间戳小于目标时间戳，搜索后半部分

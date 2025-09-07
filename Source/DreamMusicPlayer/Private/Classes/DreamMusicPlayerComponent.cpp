@@ -212,7 +212,7 @@ void UDreamMusicPlayerComponent::PlayMusicWithLyric(FDreamMusicLyric InLyric)
 {
 	if (CurrentMusicLyricList.Contains(InLyric))
 	{
-		float Time = InLyric.Timestamp.ToSeconds();
+		float Time = InLyric.StartTimestamp.ToSeconds();
 		Time = UKismetMathLibrary::NormalizeToRange(Time, 0.0f, CurrentMusicDuration);
 		SetMusicPercent(Time);
 	}
@@ -328,64 +328,19 @@ UAudioComponent* UDreamMusicPlayerComponent::GetLastActiveAudioComponent() const
 	return IsAudioComponentReady(Component) ? Component : nullptr;
 }
 
-FDreamMusicLyricProgress UDreamMusicPlayerComponent::GetCurrentLyricWordProgress(float CurrentTime, const FDreamMusicLyric& InLyric) const
+FDreamMusicLyricProgress UDreamMusicPlayerComponent::GetCurrentLyricWordProgress(const FDreamMusicLyricTimestamp& InTimestamp) const
 {
-	if (InLyric.WordTimings.Num() > 0)
-	{
-		return CalculateWordProgress(CurrentTime, InLyric.WordTimings, InLyric.Timestamp.ToSeconds());
-	}
-
-	// Fallback to line-based progress if no word timings
-	return GetCurrentLyricLineProgress(CurrentTime, InLyric);
+	return CalculateWordProgress(InTimestamp);
 }
 
-FDreamMusicLyricProgress UDreamMusicPlayerComponent::GetCurrentRomanizationProgress(float CurrentTime, const FDreamMusicLyric& InLyric) const
+FDreamMusicLyricProgress UDreamMusicPlayerComponent::GetCurrentRomanizationProgress(const FDreamMusicLyricTimestamp& InTimestamp) const
 {
-	if (InLyric.RomanizationWordTimings.Num() > 0)
-	{
-		return CalculateWordProgress(CurrentTime, InLyric.RomanizationWordTimings, InLyric.Timestamp.ToSeconds());
-	}
-
-	// Fallback to line-based progress if no romanization word timings
-	return GetCurrentLyricLineProgress(CurrentTime, InLyric);
+	return CalculateWordProgress(InTimestamp, true);
 }
 
-FDreamMusicLyricProgress UDreamMusicPlayerComponent::GetCurrentLyricLineProgress(float CurrentTime, const FDreamMusicLyric& InLyric) const
+FDreamMusicLyricProgress UDreamMusicPlayerComponent::GetCurrentLyricLineProgress(const FDreamMusicLyricTimestamp& InTimestamp) const
 {
-	FDreamMusicLyricProgress Progress;
-
-	float LineStartTime = InLyric.Timestamp.ToSeconds();
-	float LineEndTime = InLyric.EndTimestamp.ToSeconds();
-
-	// If EndTimestamp is not set or invalid, estimate duration
-	if (LineEndTime <= LineStartTime)
-	{
-		// Estimate a reasonable duration (e.g., 3 seconds) or use next lyric timing
-		LineEndTime = LineStartTime + 3.0f;
-	}
-
-	// Check if current time is within this lyric line
-	if (CurrentTime >= LineStartTime && CurrentTime <= LineEndTime)
-	{
-		Progress.bIsActive = true;
-		Progress.LineProgress = (CurrentTime - LineStartTime) / (LineEndTime - LineStartTime);
-		Progress.LineProgress = FMath::Clamp(Progress.LineProgress, 0.0f, 1.0f);
-		Progress.CurrentWordIndex = -1; // No specific word index for line-based progress
-	}
-	else if (CurrentTime < LineStartTime)
-	{
-		Progress.bIsActive = false;
-		Progress.LineProgress = 0.0f;
-		Progress.CurrentWordIndex = -1;
-	}
-	else
-	{
-		Progress.bIsActive = false;
-		Progress.LineProgress = 1.0f;
-		Progress.CurrentWordIndex = -1;
-	}
-
-	return Progress;
+	return CalculateLineProgress(InTimestamp);
 }
 
 void UDreamMusicPlayerComponent::ExtractCoverThemeColors(int32 ClusterCount, int32 MaxIterations)
@@ -462,7 +417,7 @@ void UDreamMusicPlayerComponent::ExtractTextureThemeColors(UTexture2D* Texture, 
 	if (CurrentKMeansTask && CurrentKMeansTask->IsValidLowLevel())
 	{
 		DMP_LOG(Log, TEXT("Creating K-Means analysis task for texture: %s (Size: %dx%d, Format: %d)"),
-			*Texture->GetName(), Texture->GetSizeX(), Texture->GetSizeY(), (int)Texture->GetPixelFormat());
+		        *Texture->GetName(), Texture->GetSizeX(), Texture->GetSizeY(), (int)Texture->GetPixelFormat());
 
 		CurrentKMeansTask->OnCompleted.AddDynamic(this, &UDreamMusicPlayerComponent::OnThemeColorsExtracted);
 		CurrentKMeansTask->Activate();
@@ -478,12 +433,78 @@ void UDreamMusicPlayerComponent::ExtractTextureThemeColors(UTexture2D* Texture, 
 
 bool UDreamMusicPlayerComponent::IsAudioComponentReady(UAudioComponent* Component) const
 {
-	return Component && 
-		   Component->IsValidLowLevel() && 
-		   Component->IsRegistered() && 
-		   !Component->HasAnyFlags(RF_BeginDestroyed | RF_FinishDestroyed);
+	return Component &&
+		Component->IsValidLowLevel() &&
+		Component->IsRegistered() &&
+		!Component->HasAnyFlags(RF_BeginDestroyed | RF_FinishDestroyed);
 }
 
+
+float UDreamMusicPlayerComponent::GetAccuratePlayTime() const
+{
+	if (!bIsPlaying || bIsPaused)
+	{
+		return CurrentDuration;
+	}
+
+	// 如果刚刚进行了 Seek，使用 Seek 位置作为基准
+	if (bJustSeeked)
+	{
+		return LastSeekPosition;
+	}
+
+	// 使用世界时间来计算更精确的播放时间
+	if (MusicStartWorldTime > 0.0)
+	{
+		double CurrentWorldTime = FPlatformTime::Seconds();
+		float ElapsedTime = static_cast<float>(CurrentWorldTime - MusicStartWorldTime);
+		float CalculatedTime = LastSeekPosition + ElapsedTime;
+
+		// 确保时间不会超出音乐长度
+		return FMath::Clamp(CalculatedTime, 0.0f, CurrentMusicDuration);
+	}
+
+	// 降级到当前计算方法
+	return CurrentDuration;
+}
+
+void UDreamMusicPlayerComponent::UpdateAudioAnalysisData()
+{
+	if (ConstantQ && ConstantQ->IsValidLowLevel())
+	{
+		ConstantQ->GetNormalizedChannelConstantQAtTime(CurrentDuration, 0, ConstantQDataL);
+		ConstantQ->GetNormalizedChannelConstantQAtTime(CurrentDuration, 1, ConstantQDataR);
+	}
+
+	if (Loudness && Loudness->IsValidLowLevel())
+	{
+		Loudness->GetNormalizedLoudnessAtTime(CurrentDuration, LoudnessValue);
+	}
+}
+
+void UDreamMusicPlayerComponent::BuildWordDurationCache(bool bUseRoma) const
+{
+	if (bCacheValid && bLastUseRoma == bUseRoma)
+	{
+		return;
+	}
+
+	const TArray<FDreamMusicLyricWord>& Words = bUseRoma ? CurrentLyric.RomanizationWordTimings : CurrentLyric.WordTimings;
+        
+	WordDurationPrefixSum.Empty();
+	WordDurationPrefixSum.Reserve(Words.Num());
+        
+	int32 CumulativeDuration = 0;
+	for (const FDreamMusicLyricWord& Word : Words)
+	{
+		int32 WordDuration = Word.EndTimestamp.ToMilliseconds() - Word.StartTimestamp.ToMilliseconds();
+		CumulativeDuration += WordDuration;
+		WordDurationPrefixSum.Add(CumulativeDuration);
+	}
+        
+	bCacheValid = true;
+	bLastUseRoma = bUseRoma;
+}
 
 void UDreamMusicPlayerComponent::OnThemeColorsExtracted(const TArray<FKMeansColorCluster>& ColorClusters, bool bSuccess)
 {
@@ -500,7 +521,7 @@ void UDreamMusicPlayerComponent::OnThemeColorsExtracted(const TArray<FKMeansColo
 		{
 			const FKMeansColorCluster& Cluster = ColorClusters[i];
 			DMP_LOG(Log, TEXT("Color %d: R=%.3f G=%.3f B=%.3f Weight=%.3f PixelCount=%d"),
-				i, Cluster.Color.R, Cluster.Color.G, Cluster.Color.B, Cluster.Weight, Cluster.PixelCount);
+			        i, Cluster.Color.R, Cluster.Color.G, Cluster.Color.B, Cluster.Weight, Cluster.PixelCount);
 		}
 	}
 	else
@@ -519,120 +540,128 @@ void UDreamMusicPlayerComponent::OnThemeColorsExtracted(const TArray<FKMeansColo
 		if (CompletedTask && CompletedTask->IsValidLowLevel())
 		{
 			DMP_LOG(Warning, TEXT("Task details - Texture: %s, SampledPixels: %d"),
-				CompletedTask->GetTargetTexture() ? *CompletedTask->GetTargetTexture()->GetName() : TEXT("NULL"),
-				CompletedTask->GetSamplePixelNum());
+			        CompletedTask->GetTargetTexture() ? *CompletedTask->GetTargetTexture()->GetName() : TEXT("NULL"),
+			        CompletedTask->GetSamplePixelNum());
 		}
 	}
 
 	OnThemeColorChanged.Broadcast(ColorClusters, bSuccess);
 }
 
-
-FDreamMusicLyricProgress UDreamMusicPlayerComponent::CalculateWordProgress(float CurrentTime, const TArray<FDreamMusicLyricWord>& WordTimings, float LineStartTime) const
+FDreamMusicLyricProgress UDreamMusicPlayerComponent::CalculateWordProgress(FDreamMusicLyricTimestamp InCurrentTime, bool bUseRoma) const
 {
-	FDreamMusicLyricProgress Progress;
-
-	if (WordTimings.Num() == 0)
+	// 边界检查
+	if (CurrentLyric.IsEmpty())
 	{
-		return Progress;
+		CachedCurrentWordIndex = -1;
+		bCacheValid = false;
+		return FDreamMusicLyricProgress(0, 0.0f, false, FDreamMusicLyricWord{});
 	}
 
-	// Find the current word with improved timing logic
-	int32 CurrentWordIndex = -1;
-	float CurrentWordStartTime = 0.0f;
-	float CurrentWordEndTime = 0.0f;
-
-	for (int32 i = 0; i < WordTimings.Num(); ++i)
+	// 如果当前时间在歌词行开始之前，返回0
+	if (InCurrentTime < CurrentLyric.StartTimestamp)
 	{
-		float WordStartTime = WordTimings[i].StartTimestamp.ToSeconds();
-		float WordEndTime = WordTimings[i].EndTimestamp.ToSeconds();
+		CachedCurrentWordIndex = -1;
+		bCacheValid = false;
+		return FDreamMusicLyricProgress(0, 0.0f, false, FDreamMusicLyricWord{});
+	}
 
-		// Improved end time calculation
-		if (WordEndTime <= WordStartTime)
-		{
-			if (i + 1 < WordTimings.Num())
-			{
-				// Use next word's start time
-				WordEndTime = WordTimings[i + 1].StartTimestamp.ToSeconds();
-			}
-			else
-			{
-				// For the last word, use content-based estimation with minimum duration
-				float ContentBasedDuration = FMath::Max(0.3f, WordTimings[i].Content.Len() * 0.08f + 0.2f);
-				WordEndTime = WordStartTime + ContentBasedDuration;
-			}
-		}
+	// 如果当前时间在歌词行结束之后，返回1（完成状态）
+	if (InCurrentTime > CurrentLyric.EndTimestamp)
+	{
+		CachedCurrentWordIndex = -1;
+		bCacheValid = false;
+		return FDreamMusicLyricProgress(-1, 1.0f, false, FDreamMusicLyricWord{});
+	}
 
-		// Use slightly overlapping ranges to prevent gaps between words
-		float WordEndTimeWithBuffer = (i == WordTimings.Num() - 1) ? WordEndTime + 0.15f : WordEndTime + 0.05f;
+	// 如果没有单词时间信息，使用行进度
+	if (bUseRoma ? CurrentLyric.IsRomanizationWordsEmpty() : CurrentLyric.IsWordsEmpty())
+	{
+		return CalculateLineProgress(InCurrentTime);
+	}
 
-		if (CurrentTime >= WordStartTime && CurrentTime < WordEndTimeWithBuffer)
+	// 构建缓存
+	BuildWordDurationCache(bUseRoma);
+
+	const TArray<FDreamMusicLyricWord>& Words = bUseRoma ? CurrentLyric.RomanizationWordTimings : CurrentLyric.WordTimings;
+
+	// 性能优化：从上次位置开始查找，通常时间是递增的
+	int32 StartIndex = 0;
+	if (CachedCurrentWordIndex >= 0 && CachedCurrentWordIndex < Words.Num() &&
+		InCurrentTime >= LastCalculationTime)
+	{
+		StartIndex = CachedCurrentWordIndex;
+	}
+
+	// 查找当前单词
+	int32 CurrentWordIndex = -1;
+	for (int32 i = StartIndex; i < Words.Num(); i++)
+	{
+		const FDreamMusicLyricWord& Word = Words[i];
+		if (InCurrentTime >= Word.StartTimestamp && InCurrentTime < Word.EndTimestamp)
 		{
 			CurrentWordIndex = i;
-			CurrentWordStartTime = WordStartTime;
-			CurrentWordEndTime = WordEndTime;
-			Progress.CurrentWord = WordTimings[i];
 			break;
 		}
 	}
 
-	Progress.CurrentWordIndex = CurrentWordIndex;
-
-	// Calculate overall line progress with better end time handling
-	float LineStartTime_Local = WordTimings[0].StartTimestamp.ToSeconds();
-	float LineEndTime_Local;
-
-	// Determine line end time more accurately
-	const FDreamMusicLyricWord& LastWord = WordTimings.Last();
-	if (LastWord.EndTimestamp.ToSeconds() > LastWord.StartTimestamp.ToSeconds())
+	// 如果从缓存位置没找到，从头查找
+	if (CurrentWordIndex == -1 && StartIndex > 0)
 	{
-		LineEndTime_Local = LastWord.EndTimestamp.ToSeconds();
-	}
-	else
-	{
-		// Improved estimation for undefined end times
-		float LastWordDuration = FMath::Max(0.5f, LastWord.Content.Len() * 0.08f + 0.3f);
-		LineEndTime_Local = LastWord.StartTimestamp.ToSeconds() + LastWordDuration;
-	}
-
-	// Add adaptive buffer based on line content
-	float AdaptiveBuffer = FMath::Clamp(WordTimings.Num() * 0.05f, 0.1f, 0.4f);
-	LineEndTime_Local += AdaptiveBuffer;
-
-	// Set line activity and progress
-	if (CurrentTime >= LineStartTime_Local)
-	{
-		if (CurrentTime <= LineEndTime_Local)
+		for (int32 i = 0; i < StartIndex; i++)
 		{
-			Progress.bIsActive = true;
-			float RawProgress = (CurrentTime - LineStartTime_Local) / (LineEndTime_Local - LineStartTime_Local);
-
-			// Prevent premature completion of last word
-			if (CurrentWordIndex == WordTimings.Num() - 1 && RawProgress > 0.9f)
+			const FDreamMusicLyricWord& Word = Words[i];
+			if (InCurrentTime >= Word.StartTimestamp && InCurrentTime < Word.EndTimestamp)
 			{
-				// Ensure last word has enough time to complete
-				float LastWordCompletionTime = CurrentWordEndTime + 0.1f;
-				if (CurrentTime < LastWordCompletionTime)
-				{
-					RawProgress = FMath::Min(RawProgress, 0.9f);
-				}
+				CurrentWordIndex = i;
+				break;
 			}
+		}
+	}
 
-			Progress.LineProgress = FMath::Clamp(RawProgress, 0.0f, 1.0f);
-		}
-		else
-		{
-			Progress.bIsActive = false;
-			Progress.LineProgress = 1.0f;
-		}
+	// 更新缓存
+	CachedCurrentWordIndex = CurrentWordIndex;
+	LastCalculationTime = InCurrentTime;
+
+	int32 LineTotalDuration = CurrentLyric.EndTimestamp.ToMilliseconds() - CurrentLyric.StartTimestamp.ToMilliseconds();
+
+	if (CurrentWordIndex >= 0)
+	{
+		const FDreamMusicLyricWord& CurrentWord = Words[CurrentWordIndex];
+
+		// 使用前缀和快速计算进度
+		int32 ProgressToWordStart = (CurrentWordIndex > 0) ? WordDurationPrefixSum[CurrentWordIndex - 1] : 0;
+		int32 CurrentWordElapsed = InCurrentTime.ToMilliseconds() - CurrentWord.StartTimestamp.ToMilliseconds();
+		int32 TotalProgress = ProgressToWordStart + CurrentWordElapsed;
+
+		float LineProgress = static_cast<float>(TotalProgress) / static_cast<float>(LineTotalDuration);
+
+		return FDreamMusicLyricProgress(CurrentWordIndex, LineProgress, true, CurrentWord);
 	}
 	else
 	{
-		Progress.bIsActive = false;
-		Progress.LineProgress = 0.0f;
+		// 回退到行进度计算
+		int32 Elapsed = InCurrentTime.ToMilliseconds() - CurrentLyric.StartTimestamp.ToMilliseconds();
+		float LineProgress = static_cast<float>(Elapsed) / static_cast<float>(LineTotalDuration);
+
+		return FDreamMusicLyricProgress(-1, LineProgress, false, FDreamMusicLyricWord{});
+	}
+}
+
+FDreamMusicLyricProgress UDreamMusicPlayerComponent::CalculateLineProgress(FDreamMusicLyricTimestamp InCurrentTime) const
+{
+	if (InCurrentTime < CurrentLyric.StartTimestamp || InCurrentTime > CurrentLyric.EndTimestamp)
+	{
+		return FDreamMusicLyricProgress(-1, 0.0f, false, FDreamMusicLyricWord{});
 	}
 
-	return Progress;
+	int32 LineDuration = CurrentLyric.EndTimestamp.ToMilliseconds() - CurrentLyric.StartTimestamp.ToMilliseconds();
+	int32 Elapsed = InCurrentTime.ToMilliseconds() - CurrentLyric.StartTimestamp.ToMilliseconds();
+    
+	// 修复整数除法问题
+	float Progress = static_cast<float>(Elapsed) / static_cast<float>(LineDuration);
+    
+	return FDreamMusicLyricProgress(-1, Progress, false, FDreamMusicLyricWord{});
 }
 
 TArray<FString> UDreamMusicPlayerComponent::GetNames() const
@@ -658,8 +687,11 @@ void UDreamMusicPlayerComponent::StartMusic()
 	CurrentMusicDuration = 0.0f;
 	CurrentMusicPercent = 0.0f;
 	CurrentDuration = 0.0f;
+	LastSeekPosition = 0.0f;
+	MusicStartWorldTime = FPlatformTime::Seconds(); // 记录开始时间
+	bJustSeeked = false;
 	CurrentTimestamp = FDreamMusicLyricTimestamp();
-	
+
 	// Switch audio components for seamless crossfading
 	ToggleActiveAudioComponent();
 
@@ -683,13 +715,13 @@ void UDreamMusicPlayerComponent::StartMusic()
 	// Play Music with improved setup
 	CurrentMusicDuration = SoundWave->Duration;
 	ActiveComponent->SetSound(SoundWave);
-	
+
 	// Set volume to 0 before playing if fade-in is enabled
 	if (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeInDuration > 0.0f)
 	{
 		ActiveComponent->SetVolumeMultiplier(0.0f);
 	}
-	
+
 	ActiveComponent->Play();
 
 	// Apply fade in
@@ -729,14 +761,15 @@ void UDreamMusicPlayerComponent::EndMusic(bool Native)
 	}
 
 	// Calculate fade out duration
-	float FadeOutDuration = (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeOutDuration > 0.0f) 
-		? FadeAudioSetting.FadeOutDuration : 0.0f;
+	float FadeOutDuration = (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeOutDuration > 0.0f)
+		                        ? FadeAudioSetting.FadeOutDuration
+		                        : 0.0f;
 
 	// Start fade out
 	if (FadeOutDuration > 0.0f)
 	{
 		ActiveComponent->FadeOut(FadeOutDuration, 0.0f);
-		
+
 		// Schedule stop after fade completes
 		if (GWorld)
 		{
@@ -772,7 +805,7 @@ void UDreamMusicPlayerComponent::EndMusic(bool Native)
 	ConstantQDataL.Empty();
 	ConstantQDataR.Empty();
 	LoudnessValue = 0.0f;
-	
+
 	// Safely clear references
 	ConstantQ = nullptr;
 	Loudness = nullptr;
@@ -827,6 +860,12 @@ void UDreamMusicPlayerComponent::PauseMusic()
 	GetActiveAudioComponent()->SetPaused(true);
 	SetPlayState(EDreamMusicPlayerPlayState::EDMPPS_Paused);
 	bIsPaused = true;
+
+	// 暂停时保存当前精确时间，停止世界时间计算
+	CurrentDuration = GetAccuratePlayTime();
+	LastSeekPosition = CurrentDuration;
+	MusicStartWorldTime = 0.0; // 停止世界时间基准
+
 	OnMusicPause.Broadcast();
 }
 
@@ -835,6 +874,11 @@ void UDreamMusicPlayerComponent::UnPauseMusic()
 	GetActiveAudioComponent()->SetPaused(false);
 	SetPlayState(EDreamMusicPlayerPlayState::EDMPPS_Playing);
 	bIsPaused = false;
+
+	// 恢复播放时重新设置时间基准
+	MusicStartWorldTime = FPlatformTime::Seconds();
+	bJustSeeked = true; // 标记为刚刚 Seek，使用保存的位置
+
 	OnMusicUnPause.Broadcast();
 }
 
@@ -868,29 +912,42 @@ void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
 
 	InPercent = FMath::Clamp(InPercent, 0.0f, 1.0f);
 	CurrentMusicPercent = InPercent;
-	CurrentDuration = CurrentMusicDuration * InPercent;
-	CurrentTimestamp = *FDreamMusicLyricTimestamp().FromSeconds(CurrentDuration + LyricOffset);
-	
-	// Stop current playback before seeking
+
+	// 计算目标时间
+	float TargetTime = CurrentMusicDuration * InPercent;
+	CurrentDuration = TargetTime;
+	LastSeekPosition = TargetTime;
+	bJustSeeked = true;
+
+	// 重新设置开始时间基准
+	MusicStartWorldTime = FPlatformTime::Seconds();
+
+	// 应用歌词偏移
+	float LyricTime = CurrentDuration + LyricOffset;
+	CurrentTimestamp = *FDreamMusicLyricTimestamp().FromSeconds(LyricTime);
+
+	// 停止并重新开始播放
 	UAudioComponent* ActiveComponent = GetActiveAudioComponent();
 	bool WasPlaying = ActiveComponent->IsPlaying();
-	
+
 	if (WasPlaying)
 	{
 		ActiveComponent->Stop();
 	}
-	
-	// Seek to new position
-	ActiveComponent->Play(CurrentDuration);
-	
-	// Restore pause state if needed
+
+	// 从新位置开始播放
+	ActiveComponent->Play(TargetTime);
+
+	// 恢复暂停状态
 	if (bIsPaused)
 	{
 		ActiveComponent->SetPaused(true);
+		// 暂停时不更新世界时间基准
+		MusicStartWorldTime = 0.0;
 	}
 
-	DMP_LOG(Log, TEXT("Set Music Percent : %f Time : %02d:%02d.%02d"), 
-		CurrentMusicPercent, CurrentTimestamp.Minute, CurrentTimestamp.Seconds, CurrentTimestamp.Millisecond);
+	DMP_LOG(Log, TEXT("Set Music Percent: %.3f, Target Time: %.3f, Lyric Time: %.3f"),
+	        CurrentMusicPercent, TargetTime, LyricTime);
 }
 
 void UDreamMusicPlayerComponent::SetMusicPercentFromTimestamp(FDreamMusicLyricTimestamp InTimestamp)
@@ -903,10 +960,11 @@ void UDreamMusicPlayerComponent::SetCurrentLyric(FDreamMusicLyric InLyric)
 {
 	if (InLyric != CurrentLyric && InLyric.IsNotEmpty())
 	{
+		ClearLyricProgressCache();
 		CurrentLyric = InLyric;
 		OnLyricChanged.Broadcast(CurrentLyric, CurrentMusicLyricList.Find(CurrentLyric));
 		DMP_LOG_DEBUG(Log, "Lyric", TEXT("Set : Time : %02d:%02d.%02d Content : %s"),
-		              InLyric.Timestamp.Minute, InLyric.Timestamp.Seconds, InLyric.Timestamp.Millisecond, *InLyric.Content);
+		              InLyric.StartTimestamp.Minute, InLyric.StartTimestamp.Seconds, InLyric.StartTimestamp.Millisecond, *InLyric.Content);
 	}
 }
 
@@ -921,56 +979,45 @@ void UDreamMusicPlayerComponent::LoadAudioNrt()
 
 void UDreamMusicPlayerComponent::MusicTick(float DeltaTime)
 {
-	// Improved end detection with fade consideration
+	// 获取更精确的播放时间
+	float AccuratePlayTime = GetAccuratePlayTime();
+
+	// 改进的音乐结束检测
 	float EffectiveEndTime = CurrentMusicDuration;
 	if (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeOutDuration > 0.0f)
 	{
 		EffectiveEndTime -= FadeAudioSetting.FadeOutDuration;
 	}
-	
-	// Add small buffer to prevent premature ending
 	EffectiveEndTime -= 0.1f;
 
-	if (CurrentDuration >= EffectiveEndTime)
+	if (AccuratePlayTime >= EffectiveEndTime)
 	{
 		DMP_LOG(Log, TEXT("Music Tick Music Name : %s - End"), *CurrentMusicData.Information.Title);
 		EndMusic();
 		return;
 	}
 
-	// Update timing
-	CurrentDuration += DeltaTime;
+	// 更新时间状态
+	CurrentDuration = AccuratePlayTime;
 	CurrentMusicPercent = FMath::Clamp(CurrentDuration / CurrentMusicDuration, 0.0f, 1.0f);
-	CurrentTimestamp = *FDreamMusicLyricTimestamp().FromSeconds(CurrentDuration + LyricOffset);
-	
-	// Update current lyric
+
+	// 应用歌词偏移
+	float LyricTime = CurrentDuration + LyricOffset;
+	CurrentTimestamp = *FDreamMusicLyricTimestamp().FromSeconds(LyricTime);
+
+	// 获取当前歌词（使用带偏移的时间）
 	SetCurrentLyric(FDreamMusicPlayerLyricTools::GetLyricAtTimestamp(CurrentTimestamp, CurrentMusicLyricList));
-	
-	// Update audio analysis data safely
-	if (ConstantQ && ConstantQ->IsValidLowLevel())
-	{
-		ConstantQ->GetNormalizedChannelConstantQAtTime(CurrentDuration, 0, ConstantQDataL);
-		ConstantQ->GetNormalizedChannelConstantQAtTime(CurrentDuration, 1, ConstantQDataR);
-	}
-	
-	if (Loudness && Loudness->IsValidLowLevel())
-	{
-		Loudness->GetNormalizedLoudnessAtTime(CurrentDuration, LoudnessValue);
-	}
 
-	// Handle lyric progress tracking
-	if (!CurrentLyric.bIsEmptyLine && CurrentLyric.IsNotEmpty())
-	{
-		FDreamMusicLyricProgress LyricProgress = GetCurrentLyricWordProgress(CurrentDuration, CurrentLyric);
-		FDreamMusicLyricProgress RomanizationProgress = GetCurrentRomanizationProgress(CurrentDuration, CurrentLyric);
-
-		DMP_LOG_DEBUG_TICK(Log, TEXT("Lyric Progress: %.2f, Word: %d, Romanization Progress: %.2f, Word: %d"),
-			LyricProgress.LineProgress, LyricProgress.CurrentWordIndex,
-			RomanizationProgress.LineProgress, RomanizationProgress.CurrentWordIndex);
-	}
+	// 更新音频分析数据
+	UpdateAudioAnalysisData();
 
 	OnMusicTick.Broadcast(CurrentDuration);
-	DMP_LOG_DEBUG_TICK(Log, TEXT("Time: %s DeltaTime: %f P: %f"), *CurrentTimestamp.ToString(), DeltaTime, CurrentMusicPercent);
+
+	// 重置 Seek 标志
+	if (bJustSeeked)
+	{
+		bJustSeeked = false;
+	}
 }
 
 bool UDreamMusicPlayerComponent::ToggleActiveAudioComponent()

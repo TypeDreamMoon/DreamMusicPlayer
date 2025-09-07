@@ -59,7 +59,7 @@ void FDreamMusicPlayerLyricFileParser_ASS::Parse()
 				FDreamMusicLyric* ExistingLyric = nullptr;
 				for (FDreamMusicLyric& Lyric : ParsedLyrics)
 				{
-					if (Lyric.Timestamp.ToMilliseconds() == StartTimestamp.ToMilliseconds())
+					if (Lyric.StartTimestamp.ToMilliseconds() == StartTimestamp.ToMilliseconds())
 					{
 						ExistingLyric = &Lyric;
 						break;
@@ -76,7 +76,7 @@ void FDreamMusicPlayerLyricFileParser_ASS::Parse()
 				{
 					// 创建新的歌词行
 					FDreamMusicLyric Lyric;
-					Lyric.Timestamp = StartTimestamp;
+					Lyric.StartTimestamp = StartTimestamp;
 					Lyric.EndTimestamp = EndTimestamp;
 					Lyric.Content = Text;
 					ParsedLyrics.Add(Lyric);
@@ -88,7 +88,7 @@ void FDreamMusicPlayerLyricFileParser_ASS::Parse()
 				bool bFound = false;
 				for (FDreamMusicLyric& Lyric : ParsedLyrics)
 				{
-					if (Lyric.Timestamp.ToMilliseconds() == StartTimestamp.ToMilliseconds())
+					if (Lyric.StartTimestamp.ToMilliseconds() == StartTimestamp.ToMilliseconds())
 					{
 						Lyric.Translate = Text;
 						bFound = true;
@@ -100,7 +100,7 @@ void FDreamMusicPlayerLyricFileParser_ASS::Parse()
 				if (!bFound)
 				{
 					FDreamMusicLyric Lyric;
-					Lyric.Timestamp = StartTimestamp;
+					Lyric.StartTimestamp = StartTimestamp;
 					Lyric.EndTimestamp = EndTimestamp;
 					Lyric.Translate = Text;
 					ParsedLyrics.Add(Lyric);
@@ -112,7 +112,7 @@ void FDreamMusicPlayerLyricFileParser_ASS::Parse()
 				bool bFound = false;
 				for (FDreamMusicLyric& Lyric : ParsedLyrics)
 				{
-					if (Lyric.Timestamp.ToMilliseconds() == StartTimestamp.ToMilliseconds())
+					if (Lyric.StartTimestamp.ToMilliseconds() == StartTimestamp.ToMilliseconds())
 					{
 						Lyric.Romanization = Text;
 						// 同时处理罗马音的卡拉OK标签
@@ -126,7 +126,7 @@ void FDreamMusicPlayerLyricFileParser_ASS::Parse()
 				if (!bFound)
 				{
 					FDreamMusicLyric Lyric;
-					Lyric.Timestamp = StartTimestamp;
+					Lyric.StartTimestamp = StartTimestamp;
 					Lyric.EndTimestamp = EndTimestamp;
 					Lyric.Romanization = Text;
 					// 处理罗马音的卡拉OK标签
@@ -217,7 +217,7 @@ void FDreamMusicPlayerLyricFileParser_ASS::ProcessKaraokeTags(FDreamMusicLyric& 
 	FRegexPattern Pattern(TEXT("\\{\\\\kf(\\d+)\\}([^\\{]*)"));
 	FRegexMatcher Matcher(Pattern, Text);
 
-	int32 CurrentTimeMs = Lyric.Timestamp.ToMilliseconds();
+	int32 CurrentTimeMs = Lyric.StartTimestamp.ToMilliseconds();
 
 	// 清除已存在的单词时间信息
 	Lyric.WordTimings.Empty();
@@ -282,7 +282,7 @@ void FDreamMusicPlayerLyricFileParser_ASS::ProcessRomanizationKaraokeTags(FDream
 	FRegexPattern Pattern(TEXT("\\{\\\\kf(\\d+)\\}([^\\{]*)"));
 	FRegexMatcher Matcher(Pattern, Text);
 
-	int32 CurrentTimeMs = Lyric.Timestamp.ToMilliseconds();
+	int32 CurrentTimeMs = Lyric.StartTimestamp.ToMilliseconds();
 
 	// 清除已存在的罗马音单词时间信息
 	Lyric.RomanizationWordTimings.Empty();

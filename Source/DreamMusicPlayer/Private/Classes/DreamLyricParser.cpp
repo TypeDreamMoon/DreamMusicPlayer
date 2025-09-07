@@ -123,7 +123,7 @@ void FDreamLyricParser::SortLyricsByTimestamp()
 {
 	Lyrics.Sort([](const FDreamMusicLyric& A, const FDreamMusicLyric& B)
 	{
-		return A.Timestamp.ToMilliseconds() < B.Timestamp.ToMilliseconds();
+		return A.StartTimestamp.ToMilliseconds() < B.StartTimestamp.ToMilliseconds();
 	});
 }
 
@@ -255,7 +255,7 @@ float FDreamLyricParser::GetTotalDuration() const
 		// Fallback to start timestamp if end timestamp is not set
 		if (Lyric.EndTimestamp.ToMilliseconds() == 0)
 		{
-			float StartTime = Lyric.Timestamp.ToSeconds();
+			float StartTime = Lyric.StartTimestamp.ToSeconds();
 			if (StartTime > MaxDuration)
 			{
 				MaxDuration = StartTime;
@@ -274,14 +274,14 @@ bool FDreamLyricParser::ValidateTimestamps() const
 	for (int32 i = 0; i < Lyrics.Num() - 1; i++)
 	{
 		// Check if timestamps are in ascending order
-		if (Lyrics[i].Timestamp.ToMilliseconds() > Lyrics[i + 1].Timestamp.ToMilliseconds())
+		if (Lyrics[i].StartTimestamp.ToMilliseconds() > Lyrics[i + 1].StartTimestamp.ToMilliseconds())
 		{
 			return false;
 		}
 
 		// Check if end timestamp is after start timestamp
 		if (Lyrics[i].EndTimestamp.ToMilliseconds() > 0 &&
-			Lyrics[i].Timestamp.ToMilliseconds() >= Lyrics[i].EndTimestamp.ToMilliseconds())
+			Lyrics[i].StartTimestamp.ToMilliseconds() >= Lyrics[i].EndTimestamp.ToMilliseconds())
 		{
 			return false;
 		}

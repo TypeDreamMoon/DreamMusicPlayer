@@ -21,7 +21,7 @@ void FDreamMusicPlayerLyricFileParser_SRT::Parse()
 
 		if (Line.IsEmpty())
 		{
-			if (Lyric.Timestamp.ToMilliseconds() != 0 || Lyric.EndTimestamp.ToMilliseconds() != 0)
+			if (Lyric.StartTimestamp.ToMilliseconds() != 0 || Lyric.EndTimestamp.ToMilliseconds() != 0)
 			{
 				ProcessText(Lyric);
 				ParsedLyrics.Add(Lyric);
@@ -57,7 +57,7 @@ void FDreamMusicPlayerLyricFileParser_SRT::Parse()
 		}
 	}
 
-	if (Lyric.Timestamp.ToMilliseconds() != 0 || Lyric.EndTimestamp.ToMilliseconds() != 0)
+	if (Lyric.StartTimestamp.ToMilliseconds() != 0 || Lyric.EndTimestamp.ToMilliseconds() != 0)
 	{
 		ProcessText(Lyric);
 		ParsedLyrics.Add(Lyric);
@@ -78,7 +78,7 @@ bool FDreamMusicPlayerLyricFileParser_SRT::ParseSRTTimestamp(const FString& Time
 	EndTime = EndTime.TrimStartAndEnd();
 
 	// Parse start timestamp manually for SRT format
-	OutLyric.Timestamp = ParseSRTTime(StartTime);
+	OutLyric.StartTimestamp = ParseSRTTime(StartTime);
 
 	// Parse end timestamp manually for SRT format  
 	OutLyric.EndTimestamp = ParseSRTTime(EndTime);

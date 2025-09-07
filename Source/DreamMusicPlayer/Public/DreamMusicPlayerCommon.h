@@ -232,11 +232,9 @@ public:
 	{
 	};
 
-	FDreamMusicLyric(FString Line);
-
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FDreamMusicLyricTimestamp Timestamp = FDreamMusicLyricTimestamp();
+	FDreamMusicLyricTimestamp StartTimestamp = FDreamMusicLyricTimestamp();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FDreamMusicLyricTimestamp EndTimestamp = FDreamMusicLyricTimestamp();
@@ -265,9 +263,24 @@ public:
 	bool operator==(const FDreamMusicLyricTimestamp& Target) const;
 	bool operator!=(const FDreamMusicLyric& Target) const;
 
-	bool IsNotEmpty() const
+	inline bool IsNotEmpty() const
 	{
-		return Timestamp.ToMilliseconds() > 0 || !Content.IsEmpty();
+		return StartTimestamp.ToMilliseconds() > 0 || !Content.IsEmpty();
+	}
+
+	inline bool IsEmpty() const
+	{
+		return !IsNotEmpty();
+	}
+
+	inline bool IsWordsEmpty() const
+	{
+		return WordTimings.IsEmpty();
+	}
+
+	inline bool IsRomanizationWordsEmpty() const
+	{
+		return RomanizationWordTimings.IsEmpty();
 	}
 
 	static FDreamMusicLyric EMPTY()
@@ -283,7 +296,7 @@ public:
 		                       *Content,
 		                       *Translate,
 		                       *Romanization,
-		                       *Timestamp.ToString(),
+		                       *StartTimestamp.ToString(),
 		                       *EndTimestamp.ToString(),
 		                       WordTimings.Num(),
 		                       RomanizationWordTimings.Num());
@@ -299,6 +312,21 @@ public:
 	FDreamMusicLyricProgress()
 		: CurrentWordIndex(-1)
 		  , LineProgress(0.0f)
+		  , bIsActive(false)
+	{
+	}
+
+	FDreamMusicLyricProgress(int32 InCurrentWordIndex, float InLineProgress, bool InIsActive, const FDreamMusicLyricWord& InCurrentWord)
+		: CurrentWordIndex(InCurrentWordIndex)
+		  , LineProgress(InLineProgress)
+		  , bIsActive(InIsActive)
+		  , CurrentWord(InCurrentWord)
+	{
+	}
+
+	FDreamMusicLyricProgress(float InLineProgress)
+		: CurrentWordIndex(-1)
+		  , LineProgress(InLineProgress)
 		  , bIsActive(false)
 	{
 	}

@@ -7,6 +7,7 @@
 #include "DreamMusicPlayerCommon.h"
 #include "DreamMusicPlayerComponent.generated.h"
 
+struct FKMeansColorCluster;
 class UConstantQNRTSettings;
 class ULoudnessNRTSettings;
 class UDreamAsyncAction_KMeansTexture;
@@ -412,30 +413,27 @@ public:
 
 	/**
 	* Get Current Lyric Word Progress for regular lyrics
-	* @param CurrentTime Current playback time in seconds
-	* @param InLyric The lyric line to check
+	* @param InTimestamp Current playback time in seconds
 	* @return Progress information for word timings
 	*/
 	UFUNCTION(BlueprintPure, Category = "Functions|Lyric")
-	FDreamMusicLyricProgress GetCurrentLyricWordProgress(float CurrentTime, const FDreamMusicLyric& InLyric) const;
+	FDreamMusicLyricProgress GetCurrentLyricWordProgress(const FDreamMusicLyricTimestamp& InTimestamp) const;
 
 	/**
 	 * Get Current Romanization Word Progress
-	 * @param CurrentTime Current playback time in seconds
-	 * @param InLyric The lyric line to check
+	 * @param InTimestamp Current playback time in seconds
 	 * @return Progress information for romanization word timings
 	 */
 	UFUNCTION(BlueprintPure, Category = "Functions|Lyric")
-	FDreamMusicLyricProgress GetCurrentRomanizationProgress(float CurrentTime, const FDreamMusicLyric& InLyric) const;
+	FDreamMusicLyricProgress GetCurrentRomanizationProgress(const FDreamMusicLyricTimestamp& InTimestamp) const;
 
 	/**
 	 * Get Current Lyric Line Progress (fallback when no word timings available)
-	 * @param CurrentTime Current playback time in seconds
-	 * @param InLyric The lyric line to check
+	 * @param InTimestamp Current playback time in seconds
 	 * @return Progress information based on line timestamps
 	 */
 	UFUNCTION(BlueprintPure, Category = "Functions|Lyric")
-	FDreamMusicLyricProgress GetCurrentLyricLineProgress(float CurrentTime, const FDreamMusicLyric& InLyric) const;
+	FDreamMusicLyricProgress GetCurrentLyricLineProgress(const FDreamMusicLyricTimestamp& InTimestamp) const;
 
 	/**
 		 * Extract theme colors from current music cover asynchronously
@@ -522,14 +520,54 @@ private:
 	bool ToggleActiveAudioComponent();
 
 	/**
-	 * Helper function to calculate word progress from word timing array
-	 * @param CurrentTime Current playback time in seconds
-	 * @param WordTimings Array of word timings
-	 * @param LineStartTime Start time of the lyric line
+	 * Helper function to calculate word progress
+	 * @param InCurrentTime Current playback time in seconds
+	 * @param bUseRoma Array of word timings
 	 * @return Progress information
 	 */
-	FDreamMusicLyricProgress CalculateWordProgress(float CurrentTime, const TArray<FDreamMusicLyricWord>& WordTimings, float LineStartTime) const;
+	FDreamMusicLyricProgress CalculateWordProgress(FDreamMusicLyricTimestamp InCurrentTime, bool bUseRoma = false) const;
 
+	/**
+	 * Helper function to calculate line progress
+	 * @param InCurrentTime Current playback time in seconds
+	 * @return Progress information
+	 */
+	FDreamMusicLyricProgress CalculateLineProgress(FDreamMusicLyricTimestamp InCurrentTime) const;
+
+	// 音乐开始播放的世界时间
+	double MusicStartWorldTime = 0.0;
+    
+	// 最后一次 Seek 的位置
+	float LastSeekPosition = 0.0f;
+    
+	// 是否刚刚进行了 Seek 操作
+	bool bJustSeeked = false;
+    
+	/**
+	 * 获取更精确的当前播放时间
+	 */
+	float GetAccuratePlayTime() const;
+    
+	/**
+	 * 更新音频分析数据
+	 */
+	void UpdateAudioAnalysisData();
+
+	mutable int32 CachedCurrentWordIndex = -1;
+	mutable FDreamMusicLyricTimestamp LastCalculationTime;
+	mutable TArray<int32> WordDurationPrefixSum; // 前缀和数组，提升查找性能
+	mutable bool bCacheValid = false;
+	mutable bool bLastUseRoma = false;
+
+	void BuildWordDurationCache(bool bUseRoma) const;
+
+	void ClearLyricProgressCache()
+	{
+		CachedCurrentWordIndex = -1;
+		bCacheValid = false;
+		LastCalculationTime = FDreamMusicLyricTimestamp{};
+	}
+	
 private:
 	UPROPERTY()
 	TObjectPtr<UDreamAsyncAction_KMeansTexture> CurrentKMeansTask;

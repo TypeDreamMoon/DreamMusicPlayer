@@ -43,7 +43,7 @@ void FDreamMusicPlayerLyricFileParser_LRC::Parse()
 	// Sort by timestamp
 	ParsedLyrics.Sort([](const FDreamMusicLyric& A, const FDreamMusicLyric& B)
 	{
-		return A.Timestamp.ToMilliseconds() < B.Timestamp.ToMilliseconds();
+		return A.StartTimestamp.ToMilliseconds() < B.StartTimestamp.ToMilliseconds();
 	});
 }
 
@@ -61,10 +61,10 @@ FDreamMusicLyric FDreamMusicPlayerLyricFileParser_LRC::CreateLyricFromLine(const
 		FString MillisecondsStr = Matcher.GetCaptureGroup(3);
 
 		int32 Milliseconds = (MillisecondsStr.Len() == 2) ? FCString::Atoi(*MillisecondsStr) * 10 : FCString::Atoi(*MillisecondsStr);
-		Lyric.Timestamp = FDreamMusicLyricTimestamp(Minutes, Seconds, Milliseconds);
+		Lyric.StartTimestamp = FDreamMusicLyricTimestamp(Minutes, Seconds, Milliseconds);
 		
 		// Set default end time
-		int32 EndMs = Lyric.Timestamp.ToMilliseconds() + 3000;
+		int32 EndMs = Lyric.StartTimestamp.ToMilliseconds() + 3000;
 		Lyric.EndTimestamp = FDreamMusicLyricTimestamp(
 			EndMs / 3600000,
 			(EndMs / 60000) % 60,

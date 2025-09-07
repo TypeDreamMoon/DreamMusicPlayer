@@ -51,28 +51,14 @@ float FDreamMusicLyricTimestamp::ToSeconds() const
 	return TotalSeconds;
 }
 
-FDreamMusicLyric::FDreamMusicLyric(FString Line)
-{
-	FString CleamTime = Line.Mid(1, 8);
-	FString M = CleamTime.Left(2);
-	FString S = CleamTime.Mid(3, 2);
-	FString MS = CleamTime.Right(2);
-	FDreamMusicLyricTimestamp Time = FDreamMusicLyricTimestamp(
-		FCString::Atoi(*M), FCString::Atoi(*S), FCString::Atoi(*MS));
-	Content = Line.Mid(Line.Find("]") + 1);
-	Timestamp = Time;
-	Translate = "";
-	return;
-}
-
 bool FDreamMusicLyric::operator==(const FDreamMusicLyric& Target) const
 {
-	return Content == Target.Content && Timestamp == Target.Timestamp && Translate == Target.Translate;
+	return Content == Target.Content && StartTimestamp == Target.StartTimestamp && Translate == Target.Translate;
 }
 
 bool FDreamMusicLyric::operator==(const FDreamMusicLyricTimestamp& Target) const
 {
-	return Timestamp == Target;
+	return StartTimestamp == Target;
 }
 
 bool FDreamMusicLyric::operator!=(const FDreamMusicLyric& Target) const
