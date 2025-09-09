@@ -58,6 +58,7 @@ void UDreamMusicAudioManager_Fade::Music_Changed(const FDreamMusicDataStruct& In
 {
 	// 设置后台非激活组件音乐
 	GetInactiveAudioComponent()->SetSound(InMusicData.Data.Music.LoadSynchronous());
+	GetInactiveAudioComponent()->Sound->VirtualizationMode = EVirtualizationMode::PlayWhenSilent;
 }
 
 void UDreamMusicAudioManager_Fade::Music_Play(float InTime)
@@ -157,6 +158,13 @@ void UDreamMusicAudioManager_Fade::Music_End()
 		// Stop immediately if no fade
 		ActiveComponent->Stop();
 	}
+}
+
+void UDreamMusicAudioManager_Fade::SetVolume(float InVolume)
+{
+	Volume = InVolume;
+	GetInactiveAudioComponent()->SetVolumeMultiplier(InVolume);
+	GetActiveAudioComponent()->SetVolumeMultiplier(InVolume);
 }
 
 UAudioComponent* UDreamMusicAudioManager_Fade::GetAudioComponent()

@@ -35,6 +35,7 @@ public:
 	virtual void Music_UnPause() override;
 	virtual void Music_Start() override;
 	virtual void Music_End() override;
+	virtual void SetVolume(float InVolume) override;
 
 	/**
 	 * Get Current Active Audio Component

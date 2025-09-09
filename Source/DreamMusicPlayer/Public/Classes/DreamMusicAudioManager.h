@@ -24,6 +24,13 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	UDreamMusicPlayerComponent* MusicPlayerComponent;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Setter="SetVolume")
+	float Volume = 1.f;
+
+public:
+	UFUNCTION(BlueprintCallable, Category="DreamMusicAudioManager")
+	virtual void SetVolume(float InVolume);
+
 public:
 	virtual void Initialize(UDreamMusicPlayerComponent* InComponent);
 	virtual void Deinitialize();

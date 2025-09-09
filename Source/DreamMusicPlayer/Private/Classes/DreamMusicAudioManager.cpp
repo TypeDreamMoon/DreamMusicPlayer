@@ -35,6 +35,7 @@ void UDreamMusicAudioManager::Music_Play(float InTime)
 
 void UDreamMusicAudioManager::Music_Start()
 {
+	SetVolume(Volume);
 }
 
 void UDreamMusicAudioManager::Music_Stop()
@@ -56,6 +57,12 @@ void UDreamMusicAudioManager::Music_End()
 UAudioComponent* UDreamMusicAudioManager::GetAudioComponent()
 {
 	return nullptr;
+}
+
+void UDreamMusicAudioManager::SetVolume(float InVolume)
+{
+	Volume = InVolume;
+	GetAudioComponent()->SetVolumeMultiplier(Volume);
 }
 
 bool UDreamMusicAudioManager::IsAudioComponentReady(UAudioComponent* Component) const
