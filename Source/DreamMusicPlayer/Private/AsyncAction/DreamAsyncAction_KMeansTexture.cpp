@@ -195,9 +195,7 @@ void UDreamAsyncAction_KMeansTexture::SampleTexturePixels()
 
 	// Lock the texture data for reading
 	void* TextureData = MipMap.BulkData.Lock(LOCK_READ_ONLY);
-
-	DMP_LOG(Error, TEXT("%p"), TextureData);
-
+	
 	if (!TextureData)
 	{
 		DMP_LOG(Warning, TEXT("SampleTexturePixels - Failed to lock texture data"));
@@ -227,7 +225,6 @@ void UDreamAsyncAction_KMeansTexture::SampleTexturePixels()
 
 				const FColor& Pixel = PixelData[Y * TextureWidth + X];
 				FLinearColor LinearColor = FLinearColor::FromSRGBColor(Pixel);
-				DMP_LOG(Error, TEXT("%s"), *Pixel.ToString());
 				if (bIgnoreTransparentPixels && LinearColor.A < MinAlphaThreshold)
 				{
 					continue;
