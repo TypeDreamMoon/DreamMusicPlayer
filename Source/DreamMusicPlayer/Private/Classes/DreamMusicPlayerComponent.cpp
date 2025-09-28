@@ -233,6 +233,19 @@ void UDreamMusicPlayerComponent::GetExpansionByClass(TSubclassOf<UDreamMusicPlay
 	}
 }
 
+bool UDreamMusicPlayerComponent::HasExpansion(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass) const
+{
+	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
+	{
+		if (Expansion->GetClass() == InExpansionClass)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 float UDreamMusicPlayerComponent::GetAccuratePlayTime() const
 {
 	if (!bIsPlaying || bIsPaused)

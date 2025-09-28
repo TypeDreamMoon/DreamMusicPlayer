@@ -1,5 +1,7 @@
 #include "DreamMusicPlayerCommon.h"
 
+#include "Classes/DreamMusicPlayerExpansionData.h"
+
 FDreamMusicLyricTimestamp::FDreamMusicLyricTimestamp(float InSeconds)
 {
 	FromSeconds(InSeconds);
@@ -99,4 +101,17 @@ bool FDreamMusicDataStruct::IsValid() const
 bool FDreamMusicDataStruct::operator==(const FDreamMusicDataStruct& Target) const
 {
 	return Information == Target.Information && Data == Target.Data;
+}
+
+bool FDreamMusicDataStruct::HasExpansionData(TSubclassOf<UDreamMusicPlayerExpansionData> ExpansionDataClass) const
+{
+	for (UDreamMusicPlayerExpansionData* ExpansionData : ExpansionDatas)
+	{
+		if (ExpansionData->GetClass() == ExpansionDataClass)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }

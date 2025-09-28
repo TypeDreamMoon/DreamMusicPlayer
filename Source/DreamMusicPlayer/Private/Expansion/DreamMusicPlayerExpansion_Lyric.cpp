@@ -222,6 +222,7 @@ void UDreamMusicPlayerExpansion_Lyric::SetCurrentLyric(FDreamMusicLyric InLyric)
 		ClearLyricProgressCache();
 		CurrentLyric = InLyric;
 		OnLyricChanged.Broadcast(CurrentLyric, CurrentMusicLyricList.Find(CurrentLyric));
+		OnLyricChangedNative.Broadcast(CurrentLyric, CurrentMusicLyricList.Find(CurrentLyric));
 		DMP_LOG_DEBUG_EXPANSION(Log, "Lyric", TEXT("Set : Time : %02d:%02d.%02d Content : %s"),
 		                        InLyric.StartTimestamp.Minute, InLyric.StartTimestamp.Seconds, InLyric.StartTimestamp.Millisecond, *InLyric.Content);
 	}

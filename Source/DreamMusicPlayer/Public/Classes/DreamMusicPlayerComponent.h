@@ -291,6 +291,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Functions|Expansion", Meta = (DeterminesOutputType="InExpansionClass", DynamicOutputParam="OutExpansion"))
 	void GetExpansionByClass(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass, UDreamMusicPlayerExpansion*& OutExpansion) const;
 
+	UFUNCTION(BlueprintPure, Category = "Functions|Expansion")
+	bool HasExpansion(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass) const;
+	
 public:
 	UFUNCTION()
 	TArray<FString> GetNames() const;

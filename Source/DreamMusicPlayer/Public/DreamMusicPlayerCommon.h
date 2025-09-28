@@ -445,6 +445,8 @@ public:
 	bool IsValid() const;
 	bool operator==(const FDreamMusicDataStruct& Target) const;
 
+	bool HasExpansionData(TSubclassOf<UDreamMusicPlayerExpansionData> ExpansionDataClass) const;
+
 	template <typename T>
 	T* GetExpansionData() const
 	{

@@ -22,6 +22,7 @@ public:
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FMusicPlayerLyricAndIndexDelegate, FDreamMusicLyric, Lyric, int, Index);
 
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FMusicPlayerLyricAndIndexMulticaseDelegate, FDreamMusicLyric, int);
 public:
 	// Lyric Offset
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
@@ -47,6 +48,8 @@ public:
 	 */
 	UPROPERTY(BlueprintAssignable, Category = "Delegates|Lyric")
 	FMusicPlayerLyricAndIndexDelegate OnLyricChanged;
+
+	FMusicPlayerLyricAndIndexMulticaseDelegate OnLyricChangedNative;
 
 public:
 	/**
