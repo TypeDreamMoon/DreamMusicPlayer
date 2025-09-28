@@ -26,15 +26,26 @@ void UDreamMusicPlayerExpansion_ThemeColors::ExtractCoverThemeColors(int32 Clust
 		CurrentKMeansTask = nullptr;
 	}
 
-	ExtractTextureThemeColors(MusicPlayerComponent->Cover, ClusterCount, MaxIterations);
+	LoadAssetAsync(CurrentMusicData.Information.Cover.ToSoftObjectPath().GetAssetPath(),
+	               FLoadAssetAsyncDelegate::CreateLambda(
+		               [this, ClusterCount, MaxIterations]
+	               (const FTopLevelAssetPath&, UObject* Object, EAsyncLoadingResult::Type)
+		               {
+			               ExtractTextureThemeColors(
+				               Cast<UTexture2D>(Object),
+				               ClusterCount,
+				               MaxIterations);
+		               }));
 }
 
 
-void UDreamMusicPlayerExpansion_ThemeColors::ExtractTextureThemeColors(UTexture2D* Texture, int32 ClusterCount, int32 MaxIterations)
+void UDreamMusicPlayerExpansion_ThemeColors::ExtractTextureThemeColors(UTexture2D* Texture, int32 ClusterCount,
+                                                                       int32 MaxIterations)
 {
 	if (!Texture || !Texture->IsValidLowLevel())
 	{
-		DMP_LOG_DEBUG_EXPANSION(Warning, TEXT("Invalid texture for theme color extraction - Texture is null or invalid"));
+		DMP_LOG_DEBUG_EXPANSION(
+			Warning, TEXT("Invalid texture for theme color extraction - Texture is null or invalid"));
 		OnThemeColorChanged.Broadcast(TArray<FKMeansColorCluster>(), false);
 		return;
 	}
@@ -80,16 +91,19 @@ void UDreamMusicPlayerExpansion_ThemeColors::ExtractTextureThemeColors(UTexture2
 	if (CurrentKMeansTask && CurrentKMeansTask->IsValidLowLevel())
 	{
 		DMP_LOG_DEBUG_EXPANSION(Log, TEXT("Creating K-Means analysis task for texture: %s (Size: %dx%d, Format: %d)"),
-		                  *Texture->GetName(), Texture->GetSizeX(), Texture->GetSizeY(), (int)Texture->GetPixelFormat());
+		                        *Texture->GetName(), Texture->GetSizeX(), Texture->GetSizeY(),
+		                        (int)Texture->GetPixelFormat());
 
-		CurrentKMeansTask->OnCompleted.AddDynamic(this, &UDreamMusicPlayerExpansion_ThemeColors::OnThemeColorsExtracted);
+		CurrentKMeansTask->OnCompleted.
+		                   AddDynamic(this, &UDreamMusicPlayerExpansion_ThemeColors::OnThemeColorsExtracted);
 		CurrentKMeansTask->Activate();
 
 		DMP_LOG_DEBUG_EXPANSION(Log, TEXT("Started theme color extraction for texture: %s"), *Texture->GetName());
 	}
 	else
 	{
-		DMP_LOG_DEBUG_EXPANSION(Warning, TEXT("Failed to create K-Means analysis task for texture: %s"), *Texture->GetName());
+		DMP_LOG_DEBUG_EXPANSION(Warning, TEXT("Failed to create K-Means analysis task for texture: %s"),
+		                        *Texture->GetName());
 		OnThemeColorChanged.Broadcast(TArray<FKMeansColorCluster>(), false);
 	}
 }
@@ -108,7 +122,8 @@ void UDreamMusicPlayerExpansion_ThemeColors::BP_Deinitialize_Implementation()
 	}
 }
 
-void UDreamMusicPlayerExpansion_ThemeColors::OnThemeColorsExtracted(const TArray<FKMeansColorCluster>& ColorClusters, bool bSuccess)
+void UDreamMusicPlayerExpansion_ThemeColors::OnThemeColorsExtracted(const TArray<FKMeansColorCluster>& ColorClusters,
+                                                                    bool bSuccess)
 {
 	// Safely clear the current task reference
 	UDreamAsyncAction_KMeansTexture* CompletedTask = CurrentKMeansTask;
@@ -116,14 +131,16 @@ void UDreamMusicPlayerExpansion_ThemeColors::OnThemeColorsExtracted(const TArray
 
 	if (bSuccess && ColorClusters.Num() > 0)
 	{
-		DMP_LOG_DEBUG_EXPANSION(Log, TEXT("Theme color extraction completed successfully. Found %d colors"), ColorClusters.Num());
+		DMP_LOG_DEBUG_EXPANSION(Log, TEXT("Theme color extraction completed successfully. Found %d colors"),
+		                        ColorClusters.Num());
 
 		// Log extracted colors for debugging
 		for (int32 i = 0; i < ColorClusters.Num(); ++i)
 		{
 			const FKMeansColorCluster& Cluster = ColorClusters[i];
 			DMP_LOG_DEBUG_EXPANSION(Log, TEXT("Color %d: R=%.3f G=%.3f B=%.3f Weight=%.3f PixelCount=%d"),
-			                  i, Cluster.Color.R, Cluster.Color.G, Cluster.Color.B, Cluster.Weight, Cluster.PixelCount);
+			                        i, Cluster.Color.R, Cluster.Color.G, Cluster.Color.B, Cluster.Weight,
+			                        Cluster.PixelCount);
 		}
 	}
 	else
@@ -142,8 +159,9 @@ void UDreamMusicPlayerExpansion_ThemeColors::OnThemeColorsExtracted(const TArray
 		if (CompletedTask && CompletedTask->IsValidLowLevel())
 		{
 			DMP_LOG_DEBUG_EXPANSION(Warning, TEXT("Task details - Texture: %s, SampledPixels: %d"),
-			                  CompletedTask->GetTargetTexture() ? *CompletedTask->GetTargetTexture()->GetName() : TEXT("NULL"),
-			                  CompletedTask->GetSamplePixelNum());
+			                        CompletedTask->GetTargetTexture() ? *CompletedTask->GetTargetTexture()->GetName() :
+			                        TEXT("NULL"),
+			                        CompletedTask->GetSamplePixelNum());
 		}
 	}
 

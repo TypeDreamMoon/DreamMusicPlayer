@@ -40,3 +40,8 @@ void UDreamMusicPlayerExpansion_EventLyric_EventDefine::CallEvent(const FString&
 
 	ProcessEvent(Function, &Params);
 }
+
+class UWorld* UDreamMusicPlayerExpansion_EventLyric_EventDefine::GetWorld() const
+{
+	return GWorld;
+}

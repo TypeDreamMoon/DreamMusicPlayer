@@ -7,6 +7,7 @@
 #include "DreamMusicPlayerExpansion_EventLyric_EventDefine.generated.h"
 
 struct FDreamMusicLyric;
+
 /**
  * 
  */
@@ -26,4 +27,8 @@ public:
 	UObject* Payload;
 
 	void CallEvent(const FString& EventName, const FDreamMusicLyric& Lyric);
+
+public:
+	/** UObject override **/
+	virtual class UWorld* GetWorld() const override;
 };

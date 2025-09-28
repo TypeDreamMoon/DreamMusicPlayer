@@ -45,8 +45,4 @@ void UDreamMusicPlayerExpansion_EventLyric::OnLyricChangedHandle(FDreamMusicLyri
 			}
 		}
 	}
-	else
-	{
-		DMP_LOG(Error, TEXT("Lyric ExpansionData Not Found, request Lyric ExpansionData"));
-	}
 }
