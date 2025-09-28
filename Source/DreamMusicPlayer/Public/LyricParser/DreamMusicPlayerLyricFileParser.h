@@ -144,6 +144,9 @@ protected:
 	FDreamMusicLyric CreateLyricFromLine(const FString& Line);
 	FString ExtractTimestampFromLine(const FString& Line);
 	bool IsMetadataLine(const FString& Line) const;
+	
+	// **NEW METHOD: Fix end timestamps based on word timings**
+	void UpdateEndTimestampsBasedOnWordTimings();
 };
 
 /**

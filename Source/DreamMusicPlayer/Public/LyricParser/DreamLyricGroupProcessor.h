@@ -55,9 +55,19 @@ public:
 	bool ExtractTimestampContentPairs(const FString& Line, TArray<FDreamMusicLyricTimestamp>& OutTimestamps, TArray<FString>& OutContents, const FString& RegexPattern);
 
 	/**
-	 * @brief Build word timings from timestamps and content
+	 * @brief Build word timings from timestamps and content (DEPRECATED - use BuildWordTimingsFromSegments instead)
 	 */
 	FString BuildWordsFromTimestamps(const TArray<FDreamMusicLyricTimestamp>& Timestamps, const TArray<FString>& Contents, TArray<FDreamMusicLyricWord>& OutWords);
+
+	/**
+	 * @brief Build word timings from word segments (similar to ASS parsing approach)
+	 */
+	FString BuildWordTimingsFromSegments(const TArray<FDreamMusicLyricTimestamp>& Timestamps, const TArray<FString>& Contents, TArray<FDreamMusicLyricWord>& OutWords);
+
+	/**
+	 * @brief Build detailed character-level timings within word segments
+	 */
+	FString BuildDetailedWordTimingsFromSegments(const TArray<FDreamMusicLyricTimestamp>& Timestamps, const TArray<FString>& Contents, TArray<FDreamMusicLyricWord>& OutWords);
 
 	/**
 	 * @brief Calculate end timestamp for a character

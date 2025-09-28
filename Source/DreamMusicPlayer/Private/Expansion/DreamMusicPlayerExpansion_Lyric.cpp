@@ -174,7 +174,19 @@ FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::CalculateWordProgress
 	CachedCurrentWordIndex = CurrentWordIndex;
 	LastCalculationTime = InCurrentTime;
 
+	// **FIX: Calculate actual word timing duration instead of using artificial EndTimestamp**
+	int32 ActualWordTimingDuration = 0;
+	if (Words.Num() > 0)
+	{
+		// Use the actual span of word timings for LRC files
+		FDreamMusicLyricTimestamp LastWordEnd = Words.Last().EndTimestamp;
+		FDreamMusicLyricTimestamp FirstWordStart = Words[0].StartTimestamp;
+		ActualWordTimingDuration = LastWordEnd.ToMilliseconds() - FirstWordStart.ToMilliseconds();
+	}
+
+	// Fallback to line duration if word timing duration is invalid
 	int32 LineTotalDuration = CurrentLyric.EndTimestamp.ToMilliseconds() - CurrentLyric.StartTimestamp.ToMilliseconds();
+	int32 EffectiveDuration = (ActualWordTimingDuration > 0) ? ActualWordTimingDuration : LineTotalDuration;
 
 	if (CurrentWordIndex >= 0)
 	{
@@ -185,17 +197,31 @@ FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::CalculateWordProgress
 		int32 CurrentWordElapsed = InCurrentTime.ToMilliseconds() - CurrentWord.StartTimestamp.ToMilliseconds();
 		int32 TotalProgress = ProgressToWordStart + CurrentWordElapsed;
 
-		float LineProgress = static_cast<float>(TotalProgress) / static_cast<float>(LineTotalDuration);
+		// **FIX: Use effective duration instead of artificial line duration**
+		float LineProgress = static_cast<float>(TotalProgress) / static_cast<float>(EffectiveDuration);
+		
+		// Clamp to ensure we don't exceed 1.0
+		LineProgress = FMath::Clamp(LineProgress, 0.0f, 1.0f);
 
 		return FDreamMusicLyricProgress(CurrentWordIndex, LineProgress, true, CurrentWord);
 	}
 	else
 	{
-		// 回退到行进度计算
-		int32 Elapsed = InCurrentTime.ToMilliseconds() - CurrentLyric.StartTimestamp.ToMilliseconds();
-		float LineProgress = static_cast<float>(Elapsed) / static_cast<float>(LineTotalDuration);
-
-		return FDreamMusicLyricProgress(-1, LineProgress, false, FDreamMusicLyricWord{});
+		// 回退到基于实际单词时间的进度计算
+		if (Words.Num() > 0)
+		{
+			FDreamMusicLyricTimestamp FirstWordStart = Words[0].StartTimestamp;
+			int32 Elapsed = InCurrentTime.ToMilliseconds() - FirstWordStart.ToMilliseconds();
+			float LineProgress = static_cast<float>(Elapsed) / static_cast<float>(EffectiveDuration);
+			LineProgress = FMath::Clamp(LineProgress, 0.0f, 1.0f);
+			
+			return FDreamMusicLyricProgress(-1, LineProgress, false, FDreamMusicLyricWord{});
+		}
+		else
+		{
+			// Final fallback to line progress
+			return CalculateLineProgress(InCurrentTime);
+		}
 	}
 }
 

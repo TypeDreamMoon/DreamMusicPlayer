@@ -1,6 +1,7 @@
 ﻿#include "LyricParser/DreamMusicPlayerLyricFileParser.h"
 #include "DreamMusicPlayerLog.h"
 
+// Enhanced FDreamMusicPlayerLyricFileParser_LRC::Parse() method
 void FDreamMusicPlayerLyricFileParser_LRC::Parse()
 {
 	ParsedLyrics.Empty();
@@ -45,6 +46,60 @@ void FDreamMusicPlayerLyricFileParser_LRC::Parse()
 	{
 		return A.StartTimestamp.ToMilliseconds() < B.StartTimestamp.ToMilliseconds();
 	});
+
+	// **FIX: Calculate proper end timestamps for LRC lyrics**
+	UpdateEndTimestampsBasedOnWordTimings();
+}
+
+// Add this new method to FDreamMusicPlayerLyricFileParser_LRC class
+void FDreamMusicPlayerLyricFileParser_LRC::UpdateEndTimestampsBasedOnWordTimings()
+{
+	for (int32 i = 0; i < ParsedLyrics.Num(); i++)
+	{
+		FDreamMusicLyric& CurrentLyric = ParsedLyrics[i];
+		
+		// Calculate end timestamp based on word timings if available
+		FDreamMusicLyricTimestamp CalculatedEndTime;
+		bool bHasWordTimings = false;
+
+		// Check both regular and romanization word timings
+		if (!CurrentLyric.IsWordsEmpty())
+		{
+			CalculatedEndTime = CurrentLyric.WordTimings.Last().EndTimestamp;
+			bHasWordTimings = true;
+		}
+		else if (!CurrentLyric.IsRomanizationWordsEmpty())
+		{
+			CalculatedEndTime = CurrentLyric.RomanizationWordTimings.Last().EndTimestamp;
+			bHasWordTimings = true;
+		}
+
+		if (bHasWordTimings)
+		{
+			// Use calculated end time from word timings
+			CurrentLyric.EndTimestamp = CalculatedEndTime;
+		}
+		else
+		{
+			// Fallback: Use next lyric's start time or default duration
+			if (i + 1 < ParsedLyrics.Num())
+			{
+				// Use next lyric's start time as this lyric's end time
+				CurrentLyric.EndTimestamp = ParsedLyrics[i + 1].StartTimestamp;
+			}
+			else
+			{
+				// For last lyric, add default duration
+				int32 DefaultDurationMs = 3000;
+				int32 EndMs = CurrentLyric.StartTimestamp.ToMilliseconds() + DefaultDurationMs;
+				CurrentLyric.EndTimestamp = FDreamMusicLyricTimestamp(
+					EndMs / 3600000,
+					(EndMs / 60000) % 60,
+					(EndMs / 1000) % 60,
+					EndMs % 1000);
+			}
+		}
+	}
 }
 
 FDreamMusicLyric FDreamMusicPlayerLyricFileParser_LRC::CreateLyricFromLine(const FString& Line)

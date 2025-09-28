@@ -116,7 +116,8 @@ void FDreamLyricGroupProcessor::ProcessWordByWordToField(FDreamMusicLyric& Lyric
 	}
 
 	TArray<FDreamMusicLyricWord> Words;
-	FString FullContent = BuildWordsFromTimestamps(Timestamps, Contents, Words);
+	// Use the new word-segment based approach instead of character-by-character
+	FString FullContent = BuildWordTimingsFromSegments(Timestamps, Contents, Words);
 	AssignToField(Lyric, FullContent, Words, TargetField);
 }
 
@@ -132,7 +133,7 @@ void FDreamLyricGroupProcessor::ProcessESLyricToField(FDreamMusicLyric& Lyric, c
 	}
 
 	TArray<FDreamMusicLyricWord> Words;
-	FString FullContent = BuildWordsFromTimestamps(Timestamps, Contents, Words);
+	FString FullContent = BuildWordTimingsFromSegments(Timestamps, Contents, Words);
 	AssignToField(Lyric, FullContent, Words, TargetField);
 }
 
@@ -168,6 +169,46 @@ bool FDreamLyricGroupProcessor::ExtractTimestampContentPairs(const FString& Line
 	return OutTimestamps.Num() > 0;
 }
 
+// NEW METHOD: Build word timings from word segments (similar to ASS parsing)
+FString FDreamLyricGroupProcessor::BuildWordTimingsFromSegments(const TArray<FDreamMusicLyricTimestamp>& Timestamps, const TArray<FString>& Contents, TArray<FDreamMusicLyricWord>& OutWords)
+{
+	OutWords.Empty();
+	FString FullContent;
+
+	for (int32 i = 0; i < Timestamps.Num() && i < Contents.Num(); i++)
+	{
+		FDreamMusicLyricTimestamp StartTimestamp = Timestamps[i];
+		FString WordContent = Contents[i];
+
+		// Skip empty content
+		if (WordContent.IsEmpty())
+			continue;
+
+		// Calculate end timestamp for this word segment
+		FDreamMusicLyricTimestamp EndTimestamp;
+		if (i + 1 < Timestamps.Num())
+		{
+			// Use next timestamp as end time
+			EndTimestamp = Timestamps[i + 1];
+		}
+		else
+		{
+			// For last segment, add default duration (500ms)
+			int32 EndMs = StartTimestamp.ToMilliseconds() + 500;
+			EndTimestamp = CreateTimestampFromMs(EndMs);
+		}
+
+		// Create word entry for the entire segment content
+		// This preserves the complete word/phrase from each timestamp segment
+		FDreamMusicLyricWord Word(StartTimestamp, EndTimestamp, WordContent);
+		OutWords.Add(Word);
+		FullContent += WordContent;
+	}
+
+	return FullContent;
+}
+
+// DEPRECATED: Old character-by-character method (keeping for compatibility)
 FString FDreamLyricGroupProcessor::BuildWordsFromTimestamps(const TArray<FDreamMusicLyricTimestamp>& Timestamps, const TArray<FString>& Contents, TArray<FDreamMusicLyricWord>& OutWords)
 {
 	OutWords.Empty();
@@ -176,9 +217,9 @@ FString FDreamLyricGroupProcessor::BuildWordsFromTimestamps(const TArray<FDreamM
 	for (int32 i = 0; i < Timestamps.Num(); i++)
 	{
 		FDreamMusicLyricTimestamp CurrentTimestamp = Timestamps[i];
-		FString WordContent = Contents[i]; // Don't trim spaces - keep them as requested
+		FString WordContent = Contents[i];
 
-		// Process each character in the content (including spaces)
+		// Process each character in the content (old behavior)
 		for (int32 CharIndex = 0; CharIndex < WordContent.Len(); CharIndex++)
 		{
 			FString Char = WordContent.Mid(CharIndex, 1);
@@ -186,7 +227,7 @@ FString FDreamLyricGroupProcessor::BuildWordsFromTimestamps(const TArray<FDreamM
 			// Calculate end timestamp for this character
 			FDreamMusicLyricTimestamp EndTimestamp = CalculateEndTimestamp(CurrentTimestamp, CharIndex, WordContent, i, Timestamps);
 
-			// Create word entry for all characters (including spaces as requested)
+			// Create word entry for character
 			FDreamMusicLyricWord Word(CurrentTimestamp, EndTimestamp, Char);
 			OutWords.Add(Word);
 			FullContent += Char;
@@ -272,7 +313,7 @@ FString FDreamLyricGroupProcessor::ExtractContentFromLine(const FString& Line)
 
 	if (Matcher.FindNext())
 	{
-		return Matcher.GetCaptureGroup(4); // Don't trim - keep spaces as requested
+		return Matcher.GetCaptureGroup(4);
 	}
 
 	return FString();
