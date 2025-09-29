@@ -19,7 +19,7 @@ class DREAMMUSICPLAYERUMG_API UDreamMusicPlayerDelegateWidget : public UUserWidg
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "DreamMusicPlayerDelegateWidget")
-	virtual void Initialize(UDreamMusicPlayerComponent* InComponent);
+	virtual void InitializeWidget(UDreamMusicPlayerComponent* InComponent);
 
 	virtual void NativeDestruct() override;
 
@@ -30,7 +30,7 @@ public:
 	void BP_MusicDataChanged(FDreamMusicDataStruct InData);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "DreamMusicPlayerDelegateWidget", meta = (DisplayName = "OnMusicDataListChanged"))
-	void BP_MusicDataListChanged(TArray<FDreamMusicDataStruct> InData);
+	void BP_MusicDataListChanged(const TArray<FDreamMusicDataStruct>& InData);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "DreamMusicPlayerDelegateWidget", meta = (DisplayName = "OnMusicPlay"))
 	void BP_MusicPlay(FDreamMusicDataStruct InData);

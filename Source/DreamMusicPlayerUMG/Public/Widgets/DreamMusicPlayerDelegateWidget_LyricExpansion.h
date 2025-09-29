@@ -17,7 +17,7 @@ class DREAMMUSICPLAYERUMG_API UDreamMusicPlayerDelegateWidget_LyricExpansion : p
 	GENERATED_BODY()
 
 public:
-	virtual void Initialize(UDreamMusicPlayerComponent* InComponent) override;
+	virtual void InitializeWidget(UDreamMusicPlayerComponent* InComponent) override;
 	virtual void NativeDestruct() override;
 
 	UFUNCTION(BlueprintNativeEvent, Category = "DreamMusicPlayerDelegateWidget", Meta = (DisplayName = "On Lyric List Changed"))

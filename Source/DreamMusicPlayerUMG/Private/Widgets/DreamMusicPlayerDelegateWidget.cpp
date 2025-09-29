@@ -5,7 +5,7 @@
 
 #include "Classes/DreamMusicPlayerComponent.h"
 
-void UDreamMusicPlayerDelegateWidget::Initialize(UDreamMusicPlayerComponent* InComponent)
+void UDreamMusicPlayerDelegateWidget::InitializeWidget(UDreamMusicPlayerComponent* InComponent)
 {
 	if (!InComponent)
 	{
@@ -62,7 +62,7 @@ void UDreamMusicPlayerDelegateWidget::BP_MusicDataChanged_Implementation(FDreamM
 {
 }
 
-void UDreamMusicPlayerDelegateWidget::BP_MusicDataListChanged_Implementation(TArray<FDreamMusicDataStruct> InData)
+void UDreamMusicPlayerDelegateWidget::BP_MusicDataListChanged_Implementation(const TArray<FDreamMusicDataStruct>& InData)
 {
 }
 

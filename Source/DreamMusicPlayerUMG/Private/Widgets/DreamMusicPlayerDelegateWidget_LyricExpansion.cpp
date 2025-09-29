@@ -6,14 +6,14 @@
 #include "Classes/DreamMusicPlayerComponent.h"
 #include "Expansion/DreamMusicPlayerExpansion_Lyric.h"
 
-void UDreamMusicPlayerDelegateWidget_LyricExpansion::Initialize(UDreamMusicPlayerComponent* InComponent)
+void UDreamMusicPlayerDelegateWidget_LyricExpansion::InitializeWidget(UDreamMusicPlayerComponent* InComponent)
 {
 	if (!InComponent)
 	{
 		return;
 	}
 
-	Super::Initialize(InComponent);
+	Super::InitializeWidget(InComponent);
 
 	UDreamMusicPlayerExpansion_Lyric* LyricExpansion = InComponent->GetExpansion<UDreamMusicPlayerExpansion_Lyric>();
 
