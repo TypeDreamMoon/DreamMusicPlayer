@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DreamMusicPlayerCommon.h"
 #include "Classes/DreamMusicPlayerExpansionData.h"
 #include "DreamMusicPlayerExpansionData_EventLyric.generated.h"
 
@@ -21,6 +22,21 @@ public:
 	bool operator==(int Other) const;
 };
 
+USTRUCT(BlueprintType, Blueprintable)
+struct FDreamMusicPlayerExpansionData_EventLyric_TimeEventDefine
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FDreamMusicLyricTimestamp Time;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString EventName;
+
+	bool operator==(const FDreamMusicLyricTimestamp& Other) const;
+};
+
 /**
  * 
  */
@@ -32,4 +48,7 @@ class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansionData_EventLyric : public UD
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event Lyric")
 	TArray<FDreamMusicPlayerExpansionData_EventLyric_EventDefine> EventDefines;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event Lyric")
+	TArray<FDreamMusicPlayerExpansionData_EventLyric_TimeEventDefine> TimeEventDefines;
 };

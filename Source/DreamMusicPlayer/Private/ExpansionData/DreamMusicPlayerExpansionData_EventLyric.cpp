@@ -7,3 +7,8 @@ bool FDreamMusicPlayerExpansionData_EventLyric_EventDefine::operator==(int Other
 {
 	return Other == Index;
 }
+
+bool FDreamMusicPlayerExpansionData_EventLyric_TimeEventDefine::operator==(const FDreamMusicLyricTimestamp& Other) const
+{
+	return Other == Time;
+}

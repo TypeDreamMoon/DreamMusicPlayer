@@ -37,6 +37,11 @@ void UDreamMusicPlayerExpansion::ChangeMusic(const FDreamMusicDataStruct& InData
 	BP_ChangeMusic(InData);
 }
 
+void UDreamMusicPlayerExpansion::MusicSetPercent(float InPercent)
+{
+	BP_MusicSetPercent(InPercent);
+}
+
 void UDreamMusicPlayerExpansion::MusicStart()
 {
 	BP_MusicStart();
@@ -71,6 +76,10 @@ void UDreamMusicPlayerExpansion::Deinitialize()
 {
 	UnbindDelegates();
 	BP_Deinitialize();
+}
+
+void UDreamMusicPlayerExpansion::BP_MusicSetPercent_Implementation(float InPercent)
+{
 }
 
 void UDreamMusicPlayerExpansion::BP_MusicEnd_Implementation()

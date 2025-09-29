@@ -32,6 +32,12 @@ bool FDreamMusicLyricTimestamp::operator<(const FDreamMusicLyricTimestamp& Targe
 	return ToMilliseconds() < Target.ToMilliseconds();
 }
 
+bool FDreamMusicLyricTimestamp::IsApproximatelyEqual(const FDreamMusicLyricTimestamp& Target, int ToleranceMilliseconds) const
+{
+	int Diff = ToMilliseconds() - Target.ToMilliseconds();
+	return FMath::Abs(Diff) <= ToleranceMilliseconds;
+}
+
 const FDreamMusicLyricTimestamp* FDreamMusicLyricTimestamp::FromSeconds(float InSeconds)
 {
 	Seconds = FMath::FloorToInt(InSeconds);

@@ -32,6 +32,7 @@ public:
 	virtual void Initialize(UDreamMusicPlayerComponent* InComponent);
 	virtual void Tick(const FDreamMusicLyricTimestamp& InTimestamp, float InDeltaTime);
 	virtual void ChangeMusic(const FDreamMusicDataStruct& InData);
+	virtual void MusicSetPercent(float InPercent);
 	virtual void MusicStart();
 	virtual void MusicStop();
 	virtual void MusicPause();
@@ -49,6 +50,9 @@ protected:
 
 	UFUNCTION(BlueprintNativeEvent, DisplayName = "On Change Music")
 	void BP_ChangeMusic(const FDreamMusicDataStruct& InData);
+
+	UFUNCTION(BlueprintNativeEvent, DisplayName = "On Music Set Progress")
+	void BP_MusicSetPercent(float InPercent);
 
 	UFUNCTION(BlueprintNativeEvent, DisplayName = "On Music Start")
 	void BP_MusicStart();

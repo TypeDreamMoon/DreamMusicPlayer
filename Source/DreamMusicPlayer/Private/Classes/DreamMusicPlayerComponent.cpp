@@ -486,6 +486,11 @@ void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
 	// 从新位置开始播放
 	AudioManager->Music_Play(TargetTime);
 
+	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
+	{
+		Expansion->MusicSetPercent(InPercent);
+	}
+
 	// 恢复暂停状态
 	if (bIsPaused)
 	{

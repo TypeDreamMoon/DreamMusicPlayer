@@ -5,9 +5,10 @@
 
 #include "DreamMusicPlayerLog.h"
 #include "Classes/DreamMusicPlayerComponent.h"
+#include "Expansion/DreamMusicPlayerExpansion_Lyric.h"
 #include "Expansion/DreamMusicPlayerExpansion_EventLyric_EventDefine.h"
 #include "ExpansionData/DreamMusicPlayerExpansionData_EventLyric.h"
-#include "Expansion/DreamMusicPlayerExpansion_Lyric.h"
+
 
 void UDreamMusicPlayerExpansion_EventLyric::SetPayload(UObject* InPayloadObject)
 {
@@ -27,6 +28,27 @@ void UDreamMusicPlayerExpansion_EventLyric::Initialize(UDreamMusicPlayerComponen
 	else
 	{
 		DMP_LOG(Error, TEXT("Lyric Expansion Not Found, request Lyric Expansion"));
+	}
+}
+
+void UDreamMusicPlayerExpansion_EventLyric::BP_MusicSetPercent_Implementation(float InPercent)
+{
+	IgnoreTimestamp.Empty();
+}
+
+void UDreamMusicPlayerExpansion_EventLyric::BP_Tick_Implementation(const FDreamMusicLyricTimestamp& InTimestamp, float InDeltaTime)
+{
+	if (CurrentMusicData.HasExpansionData(UDreamMusicPlayerExpansionData_EventLyric::StaticClass()))
+	{
+		for (const FDreamMusicPlayerExpansionData_EventLyric_TimeEventDefine& Define : CurrentMusicData.GetExpansionData<UDreamMusicPlayerExpansionData_EventLyric>()->TimeEventDefines)
+		{
+			if (!IgnoreTimestamp.Contains(Define.Time) && Define.Time.IsApproximatelyEqual(InTimestamp, TimeEventToleranceMilliseconds))
+			{
+				EventDefineObject->CallEvent(Define.EventName, MusicPlayerComponent->GetExpansion<UDreamMusicPlayerExpansion_Lyric>()->CurrentLyric);
+				IgnoreTimestamp.Add(Define.Time);
+				return;
+			}
+		}
 	}
 }
 

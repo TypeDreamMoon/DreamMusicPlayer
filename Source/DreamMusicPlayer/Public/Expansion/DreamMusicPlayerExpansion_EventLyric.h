@@ -18,6 +18,9 @@ class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansion_EventLyric : public UDream
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event Lyric")
+	int TimeEventToleranceMilliseconds = 5;
+	
 	/**
 	 * 事件定义对象，用于配置歌词事件的具体行为
 	 * 该对象在编辑器中可配置，并且是实例化的对象
@@ -40,11 +43,10 @@ protected:
 	TWeakObjectPtr<UObject> Payload;
 	
 protected:
-	/**
-	 * 初始化函数，在组件初始化时被调用
-	 * @param InComponent 关联的音乐播放器组件指针
-	 */
 	virtual void Initialize(UDreamMusicPlayerComponent* InComponent) override;
+	virtual void BP_MusicSetPercent_Implementation(float InPercent) override;
+	virtual void BP_Tick_Implementation(const FDreamMusicLyricTimestamp& InTimestamp, float InDeltaTime) override;
+	
 
 	/**
 	 * 歌词变更事件处理函数
@@ -53,4 +55,6 @@ protected:
 	 * @param Index 当前歌词在列表中的索引位置
 	 */
 	void OnLyricChangedHandle(FDreamMusicLyric Lyric, int Index);
+
+	TArray<FDreamMusicLyricTimestamp> IgnoreTimestamp;
 };

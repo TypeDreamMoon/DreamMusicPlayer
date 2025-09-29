@@ -133,6 +133,7 @@ public:
 	bool operator<=(const FDreamMusicLyricTimestamp& Target) const;
 	bool operator<(const FDreamMusicLyricTimestamp& Target) const;
 
+	bool IsApproximatelyEqual(const FDreamMusicLyricTimestamp& Target, int ToleranceMilliseconds) const;
 
 	static FDreamMusicLyricTimestamp Parse(const FString& TimestampStr)
 	{
