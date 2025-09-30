@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Widgets/DreamMusicPlayerDelegateWidget_LyricExpansion.h"
+#include "Components/DreamMusicPlayerDelegateWidget_LyricExpansion.h"
 
 #include "Classes/DreamMusicPlayerComponent.h"
 #include "Expansion/DreamMusicPlayerExpansion_Lyric.h"
