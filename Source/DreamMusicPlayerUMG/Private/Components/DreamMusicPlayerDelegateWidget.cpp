@@ -3,6 +3,7 @@
 
 #include "Components/DreamMusicPlayerDelegateWidget.h"
 
+#include "Blueprint/WidgetTree.h"
 #include "Classes/DreamMusicPlayerComponent.h"
 
 void UDreamMusicPlayerDelegateWidget::InitializeWidget(UDreamMusicPlayerComponent* InComponent)
@@ -25,6 +26,21 @@ void UDreamMusicPlayerDelegateWidget::InitializeWidget(UDreamMusicPlayerComponen
 	InComponent->OnPlayModeChanged.AddDynamic(this, &UDreamMusicPlayerDelegateWidget::BP_PlayModeChanged);
 	InComponent->OnPlayStateChanged.AddDynamic(this, &UDreamMusicPlayerDelegateWidget::BP_PlayStateChanged);
 	InComponent->OnExtensionInitializedCompleted.AddDynamic(this, &UDreamMusicPlayerDelegateWidget::BP_ExtensionInitializedCompleted);
+
+	if (bAutoInitializeChildren)
+	{
+		UWidgetTree* Tree = WidgetTree;
+		TArray<UWidget*> Widgets;
+		Tree->GetAllWidgets(Widgets);
+
+		for (UWidget* Widget : Widgets)
+		{
+			if (UDreamMusicPlayerDelegateWidget* DelegateWidget = Cast<UDreamMusicPlayerDelegateWidget>(Widget))
+			{
+				DelegateWidget->InitializeWidget(InComponent);
+			}
+		}
+	}
 }
 
 void UDreamMusicPlayerDelegateWidget::NativeDestruct()

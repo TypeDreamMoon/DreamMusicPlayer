@@ -18,6 +18,10 @@ class DREAMMUSICPLAYERUMG_API UDreamMusicPlayerDelegateWidget : public UUserWidg
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DreamMusicPlayerDelegateWidget|Default")
+	bool bAutoInitializeChildren = false;
+
+public:
 	UFUNCTION(BlueprintCallable, Category = "DreamMusicPlayerDelegateWidget")
 	virtual void InitializeWidget(UDreamMusicPlayerComponent* InComponent);
 
