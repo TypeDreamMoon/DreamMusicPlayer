@@ -1,3 +1,6 @@
 [submodule "Plugins/DreamMusicPlayer"]
 	path = Plugins/DreamMusicPlayer
 	url = https://github.com/TypeDreamMoon/DreamMusicPlayer.git
+[submodule "Plugins/DreamAnimationTextBlock"]
+	path = Plugins/DreamAnimationTextBlock
+	url = https://github.com/TypeDreamMoon/DreamAnimationTextBlock.git
