@@ -4,9 +4,11 @@
 #include "Expansion/DreamMusicPlayerExpansion_AudioAnalysis.h"
 #include "Classes/DreamMusicPlayerComponent.h"
 #include "ConstantQNRT.h"
+#include "ConstantQNRTFactory.h"
 #include "DreamMusicPlayerDebugLog.h"
 #include "DreamMusicPlayerLog.h"
 #include "LoudnessNRT.h"
+#include "LoudnessNRTFactory.h"
 #include "Engine/Canvas.h"
 #include "ExpansionData/DreamMusicPlayerExpansionData_AudioAnalysis.h"
 #include "Kismet/KismetRenderingLibrary.h"
@@ -23,49 +25,65 @@ void UDreamMusicPlayerExpansion_AudioAnalysis::GetAudioNrtData(TArray<float>& Co
 
 void UDreamMusicPlayerExpansion_AudioAnalysis::UpdateAudioAnalysisData()
 {
-	if (ConstantQ && ConstantQ->IsValidLowLevel())
+	bool bCreateTexture = false;
+	
+	if (ConstantQ && ConstantQ->IsValidLowLevel() && IsValid(ConstantQ))
 	{
-		ConstantQ->GetNormalizedChannelConstantQAtTime(MusicPlayerComponent->CurrentDuration, 0, ConstantQDataL);
-		ConstantQ->GetNormalizedChannelConstantQAtTime(MusicPlayerComponent->CurrentDuration, 1, ConstantQDataR);
+		TSharedPtr<const Audio::FConstantQNRTResult, ESPMode::ThreadSafe> ConstantQResult = ConstantQ->GetResult<Audio::FConstantQNRTResult>();
 
-		ConstantQData.Empty();
-		ConstantQDataAverage.Empty();
-
-		auto Avg = [this]()
+		if (ConstantQResult->IsSortedChronologically())
 		{
-			for (int i = 0; i < ConstantQData.Num() / 2; ++i)
+			bCreateTexture = true;
+			
+			ConstantQ->GetNormalizedChannelConstantQAtTime(MusicPlayerComponent->CurrentDuration, 0, ConstantQDataL);
+			ConstantQ->GetNormalizedChannelConstantQAtTime(MusicPlayerComponent->CurrentDuration, 1, ConstantQDataR);
+
+			ConstantQData.Empty();
+			ConstantQDataAverage.Empty();
+
+			auto Avg = [this]()
 			{
-				ConstantQDataAverage.Add((ConstantQData[i] + ConstantQData[ConstantQData.Num() - i - 1]) / 2.f);
-			}
-		};
+				for (int i = 0; i < ConstantQData.Num() / 2; ++i)
+				{
+					ConstantQDataAverage.Add((ConstantQData[i] + ConstantQData[ConstantQData.Num() - i - 1]) / 2.f);
+				}
+			};
 
-		switch (AverageType)
-		{
-		case EDreamMusicPlayerExpansion_AudioAnalysis_AverageType::Left:
-			ConstantQDataAverage = ConstantQDataL;
-			break;
-		case EDreamMusicPlayerExpansion_AudioAnalysis_AverageType::Right:
-			ConstantQDataAverage = ConstantQDataR;
-			break;
-		case EDreamMusicPlayerExpansion_AudioAnalysis_AverageType::Left_Right:
-			ConstantQData.Append(ConstantQDataL);
-			ConstantQData.Append(ConstantQDataR);
-			Avg();
-			break;
-		case EDreamMusicPlayerExpansion_AudioAnalysis_AverageType::Right_Left:
-			ConstantQData.Append(ConstantQDataR);
-			ConstantQData.Append(ConstantQDataL);
-			Avg();
-			break;
+			switch (AverageType)
+			{
+			case EDreamMusicPlayerExpansion_AudioAnalysis_AverageType::Left:
+				ConstantQDataAverage = ConstantQDataL;
+				break;
+			case EDreamMusicPlayerExpansion_AudioAnalysis_AverageType::Right:
+				ConstantQDataAverage = ConstantQDataR;
+				break;
+			case EDreamMusicPlayerExpansion_AudioAnalysis_AverageType::Left_Right:
+				ConstantQData.Append(ConstantQDataL);
+				ConstantQData.Append(ConstantQDataR);
+				Avg();
+				break;
+			case EDreamMusicPlayerExpansion_AudioAnalysis_AverageType::Right_Left:
+				ConstantQData.Append(ConstantQDataR);
+				ConstantQData.Append(ConstantQDataL);
+				Avg();
+				break;
+			}
 		}
 	}
 
-	if (Loudness && Loudness->IsValidLowLevel())
+	if (Loudness && Loudness->IsValidLowLevel() && IsValid(Loudness))
 	{
-		Loudness->GetNormalizedLoudnessAtTime(MusicPlayerComponent->CurrentDuration, LoudnessValue);
+		TSharedPtr<const Audio::FLoudnessNRTResult, ESPMode::ThreadSafe> LoudnessResult = Loudness->GetResult<Audio::FLoudnessNRTResult>();
+
+		if (LoudnessResult->IsSortedChronologically())
+		{
+			bCreateTexture = true;
+			
+			Loudness->GetNormalizedLoudnessAtTime(MusicPlayerComponent->CurrentDuration, LoudnessValue);
+		}
 	}
 
-	if (bEnableCreateAnalysisTexture && bIsCreated && Internal_AnalysisTexture)
+	if (bEnableCreateAnalysisTexture && bIsCreated && Internal_AnalysisTexture && bCreateTexture)
 	{
 		// fmt: B=1byte G=1byte R=1byte A=1byte 48=Width(Channel) 1=Height
 		uint8* Pixels = BuildPixelArray(ConstantQDataAverage);

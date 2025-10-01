@@ -4,6 +4,7 @@
 #include "Expansion/DreamMusicPlayerExpansion_EventLyric_EventDefine.h"
 
 #include "DreamMusicPlayerCommon.h"
+#include "DreamMusicPlayerLog.h"
 
 
 void UDreamMusicPlayerExpansion_EventLyric_EventDefine::SetPayload(UObject* InPayloadObject)
@@ -16,27 +17,29 @@ UObject* UDreamMusicPlayerExpansion_EventLyric_EventDefine::GetPayload() const
 	return Payload;
 }
 
-void UDreamMusicPlayerExpansion_EventLyric_EventDefine::CallEvent(const FString& EventName,
-                                                                  const FDreamMusicLyric& Lyric)
+void UDreamMusicPlayerExpansion_EventLyric_EventDefine::CallEvent(const FString& EventName, const FDreamMusicLyric& Lyric, UDreamMusicPlayerPayload* InEventPayload)
 {
 	if (EventName.IsEmpty())
 	{
 		return;
 	}
-	
+
 	UFunction* Function = FindFunction(FName(EventName));
-	
+
+	DMP_LOG(Log, TEXT("Call Event: %s"), *EventName);
+
 	struct FParams
 	{
-		FParams(const FDreamMusicLyric& Lyric)
-			: Lyric(Lyric)
+		FParams(const FDreamMusicLyric& Lyric, UDreamMusicPlayerPayload* InPayload)
+			: Lyric(Lyric), EventPayload(InPayload)
 		{
 		}
 
 		FDreamMusicLyric Lyric;
+		UDreamMusicPlayerPayload* EventPayload;
 	};
-	
-	FParams Params = FParams(Lyric);
+
+	FParams Params = FParams(Lyric, InEventPayload);
 
 	ProcessEvent(Function, &Params);
 }

@@ -12,6 +12,7 @@
 #include "Classes/DreamMusicData.h"
 #include "Classes/DreamMusicPlayerExpansion.h"
 #include "Classes/DreamMusicAudioManager.h"
+#include "Classes/DreamMusicPlayerExpansionData.h"
 
 UDreamMusicPlayerComponent::UDreamMusicPlayerComponent()
 {
@@ -229,6 +230,19 @@ void UDreamMusicPlayerComponent::GetExpansionByClass(TSubclassOf<UDreamMusicPlay
 		if (Expansion->GetClass() == InExpansionClass)
 		{
 			OutExpansion = Expansion;
+			return;
+		}
+	}
+}
+
+void UDreamMusicPlayerComponent::GetExpansionDataByClass(TSubclassOf<UDreamMusicPlayerExpansionData> InExpansionDataClass, UDreamMusicPlayerExpansionData*& OutExpansionData) const
+{
+	for (UDreamMusicPlayerExpansionData* ExpansionData : CurrentMusicData.ExpansionDatas)
+	{
+		if (ExpansionData->GetClass() == InExpansionDataClass)
+		{
+			OutExpansionData = ExpansionData;
+			return;
 		}
 	}
 }

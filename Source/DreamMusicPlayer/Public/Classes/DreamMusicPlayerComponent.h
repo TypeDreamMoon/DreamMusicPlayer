@@ -10,6 +10,7 @@
 
 class UDreamMusicAudioManager;
 class UDreamMusicPlayerExpansion;
+class UDreamMusicPlayerExpansionData;
 class UDreamAsyncAction_KMeansTexture;
 struct FKMeansColorCluster;
 
@@ -34,7 +35,7 @@ public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMusicPlayerMusicDataDelegate, FDreamMusicDataStruct, Data);
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMusicPlayerMusicDataListDelegate, const TArray<FDreamMusicDataStruct>&, List);
-	
+
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMusicPlayerCommonDelegate);
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMusicPlayerPlayStateDelegate, EDreamMusicPlayerPlayState, State);
@@ -170,7 +171,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Settings")
 	UDreamMusicAudioManager* AudioManager;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Settings")
 	TArray<UDreamMusicPlayerExpansion*> ExpansionList;
 
@@ -291,9 +292,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Functions|Expansion", Meta = (DeterminesOutputType="InExpansionClass", DynamicOutputParam="OutExpansion"))
 	void GetExpansionByClass(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass, UDreamMusicPlayerExpansion*& OutExpansion) const;
 
+	UFUNCTION(BlueprintPure, Category = "Functions|Expansion", Meta = (DeterminesOutputType="InExpansionDataClass", DynamicOutputParam="OutExpansionData"))
+	void GetExpansionDataByClass(TSubclassOf<UDreamMusicPlayerExpansionData> InExpansionDataClass, UDreamMusicPlayerExpansionData*& OutExpansionData) const;
+
+
 	UFUNCTION(BlueprintPure, Category = "Functions|Expansion")
 	bool HasExpansion(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass) const;
-	
+
 public:
 	UFUNCTION()
 	TArray<FString> GetNames() const;
@@ -341,13 +346,13 @@ private:
 
 	// 音乐开始播放的世界时间
 	double MusicStartWorldTime = 0.0;
-    
+
 	// 最后一次 Seek 的位置
 	float LastSeekPosition = 0.0f;
-    
+
 	// 是否刚刚进行了 Seek 操作
 	bool bJustSeeked = false;
-    
+
 	/**
 	 * 获取更精确的当前播放时间
 	 */
@@ -364,6 +369,20 @@ public:
 				return Cast<T>(Expansion);
 			}
 		}
+		return nullptr;
+	}
+
+	template <typename T>
+	T* GetExpansionData() const
+	{
+		for (auto ExpansionData : CurrentMusicData.ExpansionDatas)
+		{
+			if (ExpansionData->IsA(T::StaticClass()))
+			{
+				return Cast<T>(ExpansionData);
+			}
+		}
+
 		return nullptr;
 	}
 };

@@ -6,6 +6,7 @@
 #include "UObject/Object.h"
 #include "DreamMusicPlayerExpansion_EventLyric_EventDefine.generated.h"
 
+class UDreamMusicPlayerPayload;
 struct FDreamMusicLyric;
 
 /**
@@ -26,7 +27,7 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	UObject* Payload;
 
-	void CallEvent(const FString& EventName, const FDreamMusicLyric& Lyric);
+	void CallEvent(const FString& EventName, const FDreamMusicLyric& Lyric, UDreamMusicPlayerPayload* InEventPayload);
 
 public:
 	/** UObject override **/

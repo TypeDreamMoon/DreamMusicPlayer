@@ -7,6 +7,8 @@
 #include "Classes/DreamMusicPlayerExpansionData.h"
 #include "DreamMusicPlayerExpansionData_EventLyric.generated.h"
 
+class UDreamMusicPlayerPayload;
+
 USTRUCT(BlueprintType, Blueprintable)
 struct FDreamMusicPlayerExpansionData_EventLyric_EventDefine
 {
@@ -18,6 +20,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString EventName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
+	UDreamMusicPlayerPayload* Payload;
 
 	bool operator==(int Other) const;
 };
@@ -33,6 +38,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString EventName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
+	UDreamMusicPlayerPayload* Payload;
 
 	bool operator==(const FDreamMusicLyricTimestamp& Other) const;
 };
