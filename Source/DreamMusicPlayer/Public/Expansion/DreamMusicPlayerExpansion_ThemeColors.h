@@ -37,6 +37,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	int MaxIterationsCount = 3;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Results")
+	TArray<FKMeansColorCluster> CoverThemeColors;
+
 public:
 	/**
 	 * Extract theme colors from current music cover asynchronously
@@ -54,6 +57,16 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Functions|Theme")
 	void ExtractTextureThemeColors(UTexture2D* Texture, int32 ClusterCount, int32 MaxIterations);
+
+	/**
+	* Get extracted theme colors
+	* @return Array of theme colors
+	*/
+	UFUNCTION(BlueprintPure, Category = "Results")
+	TArray<FKMeansColorCluster> GetCoverThemeColors() const
+	{
+		return CoverThemeColors;
+	}
 
 protected:
 	UFUNCTION()

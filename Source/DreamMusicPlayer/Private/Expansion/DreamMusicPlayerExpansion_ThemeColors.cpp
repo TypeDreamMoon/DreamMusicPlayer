@@ -166,4 +166,5 @@ void UDreamMusicPlayerExpansion_ThemeColors::OnThemeColorsExtracted(const TArray
 	}
 
 	OnThemeColorChanged.Broadcast(ColorClusters, bSuccess);
+	CoverThemeColors = ColorClusters;
 }
