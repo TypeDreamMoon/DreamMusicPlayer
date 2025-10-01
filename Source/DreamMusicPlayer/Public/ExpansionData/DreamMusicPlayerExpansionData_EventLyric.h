@@ -18,11 +18,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Index;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString EventName;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
-	UDreamMusicPlayerPayload* Payload;
+	TMap<FString, UDreamMusicPlayerPayload*> Events;
 
 	bool operator==(int Other) const;
 };
@@ -36,11 +33,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FDreamMusicLyricTimestamp Time;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString EventName;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
-	UDreamMusicPlayerPayload* Payload;
+	TMap<FString, UDreamMusicPlayerPayload*> Events;
 
 	bool operator==(const FDreamMusicLyricTimestamp& Other) const;
 };

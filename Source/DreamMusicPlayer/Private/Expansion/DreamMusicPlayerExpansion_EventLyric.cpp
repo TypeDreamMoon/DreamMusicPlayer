@@ -44,7 +44,11 @@ void UDreamMusicPlayerExpansion_EventLyric::BP_Tick_Implementation(const FDreamM
 		{
 			if (!IgnoreTimestamp.Contains(Define.Time) && Define.Time.IsApproximatelyEqual(InTimestamp, TimeEventToleranceMilliseconds))
 			{
-				EventDefineObject->CallEvent(Define.EventName, MusicPlayerComponent->GetExpansion<UDreamMusicPlayerExpansion_Lyric>()->CurrentLyric, Define.Payload);
+				for (const TPair<FString, UDreamMusicPlayerPayload*>& Event : Define.Events)
+				{
+					EventDefineObject->CallEvent(Event.Key, MusicPlayerComponent->GetExpansion<UDreamMusicPlayerExpansion_Lyric>()->CurrentLyric, Event.Value);					
+				}
+				
 				IgnoreTimestamp.Add(Define.Time);
 				return;
 			}
@@ -61,7 +65,10 @@ void UDreamMusicPlayerExpansion_EventLyric::OnLyricChangedHandle(FDreamMusicLyri
 		{
 			if (Define == Index)
 			{
-				EventDefineObject->CallEvent(Define.EventName, Lyric, Define.Payload);
+				for (const TPair<FString, UDreamMusicPlayerPayload*>& Event : Define.Events)
+				{
+					EventDefineObject->CallEvent(Event.Key, MusicPlayerComponent->GetExpansion<UDreamMusicPlayerExpansion_Lyric>()->CurrentLyric, Event.Value);					
+				}
 
 				return;
 			}

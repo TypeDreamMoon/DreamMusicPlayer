@@ -155,3 +155,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Payload")
 	FName Value;
 };
+
+UCLASS(DisplayName = "Object Payload")
+class UDreamMusicPlayerPayload_Object : public UDreamMusicPlayerPayload
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Payload")
+	TSoftObjectPtr<UObject> Value;
+
+	UFUNCTION(BlueprintPure, Category = "Payload")
+	UObject* GetObject() const;
+};
+
+inline UObject* UDreamMusicPlayerPayload_Object::GetObject() const
+{
+	return Value.LoadSynchronous();
+}
