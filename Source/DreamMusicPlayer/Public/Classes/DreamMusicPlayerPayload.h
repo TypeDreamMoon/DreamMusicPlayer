@@ -77,6 +77,9 @@ class UDreamMusicPlayerPayload_Material : public UDreamMusicPlayerPayload
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Payload")
+	FName MaterialName;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Payload")
 	TSoftObjectPtr<UMaterialInterface> Value;
 
 	UFUNCTION(BlueprintPure)
@@ -94,6 +97,9 @@ class UDreamMusicPlayerPayload_Texture : public UDreamMusicPlayerPayload
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Payload")
+	FName TextureName;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Payload")
 	TSoftObjectPtr<UTexture2D> Value;
 
@@ -173,3 +179,23 @@ inline UObject* UDreamMusicPlayerPayload_Object::GetObject() const
 {
 	return Value.LoadSynchronous();
 }
+
+UCLASS(DisplayName = "Name Array Payload")
+class UDreamMusicPlayerPayload_NameArray : public UDreamMusicPlayerPayload
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Payload")
+	TArray<FName> Value;
+};
+
+UCLASS(DisplayName = "String Array Payload")
+class UDreamMusicPlayerPayload_StringArray : public UDreamMusicPlayerPayload
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Payload")
+	TArray<FString> Value;
+};

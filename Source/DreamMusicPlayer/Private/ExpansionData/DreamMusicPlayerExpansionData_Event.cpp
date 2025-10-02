@@ -5,13 +5,13 @@
 
 void FDreamMusicPlayerExpansionData_BaseEvent::Call(FDreamEventCallback Callback) const
 {
-	for (const TPair<FString, UDreamMusicPlayerPayload*>& Event : Events)
+	for (const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& Event : Events)
 	{
 		Callback(Event);
 	}
 }
 
-bool FDreamMusicPlayerExpansionData_Event_EventDefine::operator==(int Other) const
+bool FDreamMusicPlayerExpansionData_Event_LyricEventDefine::operator==(int Other) const
 {
 	return Other == Index;
 }

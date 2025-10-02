@@ -113,6 +113,11 @@ bool FDreamMusicDataStruct::HasExpansionData(TSubclassOf<UDreamMusicPlayerExpans
 {
 	for (UDreamMusicPlayerExpansionData* ExpansionData : ExpansionDatas)
 	{
+		if (ExpansionData == nullptr)
+		{
+			continue;
+		}
+		
 		if (ExpansionData->GetClass() == ExpansionDataClass)
 		{
 			return true;

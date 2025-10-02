@@ -35,9 +35,9 @@ void UDreamMusicPlayerExpansion_Event::BP_MusicStart_Implementation()
 {
 	if (CurrentMusicData.HasExpansionData(UDreamMusicPlayerExpansionData_Event::StaticClass()))
 	{
-		for (const FDreamMusicPlayerExpansionData_Event_EventDefine& Define : CurrentMusicData.GetExpansionData<UDreamMusicPlayerExpansionData_Event>()->MusicStartEventDefines)
+		for (const FDreamMusicPlayerExpansionData_BaseEvent& Define : CurrentMusicData.GetExpansionData<UDreamMusicPlayerExpansionData_Event>()->MusicStartEventDefines)
 		{
-			Define.Event.Call([this](FDreamEventDefine Event)
+			Define.Call([this](const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& Event)
 			{
 				EventDefineObject->CallEvent(Event);
 			});
@@ -49,9 +49,9 @@ void UDreamMusicPlayerExpansion_Event::BP_MusicEnd_Implementation()
 {
 	if (CurrentMusicData.HasExpansionData(UDreamMusicPlayerExpansionData_Event::StaticClass()))
 	{
-		for (const FDreamMusicPlayerExpansionData_Event_EventDefine& Define : CurrentMusicData.GetExpansionData<UDreamMusicPlayerExpansionData_Event>()->MusicEndEventDefines)
+		for (const FDreamMusicPlayerExpansionData_BaseEvent& Define : CurrentMusicData.GetExpansionData<UDreamMusicPlayerExpansionData_Event>()->MusicEndEventDefines)
 		{
-			Define.Event.Call([this](FDreamEventDefine Event)
+			Define.Call([this](const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& Event)
 			{
 				EventDefineObject->CallEvent(Event);
 			});
@@ -72,9 +72,9 @@ void UDreamMusicPlayerExpansion_Event::BP_Tick_Implementation(const FDreamMusicL
 		{
 			if (!IgnoreTimestamp.Contains(Define.Time) && Define.Time.IsApproximatelyEqual(InTimestamp, TimeEventToleranceMilliseconds))
 			{
-				Define.Event.Call([this](FDreamEventDefine Event)
+				Define.Event.Call([this](const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& Event)
 				{
-					EventDefineObject->CallEvent(Event.Key, MusicPlayerComponent->GetExpansion<UDreamMusicPlayerExpansion_Lyric>()->CurrentLyric, Event.Value);
+					EventDefineObject->CallEvent(Event, MusicPlayerComponent->GetExpansion<UDreamMusicPlayerExpansion_Lyric>()->CurrentLyric);
 				});
 
 				IgnoreTimestamp.Add(Define.Time);
@@ -88,14 +88,14 @@ void UDreamMusicPlayerExpansion_Event::OnLyricChangedHandle(FDreamMusicLyric Lyr
 {
 	if (CurrentMusicData.HasExpansionData(UDreamMusicPlayerExpansionData_Event::StaticClass()))
 	{
-		for (const FDreamMusicPlayerExpansionData_Event_EventDefine& Define : CurrentMusicData.GetExpansionData<
+		for (const FDreamMusicPlayerExpansionData_Event_LyricEventDefine& Define : CurrentMusicData.GetExpansionData<
 			     UDreamMusicPlayerExpansionData_Event>()->LyricEventDefines)
 		{
 			if (Define == Index)
 			{
-				Define.Event.Call([this, Lyric](FDreamEventDefine Event)
+				Define.Event.Call([this, Lyric](const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& Event)
 				{
-					EventDefineObject->CallEvent(Event.Key, Lyric, Event.Value);
+					EventDefineObject->CallEvent(Event, Lyric);
 				});
 
 				return;

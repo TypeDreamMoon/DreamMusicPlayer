@@ -28,8 +28,8 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	UObject* Payload;
 
-	void CallEvent(const FString& EventName, const FDreamMusicLyric& Lyric, UDreamMusicPlayerPayload* InEventPayload);
-	void CallEvent(FDreamEventDefine Event);
+	void CallEvent(const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& InEvent, const FDreamMusicLyric& InLyric);
+	void CallEvent(const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& InEvent);
 
 public:
 	/** UObject override **/

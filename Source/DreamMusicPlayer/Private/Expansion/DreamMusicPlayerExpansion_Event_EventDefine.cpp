@@ -4,6 +4,7 @@
 #include "Expansion/DreamMusicPlayerExpansion_Event_EventDefine.h"
 
 #include "DreamMusicPlayerCommon.h"
+#include "DreamMusicPlayerDebugLog.h"
 #include "DreamMusicPlayerLog.h"
 
 
@@ -17,16 +18,20 @@ UObject* UDreamMusicPlayerExpansion_Event_EventDefine::GetPayload() const
 	return Payload;
 }
 
-void UDreamMusicPlayerExpansion_Event_EventDefine::CallEvent(const FString& EventName, const FDreamMusicLyric& Lyric, UDreamMusicPlayerPayload* InEventPayload)
+void UDreamMusicPlayerExpansion_Event_EventDefine::CallEvent(const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& InEvent, const FDreamMusicLyric& InLyric)
 {
-	if (EventName.IsEmpty())
+	if (InEvent.EventName.IsNone() || InEvent.Payload == nullptr)
 	{
+		DMP_LOG_DEBUG_EXPANSION(Warning, TEXT("Invalid Event"));
 		return;
 	}
 
-	UFunction* Function = FindFunction(FName(EventName));
-
-	DMP_LOG(Log, TEXT("Call Event: %s"), *EventName);
+	UFunction* Function = FindFunction(InEvent.EventName);
+	if (Function == nullptr)
+	{
+		DMP_LOG_DEBUG_EXPANSION(Warning, TEXT("Invalid Function"));
+		return;
+	}
 
 	struct FParams
 	{
@@ -35,18 +40,23 @@ void UDreamMusicPlayerExpansion_Event_EventDefine::CallEvent(const FString& Even
 		{
 		}
 
+		FParams(const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& InEvent, const FDreamMusicLyric& InLyric)
+			: Lyric(InLyric), EventPayload(InEvent.Payload)
+		{
+		}
+
 		FDreamMusicLyric Lyric;
 		UDreamMusicPlayerPayload* EventPayload;
 	};
 
-	FParams Params = FParams(Lyric, InEventPayload);
-
+	FParams Params(InEvent, InLyric);
+	
 	ProcessEvent(Function, &Params);
 }
 
-void UDreamMusicPlayerExpansion_Event_EventDefine::CallEvent(FDreamEventDefine Event)
+void UDreamMusicPlayerExpansion_Event_EventDefine::CallEvent(const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& InEvent)
 {
-	CallEvent(Event.Key, FDreamMusicLyric(), Event.Value);
+	CallEvent(InEvent, FDreamMusicLyric());
 }
 
 class UWorld* UDreamMusicPlayerExpansion_Event_EventDefine::GetWorld() const

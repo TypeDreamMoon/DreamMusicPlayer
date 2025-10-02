@@ -7,10 +7,24 @@
 #include "Classes/DreamMusicPlayerExpansionData.h"
 #include "DreamMusicPlayerExpansionData_Event.generated.h"
 
+struct FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine;
 class UDreamMusicPlayerPayload;
 
-typedef const TPair<FString, UDreamMusicPlayerPayload*>& FDreamEventDefine;
-typedef TFunctionRef<void(FDreamEventDefine)> FDreamEventCallback;
+
+typedef TFunctionRef<void(const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine&)> FDreamEventCallback;
+
+USTRUCT(BlueprintType)
+struct FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName EventName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
+	UDreamMusicPlayerPayload* Payload;
+};
 
 USTRUCT(BlueprintType)
 struct FDreamMusicPlayerExpansionData_BaseEvent
@@ -18,14 +32,14 @@ struct FDreamMusicPlayerExpansionData_BaseEvent
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
-	TMap<FString, UDreamMusicPlayerPayload*> Events;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine> Events;
 
 	void Call(FDreamEventCallback Callback) const;
 };
 
 USTRUCT(BlueprintType, Blueprintable)
-struct FDreamMusicPlayerExpansionData_Event_EventDefine
+struct FDreamMusicPlayerExpansionData_Event_LyricEventDefine
 {
 	GENERATED_BODY()
 
@@ -64,13 +78,13 @@ class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansionData_Event : public UDreamM
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event")
-	TArray<FDreamMusicPlayerExpansionData_Event_EventDefine> MusicStartEventDefines;
+	TArray<FDreamMusicPlayerExpansionData_BaseEvent> MusicStartEventDefines;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event")
-	TArray<FDreamMusicPlayerExpansionData_Event_EventDefine> MusicEndEventDefines;
+	TArray<FDreamMusicPlayerExpansionData_BaseEvent> MusicEndEventDefines;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event")
-	TArray<FDreamMusicPlayerExpansionData_Event_EventDefine> LyricEventDefines;
+	TArray<FDreamMusicPlayerExpansionData_Event_LyricEventDefine> LyricEventDefines;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event")
 	TArray<FDreamMusicPlayerExpansionData_Event_TimeEventDefine> TimeEventDefines;
