@@ -3,8 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ExpansionData/DreamMusicPlayerExpansionData_Event.h"
 #include "UObject/Object.h"
-#include "DreamMusicPlayerExpansion_EventLyric_EventDefine.generated.h"
+#include "DreamMusicPlayerExpansion_Event_EventDefine.generated.h"
 
 class UDreamMusicPlayerPayload;
 struct FDreamMusicLyric;
@@ -12,8 +13,8 @@ struct FDreamMusicLyric;
 /**
  * 
  */
-UCLASS(Abstract, Blueprintable, EditInlineNew, DisplayName = "Event Lyric Event Define")
-class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansion_EventLyric_EventDefine : public UObject
+UCLASS(Abstract, Blueprintable, EditInlineNew, DisplayName = "Event Define")
+class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansion_Event_EventDefine : public UObject
 {
 	GENERATED_BODY()
 
@@ -28,6 +29,7 @@ public:
 	UObject* Payload;
 
 	void CallEvent(const FString& EventName, const FDreamMusicLyric& Lyric, UDreamMusicPlayerPayload* InEventPayload);
+	void CallEvent(FDreamEventDefine Event);
 
 public:
 	/** UObject override **/

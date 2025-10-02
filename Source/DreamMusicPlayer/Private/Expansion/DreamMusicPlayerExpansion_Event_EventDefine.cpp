@@ -1,23 +1,23 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Expansion/DreamMusicPlayerExpansion_EventLyric_EventDefine.h"
+#include "Expansion/DreamMusicPlayerExpansion_Event_EventDefine.h"
 
 #include "DreamMusicPlayerCommon.h"
 #include "DreamMusicPlayerLog.h"
 
 
-void UDreamMusicPlayerExpansion_EventLyric_EventDefine::SetPayload(UObject* InPayloadObject)
+void UDreamMusicPlayerExpansion_Event_EventDefine::SetPayload(UObject* InPayloadObject)
 {
 	Payload = InPayloadObject;
 }
 
-UObject* UDreamMusicPlayerExpansion_EventLyric_EventDefine::GetPayload() const
+UObject* UDreamMusicPlayerExpansion_Event_EventDefine::GetPayload() const
 {
 	return Payload;
 }
 
-void UDreamMusicPlayerExpansion_EventLyric_EventDefine::CallEvent(const FString& EventName, const FDreamMusicLyric& Lyric, UDreamMusicPlayerPayload* InEventPayload)
+void UDreamMusicPlayerExpansion_Event_EventDefine::CallEvent(const FString& EventName, const FDreamMusicLyric& Lyric, UDreamMusicPlayerPayload* InEventPayload)
 {
 	if (EventName.IsEmpty())
 	{
@@ -44,7 +44,12 @@ void UDreamMusicPlayerExpansion_EventLyric_EventDefine::CallEvent(const FString&
 	ProcessEvent(Function, &Params);
 }
 
-class UWorld* UDreamMusicPlayerExpansion_EventLyric_EventDefine::GetWorld() const
+void UDreamMusicPlayerExpansion_Event_EventDefine::CallEvent(FDreamEventDefine Event)
+{
+	CallEvent(Event.Key, FDreamMusicLyric(), Event.Value);
+}
+
+class UWorld* UDreamMusicPlayerExpansion_Event_EventDefine::GetWorld() const
 {
 	return GWorld;
 }

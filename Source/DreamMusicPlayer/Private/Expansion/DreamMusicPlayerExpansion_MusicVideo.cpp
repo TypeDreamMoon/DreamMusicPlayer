@@ -12,6 +12,16 @@ void UDreamMusicPlayerExpansion_MusicVideo::OnMediaOpenedHandle(FString OpenedUr
 	MediaPlayer->Play();
 }
 
+void UDreamMusicPlayerExpansion_MusicVideo::BP_MusicPause_Implementation()
+{
+	MediaPlayer->Pause();
+}
+
+void UDreamMusicPlayerExpansion_MusicVideo::BP_MusicUnPause_Implementation()
+{
+	MediaPlayer->Play();
+}
+
 void UDreamMusicPlayerExpansion_MusicVideo::BP_ChangeMusic_Implementation(const FDreamMusicDataStruct& InData)
 {
 	if (!InData.HasExpansionData(UDreamMusicPlayerExpansionData_MusicVideo::StaticClass()))
@@ -22,7 +32,7 @@ void UDreamMusicPlayerExpansion_MusicVideo::BP_ChangeMusic_Implementation(const 
 		
 	UDreamMusicPlayerExpansionData_MusicVideo* MusicVideoData = InData.GetExpansionData<UDreamMusicPlayerExpansionData_MusicVideo>();
 
-	if (MusicVideoData)
+	if (MusicVideoData && IsValid(MediaPlayer))
 	{
 		CachedMusicVideoData = MusicVideoData->MusicVideo;
 		

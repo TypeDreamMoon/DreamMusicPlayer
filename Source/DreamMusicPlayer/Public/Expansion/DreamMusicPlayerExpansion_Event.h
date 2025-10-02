@@ -4,29 +4,30 @@
 
 #include "CoreMinimal.h"
 #include "Classes/DreamMusicPlayerExpansion.h"
-#include "DreamMusicPlayerExpansion_EventLyric.generated.h"
+#include "ExpansionData/DreamMusicPlayerExpansionData_Event.h"
+#include "DreamMusicPlayerExpansion_Event.generated.h"
 
-class UDreamMusicPlayerExpansion_EventLyric_EventDefine;
+class UDreamMusicPlayerExpansion_Event_EventDefine;
 
 /**
  * Event Lyric扩展类，用于处理音乐播放过程中的歌词事件
  * 继承自UDreamMusicPlayerExpansion基类，提供歌词事件定义和负载数据管理功能
  */
-UCLASS(DisplayName = "Event Lyric")
-class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansion_EventLyric : public UDreamMusicPlayerExpansion
+UCLASS(DisplayName = "Event")
+class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansion_Event : public UDreamMusicPlayerExpansion
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event Lyric")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event")
 	int TimeEventToleranceMilliseconds = 5;
-	
+
 	/**
 	 * 事件定义对象，用于配置歌词事件的具体行为
 	 * 该对象在编辑器中可配置，并且是实例化的对象
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Event Lyric")
-	UDreamMusicPlayerExpansion_EventLyric_EventDefine* EventDefineObject;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Event")
+	UDreamMusicPlayerExpansion_Event_EventDefine* EventDefineObject;
 
 public:
 	/**
@@ -41,12 +42,13 @@ protected:
 	 * 存储负载对象的弱引用指针，避免循环引用问题
 	 */
 	TWeakObjectPtr<UObject> Payload;
-	
+
 protected:
 	virtual void Initialize(UDreamMusicPlayerComponent* InComponent) override;
+	virtual void BP_MusicStart_Implementation() override;
+	virtual void BP_MusicEnd_Implementation() override;
 	virtual void BP_MusicSetPercent_Implementation(float InPercent) override;
 	virtual void BP_Tick_Implementation(const FDreamMusicLyricTimestamp& InTimestamp, float InDeltaTime) override;
-	
 
 	/**
 	 * 歌词变更事件处理函数
