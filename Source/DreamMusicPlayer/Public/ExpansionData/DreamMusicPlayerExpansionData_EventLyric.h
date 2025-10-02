@@ -42,7 +42,7 @@ public:
 /**
  * 
  */
-UCLASS(DisplayName = "Event Lyric")
+UCLASS(DisplayName = "Event Lyric Expansion Data")
 class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansionData_EventLyric : public UDreamMusicPlayerExpansionData
 {
 	GENERATED_BODY()

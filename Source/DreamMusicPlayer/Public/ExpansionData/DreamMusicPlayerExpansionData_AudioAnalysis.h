@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS(DisplayName = "Audio Analysis")
+UCLASS(DisplayName = "Audio Analysis Expansion Data")
 class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansionData_AudioAnalysis : public UDreamMusicPlayerExpansionData
 {
 	GENERATED_BODY()

@@ -28,7 +28,9 @@ public class DreamMusicPlayer : ModuleRules
 			new string[]
 			{
 				"Core",
-				"Engine",
+				"Engine", 
+				"MediaAssets", 
+				"ImgMedia",
 			}
 		);
 
