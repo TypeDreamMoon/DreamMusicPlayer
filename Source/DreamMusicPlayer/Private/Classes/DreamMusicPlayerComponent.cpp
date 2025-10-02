@@ -235,18 +235,6 @@ void UDreamMusicPlayerComponent::GetExpansionByClass(TSubclassOf<UDreamMusicPlay
 	}
 }
 
-void UDreamMusicPlayerComponent::GetExpansionDataByClass(TSubclassOf<UDreamMusicPlayerExpansionData> InExpansionDataClass, UDreamMusicPlayerExpansionData*& OutExpansionData) const
-{
-	for (UDreamMusicPlayerExpansionData* ExpansionData : CurrentMusicData.ExpansionDatas)
-	{
-		if (ExpansionData->GetClass() == InExpansionDataClass)
-		{
-			OutExpansionData = ExpansionData;
-			return;
-		}
-	}
-}
-
 bool UDreamMusicPlayerComponent::HasExpansion(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass) const
 {
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
@@ -319,7 +307,7 @@ void UDreamMusicPlayerComponent::StartMusic()
 
 	// Play Music with improved setup
 	CurrentMusicDuration = SoundWave->Duration;
-	
+
 	AudioManager->Music_Start();
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
 	{

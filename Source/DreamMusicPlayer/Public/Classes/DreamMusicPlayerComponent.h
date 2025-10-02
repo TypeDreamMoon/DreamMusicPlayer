@@ -291,11 +291,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Functions|Expansion", Meta = (DeterminesOutputType="InExpansionClass", DynamicOutputParam="OutExpansion"))
 	void GetExpansionByClass(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass, UDreamMusicPlayerExpansion*& OutExpansion) const;
-
-	UFUNCTION(BlueprintPure, Category = "Functions|Expansion", Meta = (DeterminesOutputType="InExpansionDataClass", DynamicOutputParam="OutExpansionData"))
-	void GetExpansionDataByClass(TSubclassOf<UDreamMusicPlayerExpansionData> InExpansionDataClass, UDreamMusicPlayerExpansionData*& OutExpansionData) const;
-
-
+	
 	UFUNCTION(BlueprintPure, Category = "Functions|Expansion")
 	bool HasExpansion(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass) const;
 
