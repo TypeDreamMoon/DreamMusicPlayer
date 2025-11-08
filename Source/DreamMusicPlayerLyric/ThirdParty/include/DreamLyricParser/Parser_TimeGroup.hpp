@@ -3,6 +3,12 @@
 
 #pragma once
 
+// Suppress C4251 warning: STL containers in exported classes are expected
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4251)
+#endif
+
 #include <cstddef>
 #include <cstdint>
 #include <map>
@@ -30,4 +36,7 @@ private:
 
 }  // namespace dream_lyric_parser
 
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 

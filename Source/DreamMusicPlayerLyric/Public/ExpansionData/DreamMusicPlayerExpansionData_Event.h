@@ -72,7 +72,7 @@ public:
  * 
  */
 UCLASS(DisplayName = "Event Expansion Data")
-class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansionData_Event : public UDreamMusicPlayerExpansionData
+class DREAMMUSICPLAYERLYRIC_API UDreamMusicPlayerExpansionData_Event : public UDreamMusicPlayerExpansionData
 {
 	GENERATED_BODY()
 

@@ -32,9 +32,16 @@ void UDreamMusicPlayerComponent::BeginPlay()
 
 
 	AudioManager->Initialize(this);
-	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
+	for (int i = 0; i < ExpansionList.Num(); i++)
 	{
-		Expansion->Initialize(this);
+		if (UDreamMusicPlayerExpansion* Expansion = ExpansionList[i])
+		{
+			Expansion->Initialize(this);
+		}
+		else
+		{
+			DMP_LOG(Error, TEXT("DreamMusicPlayerExpansion is null !!! index: %d"), i);
+		}
 	}
 
 	Super::BeginPlay();
@@ -53,6 +60,9 @@ void UDreamMusicPlayerComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 	}
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
 	{
+		if (Expansion == nullptr)
+			continue;
+		
 		Expansion->Deinitialize();
 	}
 	Super::EndPlay(EndPlayReason);
@@ -227,6 +237,9 @@ void UDreamMusicPlayerComponent::GetExpansionByClass(TSubclassOf<UDreamMusicPlay
 {
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
 	{
+		if (Expansion == nullptr)
+			continue;
+		
 		if (Expansion->GetClass() == InExpansionClass)
 		{
 			OutExpansion = Expansion;
@@ -239,6 +252,9 @@ bool UDreamMusicPlayerComponent::HasExpansion(TSubclassOf<UDreamMusicPlayerExpan
 {
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
 	{
+		if (Expansion == nullptr)
+			continue;
+		
 		if (Expansion->GetClass() == InExpansionClass)
 		{
 			return true;
@@ -311,6 +327,9 @@ void UDreamMusicPlayerComponent::StartMusic()
 	AudioManager->Music_Start();
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
 	{
+		if (Expansion == nullptr)
+			continue;
+		
 		Expansion->MusicStart();
 	}
 
@@ -343,6 +362,9 @@ void UDreamMusicPlayerComponent::EndMusic(bool Native)
 	AudioManager->Music_End();
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
 	{
+		if (Expansion == nullptr)
+			continue;
+		
 		Expansion->MusicEnd();
 	}
 
@@ -408,6 +430,8 @@ void UDreamMusicPlayerComponent::PauseMusic()
 
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
 	{
+		if (Expansion == nullptr)
+			continue;
 		Expansion->MusicPause();
 	}
 
@@ -427,6 +451,9 @@ void UDreamMusicPlayerComponent::UnPauseMusic()
 
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
 	{
+		if (Expansion == nullptr)
+			continue;
+		
 		Expansion->MusicUnPause();
 	}
 
@@ -443,6 +470,9 @@ void UDreamMusicPlayerComponent::SetMusicData(FDreamMusicDataStruct InData)
 	AudioManager->Music_Changed(InData);
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
 	{
+		if (Expansion == nullptr)
+			continue;
+		
 		Expansion->ChangeMusic(InData);
 	}
 
@@ -490,6 +520,9 @@ void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
 
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
 	{
+		if (Expansion == nullptr)
+			continue;
+		
 		Expansion->MusicSetPercent(InPercent);
 	}
 
@@ -528,6 +561,9 @@ void UDreamMusicPlayerComponent::MusicTick(float DeltaTime)
 	AudioManager->Tick(CurrentTimestamp, DeltaTime);
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
 	{
+		if (Expansion == nullptr)
+			continue;
+		
 		Expansion->Tick(CurrentTimestamp, DeltaTime);
 	}
 

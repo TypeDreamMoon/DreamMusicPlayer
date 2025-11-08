@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using UnrealBuildTool;
 
 public class DreamMusicPlayerLyric : ModuleRules
@@ -16,6 +16,7 @@ public class DreamMusicPlayerLyric : ModuleRules
 			new string[]
 			{
 				"Core",
+				"DreamMusicPlayer",
 			}
 		);
 
@@ -34,24 +35,20 @@ public class DreamMusicPlayerLyric : ModuleRules
 				"EditorWidgets",
 				"PropertyEditor",
 				"AssetTools",
-				"ContentBrowser"
+				"ContentBrowser",
+				"DesktopPlatform", 
+				"EditorScriptingUtilities",
 			}
 		);
 
 		PublicIncludePaths.Add(Path.Combine(ThirdPartyPath, "include"));
-		
+
 		// 链接第三方库
 		if (Target.Platform == UnrealTargetPlatform.Win64)
 		{
 			// 直接链接 .lib 文件
 			PublicAdditionalLibraries.Add(Path.Combine(ThirdPartyPath, "lib", "windows_x64", "DreamLyricParser.lib"));
-			
-			// 将 DLL 复制到输出目录，确保运行时可以找到
-			string DllPath = Path.Combine(ThirdPartyPath, "lib", "windows_x64", "DreamLyricParser.dll");
-			if (File.Exists(DllPath))
-			{
-				RuntimeDependencies.Add(DllPath);
-			}
+			RuntimeDependencies.Add(Path.Combine(ThirdPartyPath, "lib", "windows_x64", "DreamLyricParser.dll"));
 		}
 	}
 }

@@ -30,8 +30,12 @@ enum class EDreamMusicPlayerPlayMode : uint8
  * Lyric File Type
  */
 UENUM(BlueprintType)
-enum class EDreamMusicPlayerLyricParseFileType : uint8
+enum class EDreamMusicPlayerLyricType : uint8
 {
+	// Asset
+	Asset UMETA(DisplayName = "Asset"),
+	// Network Stream
+	Stream UMETA(DisplayName = "Stream [UnderDevelopment]"),
 	// Three Types of LRC File
 	LRC UMETA(DisplayName = "LRC"),
 	/**
@@ -89,6 +93,19 @@ enum class EDreamMusicPlayerLyricParseLineType: uint8
 	Translation_Lyric UMETA(DisplayName = "Translation-Lyric"),
 	Lyric_Translation UMETA(DisplayName = "Lyric-Translation"),
 	Lyric_Only UMETA(DisplayName = "Lyric-Only"),
+};
+
+/**
+ * @brief 歌词文本角色枚举
+ * 用于区分原歌词、音译、翻译等不同类型的文本
+ */
+UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
+enum class EDreamMusicLyricTextRole : uint8
+{
+	None = 0 UMETA(DisplayName = "None"),
+	Lyric = 1 UMETA(DisplayName = "Lyric"),
+	Romanization = 2 UMETA(DisplayName = "Romanization"),
+	Translation = 3 UMETA(DisplayName = "Translation")
 };
 
 USTRUCT(BlueprintType)
@@ -193,27 +210,53 @@ public:
 	inline const FDreamMusicLyricTimestamp* FromSeconds(float InSeconds);
 	inline float ToSeconds() const;
 	inline int ToMilliseconds() const;
+
+	/**
+	 * @brief 转换为总毫秒数（int64，用于大时间跨度）
+	 */
+	int64 ToTotalMilliseconds() const;
+
+	/**
+	 * @brief 从总毫秒数创建时间戳
+	 */
+	static FDreamMusicLyricTimestamp FromTotalMilliseconds(int64 TotalMilliseconds);
+
+	/**
+	 * @brief 从总秒数创建时间戳（静态方法）
+	 */
+	static FDreamMusicLyricTimestamp FromSecondsStatic(float TotalSeconds);
+
+	/**
+	 * @brief 规范化时间值（确保分钟、秒、毫秒在有效范围内）
+	 */
+	void Normalize();
+
+	/**
+	 * @brief 格式化为字符串（HH:MM:SS.mmm 或 MM:SS.mmm）
+	 */
+	FString ToStringFormatted(bool bIncludeHours = false, int32 FractionalDigits = 3) const;
+
+	/**
+	 * @brief 判断是否为零时间
+	 */
+	bool IsZero() const;
+
+	// 操作符重载（已存在，但添加减法）
+	FDreamMusicLyricTimestamp operator+(const FDreamMusicLyricTimestamp& Other) const;
+	FDreamMusicLyricTimestamp operator-(const FDreamMusicLyricTimestamp& Other) const;
 };
 
 USTRUCT(BlueprintType)
-struct FDreamMusicLyricWord
+struct DREAMMUSICPLAYER_API FDreamMusicLyricWord
 {
 	GENERATED_BODY()
 
 public:
-	FDreamMusicLyricWord()
-		: StartTimestamp(0, 0, 0, 0),
-		  EndTimestamp(0, 0, 0, 0),
-		  Content("")
-	{
-	};
+	FDreamMusicLyricWord();
 
-	FDreamMusicLyricWord(FDreamMusicLyricTimestamp InStartTimestamp, FDreamMusicLyricTimestamp InEndTimestamp, FString InContent)
-		: StartTimestamp(InStartTimestamp),
-		  EndTimestamp(InEndTimestamp),
-		  Content(InContent)
-	{
-	}
+	FDreamMusicLyricWord(FDreamMusicLyricTimestamp InStartTimestamp, FDreamMusicLyricTimestamp InEndTimestamp, FString InContent);
+
+	FDreamMusicLyricWord(const FString& InContent, const FDreamMusicLyricTimestamp& InStartTimestamp, const FDreamMusicLyricTimestamp& InEndTimestamp = FDreamMusicLyricTimestamp());
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -222,12 +265,33 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FDreamMusicLyricTimestamp EndTimestamp;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (MultiLine = true))
 	FString Content;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHasEndTimestamp = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EDreamMusicLyricTextRole Role;
+
+	/**
+	 * @brief 获取单词持续时间（毫秒）
+	 */
+	int64 GetDurationMilliseconds() const;
+
+	/**
+	 * @brief 判断时间点是否在单词时间范围内
+	 */
+	bool IsTimeInRange(const FDreamMusicLyricTimestamp& Time) const;
+
+	/**
+	 * @brief 判断是否为空单词
+	 */
+	bool IsEmpty() const;
 };
 
 USTRUCT(BlueprintType)
-struct FDreamMusicLyric
+struct DREAMMUSICPLAYER_API FDreamMusicLyric
 {
 	GENERATED_BODY()
 
@@ -418,7 +482,7 @@ public:
 
 // 歌曲数据表
 USTRUCT(BlueprintType)
-struct FDreamMusicDataStruct
+struct DREAMMUSICPLAYER_API FDreamMusicDataStruct
 {
 	GENERATED_BODY()
 
@@ -487,4 +551,154 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float FadeOutDuration = 0.5f;
+};
+
+// ============ 歌词资产相关类型定义（用于 Lyric 模块） ============
+
+/**
+ * @brief 歌词行结构
+ * 
+ * 表示一行歌词，可以包含多个单词（用于逐词显示）
+ */
+USTRUCT(BlueprintType)
+struct DREAMMUSICPLAYER_API FDreamMusicLyricLine
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Line")
+	EDreamMusicLyricTextRole Role = EDreamMusicLyricTextRole::Lyric;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Line", meta = (MultiLine = true))
+	FString Text;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Line", meta = (TitleProperty = "Content"))
+	TArray<FDreamMusicLyricWord> Words;
+
+	FDreamMusicLyricLine() = default;
+
+	FDreamMusicLyricLine(const FString& InText, EDreamMusicLyricTextRole InRole = EDreamMusicLyricTextRole::Lyric)
+		: Role(InRole), Text(InText)
+	{
+	}
+
+	/**
+	 * @brief 获取行的开始时间（从第一个单词）
+	 */
+	FDreamMusicLyricTimestamp GetStartTimestamp() const;
+
+	/**
+	 * @brief 获取行的结束时间（从最后一个单词）
+	 */
+	FDreamMusicLyricTimestamp GetEndTimestamp() const;
+
+	/**
+	 * @brief 判断时间点是否在行的时间范围内
+	 */
+	bool IsTimeInRange(const FDreamMusicLyricTimestamp& Time) const;
+
+	/**
+	 * @brief 判断是否为空行
+	 */
+	bool IsEmpty() const;
+
+	/**
+	 * @brief 获取行的总单词数
+	 */
+	int32 GetWordCount() const { return Words.Num(); }
+};
+
+/**
+ * @brief 歌词组结构
+ * 
+ * 表示一个时间点的歌词组，可以包含多行（如原歌词、音译、翻译等）
+ */
+USTRUCT(BlueprintType)
+struct DREAMMUSICPLAYER_API FDreamMusicLyricGroup
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Group")
+	FDreamMusicLyricTimestamp Timestamp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Group", meta = (TitleProperty = "Text"))
+	TArray<FDreamMusicLyricLine> Lines;
+
+	FDreamMusicLyricGroup() = default;
+
+	FDreamMusicLyricGroup(const FDreamMusicLyricTimestamp& InTimestamp)
+		: Timestamp(InTimestamp)
+	{
+	}
+
+	/**
+	 * @brief 获取指定角色的行
+	 */
+	FDreamMusicLyricLine* GetLineByRole(EDreamMusicLyricTextRole Role);
+
+	/**
+	 * @brief 获取指定角色的行（常量版本）
+	 */
+	const FDreamMusicLyricLine* GetLineByRole(EDreamMusicLyricTextRole Role) const;
+
+	/**
+	 * @brief 获取主歌词行（通常是 Lyric 角色）
+	 */
+	FDreamMusicLyricLine* GetMainLyricLine();
+
+	/**
+	 * @brief 判断时间点是否匹配此组
+	 */
+	bool IsTimeMatch(const FDreamMusicLyricTimestamp& Time, float ToleranceSeconds = 0.1f) const;
+
+	/**
+	 * @brief 判断是否为空组
+	 */
+	bool IsEmpty() const;
+
+	/**
+	 * @brief 获取组的总行数
+	 */
+	int32 GetLineCount() const { return Lines.Num(); }
+};
+
+/**
+ * @brief 歌词元数据结构
+ * 
+ * 存储歌词文件的元数据信息（如标题、艺术家、专辑等）
+ */
+USTRUCT(BlueprintType)
+struct DREAMMUSICPLAYER_API FDreamMusicLyricMetadata
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Metadata")
+	TMap<FString, FString> Items;
+
+	FDreamMusicLyricMetadata() = default;
+
+	/**
+	 * @brief 获取元数据值
+	 */
+	FString GetValue(const FString& Key, const FString& DefaultValue = TEXT("")) const;
+
+	/**
+	 * @brief 设置元数据值
+	 */
+	void SetValue(const FString& Key, const FString& Value);
+
+	/**
+	 * @brief 检查是否包含指定键
+	 */
+	bool HasKey(const FString& Key) const;
+
+	/**
+	 * @brief 获取常用元数据（标题、艺术家、专辑）
+	 */
+	FString GetTitle() const { return GetValue(TEXT("ti"), GetValue(TEXT("title"))); }
+
+	FString GetArtist() const { return GetValue(TEXT("ar"), GetValue(TEXT("artist"))); }
+
+	FString GetAlbum() const { return GetValue(TEXT("al"), GetValue(TEXT("album"))); }
+
+	FString GetCreator() const { return GetValue(TEXT("by"), GetValue(TEXT("creator"))); }
 };

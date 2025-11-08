@@ -5,7 +5,7 @@
 
 #define DMP_DEBUG_CHANNEL "Parser"
 
-FDreamLyricParser::FDreamLyricParser(FString InFilePath, EDreamMusicPlayerLyricParseFileType InFileType, EDreamMusicPlayerLyricParseLineType InLineType, EDreamMusicPlayerLrcLyricType InLrcParseMethod)
+FDreamLyricParser::FDreamLyricParser(FString InFilePath, EDreamMusicPlayerLyricType InFileType, EDreamMusicPlayerLyricParseLineType InLineType, EDreamMusicPlayerLrcLyricType InLrcParseMethod)
 {
 	FilePath = InFilePath;
 	FileType = InFileType;
@@ -85,15 +85,15 @@ void FDreamLyricParser::InitializeParser()
 	// Create appropriate parser based on file type
 	switch (FileType)
 	{
-	case EDreamMusicPlayerLyricParseFileType::SRT:
+	case EDreamMusicPlayerLyricType::SRT:
 		Parser = MakeShared<FDreamMusicPlayerLyricFileParser_SRT>(CachedFileContent, CachedFileLines, LineType);
 		break;
 
-	case EDreamMusicPlayerLyricParseFileType::LRC:
+	case EDreamMusicPlayerLyricType::LRC:
 		Parser = MakeShared<FDreamMusicPlayerLyricFileParser_LRC>(CachedFileContent, CachedFileLines, LrcParseMethod, LineType);
 		break;
 
-	case EDreamMusicPlayerLyricParseFileType::ASS:
+	case EDreamMusicPlayerLyricType::ASS:
 		Parser = MakeShared<FDreamMusicPlayerLyricFileParser_ASS>(CachedFileContent, CachedFileLines, LineType);
 		break;
 
@@ -142,26 +142,26 @@ FString FDreamLyricParser::GetFileExtension() const
 	return Extension.ToLower();
 }
 
-EDreamMusicPlayerLyricParseFileType FDreamLyricParser::DetectFileType() const
+EDreamMusicPlayerLyricType FDreamLyricParser::DetectFileType() const
 {
 	FString Extension = GetFileExtension();
 
 	if (Extension == TEXT("srt"))
 	{
-		return EDreamMusicPlayerLyricParseFileType::SRT;
+		return EDreamMusicPlayerLyricType::SRT;
 	}
 	else if (Extension == TEXT("ass") || Extension == TEXT("ssa"))
 	{
-		return EDreamMusicPlayerLyricParseFileType::ASS;
+		return EDreamMusicPlayerLyricType::ASS;
 	}
 	else if (Extension == TEXT("lrc"))
 	{
 		// Analyze content to determine LRC subtype
-		return EDreamMusicPlayerLyricParseFileType::LRC;
+		return EDreamMusicPlayerLyricType::LRC;
 	}
 
 	// Default fallback
-	return EDreamMusicPlayerLyricParseFileType::LRC;
+	return EDreamMusicPlayerLyricType::LRC;
 }
 
 EDreamMusicPlayerLrcLyricType FDreamLyricParser::DetectLRCSubtype() const

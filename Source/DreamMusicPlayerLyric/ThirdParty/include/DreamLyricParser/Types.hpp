@@ -3,6 +3,13 @@
 
 #pragma once
 
+// Suppress C4251 warning: STL containers in exported classes are expected
+// This is safe because we ensure proper memory management with explicit destructors
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4251)
+#endif
+
 #include <cstdint>
 #include <map>
 #include <optional>
@@ -20,8 +27,7 @@ struct DREAMLYRICPARSER_API FTimeSpan {
     int milliseconds{0};
 
     constexpr FTimeSpan() = default;
-    constexpr FTimeSpan(int h, int m, int s, int ms) noexcept
-        : hours(h), minutes(m), seconds(s), milliseconds(ms) {}
+    FTimeSpan(int h, int m, int s, int ms) noexcept;
 
     [[nodiscard]] int64_t ToTotalMilliseconds() const noexcept;
     [[nodiscard]] static FTimeSpan FromTotalMilliseconds(int64_t total_ms) noexcept;
@@ -113,6 +119,17 @@ struct DREAMLYRICPARSER_API FParsedLyric {
     FMetadata metadata;
     std::vector<FLyricGroup> groups;
 
+    // 默认构造函数
+    FParsedLyric();
+    
+    // 复制构造函数和赋值运算符，确保正确的内存管理
+    FParsedLyric(const FParsedLyric&);
+    FParsedLyric& operator=(const FParsedLyric&);
+    
+    // 移动构造函数和赋值运算符
+    FParsedLyric(FParsedLyric&&) noexcept;
+    FParsedLyric& operator=(FParsedLyric&&) noexcept;
+
     // 显式析构函数，确保在 DLL 中正确释放 STL 容器
     // 这对于跨 DLL 边界使用非常重要
     ~FParsedLyric();
@@ -122,16 +139,42 @@ struct DREAMLYRICPARSER_API FGroupingRule {
     std::vector<FLyricTextRole> sequence;
     FLyricTextRole fallback{FLyricTextRole::Lyric};
 
+    // 默认构造函数
+    FGroupingRule();
+    
+    // 复制构造函数和赋值运算符
+    FGroupingRule(const FGroupingRule&);
+    FGroupingRule& operator=(const FGroupingRule&);
+    
+    // 移动构造函数和赋值运算符
+    FGroupingRule(FGroupingRule&&) noexcept;
+    FGroupingRule& operator=(FGroupingRule&&) noexcept;
+
     // 显式析构函数，确保在 DLL 中正确释放 STL 容器
     ~FGroupingRule();
 
+    // 返回默认分组规则，确保在 DLL 中正确构造
     [[nodiscard]] static FGroupingRule Default();
 };
 
 struct DREAMLYRICPARSER_API FParserOptions {
-    FGroupingRule grouping = FGroupingRule::Default();
+    FGroupingRule grouping;
+    
+    // 默认构造函数，在 DLL 中正确初始化
+    FParserOptions();
+    
+    // 复制构造函数和赋值运算符
+    FParserOptions(const FParserOptions&);
+    FParserOptions& operator=(const FParserOptions&);
+    
+    // 移动构造函数和赋值运算符
+    FParserOptions(FParserOptions&&) noexcept;
+    FParserOptions& operator=(FParserOptions&&) noexcept;
 };
 
 }  // namespace dream_lyric_parser
 
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 

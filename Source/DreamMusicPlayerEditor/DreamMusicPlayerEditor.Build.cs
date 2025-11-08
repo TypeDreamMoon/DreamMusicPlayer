@@ -10,6 +10,8 @@ public class DreamMusicPlayerEditor : ModuleRules
             new string[]
             {
                 "Core",
+                "DreamMusicPlayer",
+                "DreamMusicPlayerLyric",
             }
         );
 
@@ -19,7 +21,19 @@ public class DreamMusicPlayerEditor : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "Slate",
-                "SlateCore"
+                "SlateCore",
+                "EditorStyle",
+                "EditorWidgets",
+                "ToolMenus",
+                "PropertyEditor",
+                "AssetTools",
+                "AssetRegistry",
+                "ContentBrowser",
+                "WorkspaceMenuStructure",
+                "UnrealEd",
+                "ApplicationCore",
+                "InputCore",
+                "EditorScriptingUtilities"
             }
         );
     }

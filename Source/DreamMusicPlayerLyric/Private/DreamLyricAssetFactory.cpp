@@ -1,6 +1,6 @@
-#include "LyricAssetFactory.h"
-#include "LyricAsset.h"
-#include "LyricImportDialog.h"
+#include "DreamLyricAssetFactory.h"
+#include "DreamLyricAsset.h"
+#include "DreamLyricImportDialog.h"
 #include "DreamLyricParserRuntime.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
@@ -10,6 +10,8 @@
 #include "Widgets/SWindow.h"
 #include "DreamLyricParser/DreamLyricParser.hpp"
 #include <string>
+
+#define LOCTEXT_NAMESPACE "DreamLyricAssetFactory"
 
 ULyricAssetFactory::ULyricAssetFactory(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -21,7 +23,7 @@ ULyricAssetFactory::ULyricAssetFactory(const FObjectInitializer& ObjectInitializ
 	bCreateNew = false;
 	bEditAfterNew = true;
 	bEditorImport = true;
-	SupportedClass = ULyricAsset::StaticClass();
+	SupportedClass = UDreamLyricAsset::StaticClass();
 }
 
 UObject* ULyricAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, FFeedbackContext* Warn, bool& bOutOperationCanceled)
@@ -77,13 +79,14 @@ UObject* ULyricAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InParen
 	// 显示对话框选择导入选项
 	TSharedPtr<SLyricImportDialog> ImportDialog = SNew(SLyricImportDialog);
 	ImportDialog->SetFileFormat(FileFormatName);
+	ImportDialog->SetFilePath(Filename); // 设置文件路径以启用预览
 	
 	TSharedRef<SWindow> Window = SNew(SWindow)
 		.Title(FText::FromString(WindowTitle))
-		.ClientSize(FVector2D(450, 400))
+		.ClientSize(FVector2D(1000, 600))
 		.SupportsMaximize(false)
 		.SupportsMinimize(false)
-		.SizingRule(ESizingRule::Autosized)
+		.SizingRule(ESizingRule::UserSized)
 		[
 			ImportDialog.ToSharedRef()
 		];
@@ -125,7 +128,7 @@ UObject* ULyricAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InParen
 	FDreamLyricParserOptions ParserOptions = ImportDialog->GetParserOptions();
 	
 	// 创建资产
-	ULyricAsset* Asset = NewObject<ULyricAsset>(InParent, InClass, InName, Flags);
+	UDreamLyricAsset* Asset = NewObject<UDreamLyricAsset>(InParent, InClass, InName, Flags);
 	Asset->SourceFileName = FPaths::GetCleanFilename(Filename);
 
 	// 导入文件（使用用户配置的解析选项）
@@ -147,7 +150,12 @@ bool ULyricAssetFactory::FactoryCanImport(const FString& Filename)
 	return Extension == TEXT("lrc") || Extension == TEXT("ass") || Extension == TEXT("srt");
 }
 
-bool ULyricAssetFactory::ImportLyricFile(const FString& Filename, ULyricAsset* Asset, dream_lyric_parser::FParserFormat Format, const FDreamLyricParserOptions& ParserOptions)
+FText ULyricAssetFactory::GetDisplayName() const
+{
+	return LOCTEXT("FactoryDisplayName", "Dream Lyric Asset");
+}
+
+bool ULyricAssetFactory::ImportLyricFile(const FString& Filename, UDreamLyricAsset* Asset, dream_lyric_parser::FParserFormat Format, const FDreamLyricParserOptions& ParserOptions)
 {
 	if (!Asset)
 	{
@@ -197,7 +205,10 @@ bool ULyricAssetFactory::ImportLyricFile(const FString& Filename, ULyricAsset* A
 		}
 
 		// 解析文件 - 使用用户定义的解析选项
-		dream_lyric_parser::FParserOptions Options = UDreamLyricParserRuntime::ConvertParserOptions(ParserOptions);
+		// 注意：FParserOptions 的默认构造函数会调用 FGroupingRule::Default()，
+		// 但 ConvertParserOptions 会立即覆盖它，所以这里是安全的
+		dream_lyric_parser::FParserOptions Options;
+		UDreamLyricParserRuntime::ConvertParserOptions(ParserOptions, Options);
 		
 		// 执行解析
 		dream_lyric_parser::FParsedLyric ParsedLyric = Parser->Parse(ContentStr, Options);
@@ -220,7 +231,7 @@ bool ULyricAssetFactory::ImportLyricFile(const FString& Filename, ULyricAsset* A
 	}
 }
 
-void ULyricAssetFactory::ConvertParsedLyricToAsset(const dream_lyric_parser::FParsedLyric& ParsedLyric, ULyricAsset* Asset)
+void ULyricAssetFactory::ConvertParsedLyricToAsset(const dream_lyric_parser::FParsedLyric& ParsedLyric, UDreamLyricAsset* Asset)
 {
 	// 转换元数据
 	for (const auto& Pair : ParsedLyric.metadata.items)
@@ -231,10 +242,10 @@ void ULyricAssetFactory::ConvertParsedLyricToAsset(const dream_lyric_parser::FPa
 	// 转换组
 	for (const auto& Group : ParsedLyric.groups)
 	{
-		FLyricGroup LyricGroup;
+		FDreamMusicLyricGroup LyricGroup;
 		
 		// 转换时间戳
-		LyricGroup.Timestamp = FLyricTimeSpan(
+		LyricGroup.Timestamp = FDreamMusicLyricTimestamp(
 			Group.timestamp.hours,
 			Group.timestamp.minutes,
 			Group.timestamp.seconds,
@@ -244,22 +255,22 @@ void ULyricAssetFactory::ConvertParsedLyricToAsset(const dream_lyric_parser::FPa
 		// 转换行
 		for (const auto& Line : Group.lines)
 		{
-			FLyricLine LyricLine;
+			FDreamMusicLyricLine LyricLine;
 			
 			// 转换角色
 			switch (Line.role)
 			{
 			case dream_lyric_parser::FLyricTextRole::Lyric:
-				LyricLine.Role = ELyricTextRole::Lyric;
+				LyricLine.Role = EDreamMusicLyricTextRole::Lyric;
 				break;
 			case dream_lyric_parser::FLyricTextRole::Romanization:
-				LyricLine.Role = ELyricTextRole::Romanization;
+				LyricLine.Role = EDreamMusicLyricTextRole::Romanization;
 				break;
 			case dream_lyric_parser::FLyricTextRole::Translation:
-				LyricLine.Role = ELyricTextRole::Translation;
+				LyricLine.Role = EDreamMusicLyricTextRole::Translation;
 				break;
 			default:
-				LyricLine.Role = ELyricTextRole::None;
+				LyricLine.Role = EDreamMusicLyricTextRole::None;
 				break;
 			}
 
@@ -268,9 +279,9 @@ void ULyricAssetFactory::ConvertParsedLyricToAsset(const dream_lyric_parser::FPa
 			// 转换词
 			for (const auto& Word : Line.words)
 			{
-				FLyricWord LyricWord;
-				LyricWord.Text = UTF8_TO_TCHAR(Word.text.c_str());
-				LyricWord.StartTime = FLyricTimeSpan(
+				FDreamMusicLyricWord LyricWord;
+				LyricWord.Content = UTF8_TO_TCHAR(Word.text.c_str());
+				LyricWord.StartTimestamp = FDreamMusicLyricTimestamp(
 					Word.start_time.hours,
 					Word.start_time.minutes,
 					Word.start_time.seconds,
@@ -279,8 +290,8 @@ void ULyricAssetFactory::ConvertParsedLyricToAsset(const dream_lyric_parser::FPa
 
 				if (Word.end_time.has_value())
 				{
-					LyricWord.bHasEndTime = true;
-					LyricWord.EndTime = FLyricTimeSpan(
+					LyricWord.bHasEndTimestamp = true;
+					LyricWord.EndTimestamp = FDreamMusicLyricTimestamp(
 						Word.end_time->hours,
 						Word.end_time->minutes,
 						Word.end_time->seconds,
@@ -289,23 +300,23 @@ void ULyricAssetFactory::ConvertParsedLyricToAsset(const dream_lyric_parser::FPa
 				}
 				else
 				{
-					LyricWord.bHasEndTime = false;
+					LyricWord.bHasEndTimestamp = false;
 				}
 
 				// 转换角色
 				switch (Word.role)
 				{
 				case dream_lyric_parser::FLyricTextRole::Lyric:
-					LyricWord.Role = ELyricTextRole::Lyric;
+					LyricWord.Role = EDreamMusicLyricTextRole::Lyric;
 					break;
 				case dream_lyric_parser::FLyricTextRole::Romanization:
-					LyricWord.Role = ELyricTextRole::Romanization;
+					LyricWord.Role = EDreamMusicLyricTextRole::Romanization;
 					break;
 				case dream_lyric_parser::FLyricTextRole::Translation:
-					LyricWord.Role = ELyricTextRole::Translation;
+					LyricWord.Role = EDreamMusicLyricTextRole::Translation;
 					break;
 				default:
-					LyricWord.Role = ELyricTextRole::None;
+					LyricWord.Role = EDreamMusicLyricTextRole::None;
 					break;
 				}
 
@@ -319,3 +330,4 @@ void ULyricAssetFactory::ConvertParsedLyricToAsset(const dream_lyric_parser::FPa
 	}
 }
 
+#undef LOCTEXT_NAMESPACE

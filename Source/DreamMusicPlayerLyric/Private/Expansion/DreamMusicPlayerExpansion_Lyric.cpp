@@ -9,6 +9,7 @@
 #include "LyricParser/DreamLyricParser.h"
 #include "LyricParser/DreamMusicPlayerLyricTools.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "DreamLyricAsset.h"
 
 using namespace FDreamMusicPlayerLyricTools;
 
@@ -24,12 +25,35 @@ void UDreamMusicPlayerExpansion_Lyric::InitializeLyricList()
 
 	UDreamMusicPlayerExpansionData_Lyric* ExpansionData = CurrentMusicData.GetExpansionData<UDreamMusicPlayerExpansionData_Lyric>();
 
-	FDreamLyricParser Parser(GetLyricFilePath(ExpansionData->LyricFileName),
-	                         ExpansionData->LyricParseFileType,
-	                         ExpansionData->LyricParseLineType,
-	                         ExpansionData->LrcLyricType);
+	if (ExpansionData->LyricFileType != EDreamMusicPlayerLyricType::Asset && ExpansionData->LyricFileType != EDreamMusicPlayerLyricType::Stream)
+	{
+		FDreamLyricParser Parser(GetLyricFilePath(ExpansionData->LyricFileName),
+		                         ExpansionData->LyricFileType,
+		                         ExpansionData->LyricParseLineType,
+		                         ExpansionData->LrcLyricType);
 
-	CurrentMusicLyricList = Parser.GetLyrics();
+		CurrentMusicLyricList = Parser.GetLyrics();
+	}
+	else if (ExpansionData->LyricFileType == EDreamMusicPlayerLyricType::Asset)
+	{
+		UDreamLyricAsset* Asset = ExpansionData->LyricAsset.LoadSynchronous();
+		if (Asset != nullptr)
+		{
+			CurrentMusicLyricList = Asset->ToLegacyLyrics();
+		}
+		else
+		{
+			DMP_LOG_DEBUG_EXPANSION(Error, TEXT("Failed to load LyricAsset: %s"), *ExpansionData->LyricAsset.ToSoftObjectPath().ToString());
+		}
+	}
+	else if (ExpansionData->LyricFileType == EDreamMusicPlayerLyricType::Stream)
+	{
+		UE_LOG(LogDreamMusicPlayer, Error, TEXT("%hs Stream Lyric Not Supported !!!"), __FUNCTION__);
+	}
+	else
+	{
+		DMP_LOG_DEBUG_EXPANSION(Error, TEXT("Lyric File Type Not Supported !!!"));
+	}
 
 	OnLyricListChanged.Broadcast(CurrentMusicLyricList);
 	DMP_LOG_DEBUG_EXPANSION(Log, TEXT("InitializeLyricList Count : %02d - End"), CurrentMusicLyricList.Num());
@@ -199,7 +223,7 @@ FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::CalculateWordProgress
 
 		// **FIX: Use effective duration instead of artificial line duration**
 		float LineProgress = static_cast<float>(TotalProgress) / static_cast<float>(EffectiveDuration);
-		
+
 		// Clamp to ensure we don't exceed 1.0
 		LineProgress = FMath::Clamp(LineProgress, 0.0f, 1.0f);
 
@@ -214,7 +238,7 @@ FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::CalculateWordProgress
 			int32 Elapsed = InCurrentTime.ToMilliseconds() - FirstWordStart.ToMilliseconds();
 			float LineProgress = static_cast<float>(Elapsed) / static_cast<float>(EffectiveDuration);
 			LineProgress = FMath::Clamp(LineProgress, 0.0f, 1.0f);
-			
+
 			return FDreamMusicLyricProgress(-1, LineProgress, false, FDreamMusicLyricWord{});
 		}
 		else

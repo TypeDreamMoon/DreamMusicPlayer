@@ -51,7 +51,7 @@ FDreamLyricImportResult UDreamLyricParserRuntime::ImportLyricFileFromPath(
 	}
 
 	// 创建资产对象
-	ULyricAsset* Asset = NewObject<ULyricAsset>();
+	UDreamLyricAsset* Asset = NewObject<UDreamLyricAsset>();
 	Asset->SourceFileName = FPaths::GetCleanFilename(AbsolutePath);
 
 	// 解析文件内容
@@ -88,7 +88,7 @@ FDreamLyricImportResult UDreamLyricParserRuntime::ImportLyricFileFromString(
 	}
 
 	// 创建资产对象
-	ULyricAsset* Asset = NewObject<ULyricAsset>();
+	UDreamLyricAsset* Asset = NewObject<UDreamLyricAsset>();
 	Asset->SourceFileName = SourceFileName.IsEmpty() ? TEXT("ImportedFromString") : SourceFileName;
 
 	// 解析文件内容
@@ -160,7 +160,7 @@ EDreamLyricParserFormat UDreamLyricParserRuntime::DetectFormatFromExtension(cons
 bool UDreamLyricParserRuntime::ParseLyricContent(
 	const FString& FileContent,
 	dream_lyric_parser::FParserFormat Format,
-	ULyricAsset* OutAsset,
+	UDreamLyricAsset* OutAsset,
 	FString& OutErrorMessage,
 	const FDreamLyricParserOptions& ParserOptions)
 {
@@ -192,7 +192,10 @@ bool UDreamLyricParserRuntime::ParseLyricContent(
 		}
 
 		// 解析文件 - 使用用户定义的解析选项
-		dream_lyric_parser::FParserOptions Options = ConvertParserOptions(ParserOptions);
+		// 注意：FParserOptions 的默认构造函数会调用 FGroupingRule::Default()，
+		// 但 ConvertParserOptions 会立即覆盖它，所以这里是安全的
+		dream_lyric_parser::FParserOptions Options;
+		ConvertParserOptions(ParserOptions, Options);
 		
 		// 执行解析
 		dream_lyric_parser::FParsedLyric ParsedLyric = Parser->Parse(ContentStr, Options);
@@ -216,7 +219,7 @@ bool UDreamLyricParserRuntime::ParseLyricContent(
 
 void UDreamLyricParserRuntime::ConvertParsedLyricToAsset(
 	const dream_lyric_parser::FParsedLyric& ParsedLyric,
-	ULyricAsset* Asset)
+	UDreamLyricAsset* Asset)
 {
 	if (!Asset)
 	{
@@ -232,10 +235,10 @@ void UDreamLyricParserRuntime::ConvertParsedLyricToAsset(
 	// 转换组
 	for (const auto& Group : ParsedLyric.groups)
 	{
-		FLyricGroup LyricGroup;
+		FDreamMusicLyricGroup LyricGroup;
 		
 		// 转换时间戳
-		LyricGroup.Timestamp = FLyricTimeSpan(
+		LyricGroup.Timestamp = FDreamMusicLyricTimestamp(
 			Group.timestamp.hours,
 			Group.timestamp.minutes,
 			Group.timestamp.seconds,
@@ -245,22 +248,22 @@ void UDreamLyricParserRuntime::ConvertParsedLyricToAsset(
 		// 转换行
 		for (const auto& Line : Group.lines)
 		{
-			FLyricLine LyricLine;
+			FDreamMusicLyricLine LyricLine;
 			
 			// 转换角色
 			switch (Line.role)
 			{
 			case dream_lyric_parser::FLyricTextRole::Lyric:
-				LyricLine.Role = ELyricTextRole::Lyric;
+				LyricLine.Role = EDreamMusicLyricTextRole::Lyric;
 				break;
 			case dream_lyric_parser::FLyricTextRole::Romanization:
-				LyricLine.Role = ELyricTextRole::Romanization;
+				LyricLine.Role = EDreamMusicLyricTextRole::Romanization;
 				break;
 			case dream_lyric_parser::FLyricTextRole::Translation:
-				LyricLine.Role = ELyricTextRole::Translation;
+				LyricLine.Role = EDreamMusicLyricTextRole::Translation;
 				break;
 			default:
-				LyricLine.Role = ELyricTextRole::None;
+				LyricLine.Role = EDreamMusicLyricTextRole::None;
 				break;
 			}
 
@@ -269,9 +272,9 @@ void UDreamLyricParserRuntime::ConvertParsedLyricToAsset(
 			// 转换词
 			for (const auto& Word : Line.words)
 			{
-				FLyricWord LyricWord;
-				LyricWord.Text = UTF8_TO_TCHAR(Word.text.c_str());
-				LyricWord.StartTime = FLyricTimeSpan(
+				FDreamMusicLyricWord LyricWord;
+				LyricWord.Content = UTF8_TO_TCHAR(Word.text.c_str());
+				LyricWord.StartTimestamp = FDreamMusicLyricTimestamp(
 					Word.start_time.hours,
 					Word.start_time.minutes,
 					Word.start_time.seconds,
@@ -280,8 +283,8 @@ void UDreamLyricParserRuntime::ConvertParsedLyricToAsset(
 
 				if (Word.end_time.has_value())
 				{
-					LyricWord.bHasEndTime = true;
-					LyricWord.EndTime = FLyricTimeSpan(
+					LyricWord.bHasEndTimestamp = true;
+					LyricWord.EndTimestamp = FDreamMusicLyricTimestamp(
 						Word.end_time->hours,
 						Word.end_time->minutes,
 						Word.end_time->seconds,
@@ -290,23 +293,23 @@ void UDreamLyricParserRuntime::ConvertParsedLyricToAsset(
 				}
 				else
 				{
-					LyricWord.bHasEndTime = false;
+					LyricWord.bHasEndTimestamp = false;
 				}
 
 				// 转换角色
 				switch (Word.role)
 				{
 				case dream_lyric_parser::FLyricTextRole::Lyric:
-					LyricWord.Role = ELyricTextRole::Lyric;
+					LyricWord.Role = EDreamMusicLyricTextRole::Lyric;
 					break;
 				case dream_lyric_parser::FLyricTextRole::Romanization:
-					LyricWord.Role = ELyricTextRole::Romanization;
+					LyricWord.Role = EDreamMusicLyricTextRole::Romanization;
 					break;
 				case dream_lyric_parser::FLyricTextRole::Translation:
-					LyricWord.Role = ELyricTextRole::Translation;
+					LyricWord.Role = EDreamMusicLyricTextRole::Translation;
 					break;
 				default:
-					LyricWord.Role = ELyricTextRole::None;
+					LyricWord.Role = EDreamMusicLyricTextRole::None;
 					break;
 				}
 
@@ -365,76 +368,105 @@ bool UDreamLyricParserRuntime::ValidateThirdPartyLibrary(FString& OutErrorMessag
 	return true;
 }
 
-dream_lyric_parser::FParserOptions UDreamLyricParserRuntime::ConvertParserOptions(const FDreamLyricParserOptions& UEOptions)
+void UDreamLyricParserRuntime::ConvertParserOptions(const FDreamLyricParserOptions& UEOptions, dream_lyric_parser::FParserOptions& OutOptions)
 {
-	dream_lyric_parser::FParserOptions Options;
-	
-	// 如果分组序列为空，直接使用默认规则（参考 CLI 示例的 ConfigureGrouping 函数）
-	if (UEOptions.GroupingSequence.Num() == 0)
+	// 使用 try-catch 来捕获可能的异常
+	try
 	{
-		Options.grouping = dream_lyric_parser::FGroupingRule::Default();
-		return Options;
-	}
-	
-	// 创建自定义分组规则
-	dream_lyric_parser::FGroupingRule GroupingRule;
-	
-	// 转换分组序列（参考 CLI 示例的 ConfigureGrouping 函数）
-	for (ELyricTextRole Role : UEOptions.GroupingSequence)
-	{
-		// 跳过 None 角色
-		if (Role == ELyricTextRole::None)
-		{
-			continue;
-		}
+		// 重要：不要使用 FParserOptions() 默认构造函数，因为它会调用 FGroupingRule::Default()
+		// 这可能在跨 DLL 边界时导致堆损坏。
+		// 策略：创建一个新的 FGroupingRule 对象（在 UE 的堆上），然后一次性赋值给 OutOptions.grouping
+		// 这样可以避免直接操作可能在不同 DLL 中分配的 vector
 		
-		dream_lyric_parser::FLyricTextRole ParserRole;
-		switch (Role)
-		{
-		case ELyricTextRole::Lyric:
-			ParserRole = dream_lyric_parser::FLyricTextRole::Lyric;
-			break;
-		case ELyricTextRole::Romanization:
-			ParserRole = dream_lyric_parser::FLyricTextRole::Romanization;
-			break;
-		case ELyricTextRole::Translation:
-			ParserRole = dream_lyric_parser::FLyricTextRole::Translation;
-			break;
-		default:
-			// 跳过无效角色
-			continue;
-		}
-		GroupingRule.sequence.push_back(ParserRole);
+		// dream_lyric_parser::FGroupingRule NewGroupingRule;
+		
+		// 如果分组序列为空，手动创建默认规则（避免调用可能不安全的 Default()）
+		// if (UEOptions.GroupingSequence.Num() == 0)
+		// {
+		// 	NewGroupingRule.sequence.push_back(dream_lyric_parser::FLyricTextRole::Lyric);
+		// 	NewGroupingRule.fallback = dream_lyric_parser::FLyricTextRole::Lyric;
+		// 	OutOptions.grouping = NewGroupingRule;
+		// 	return;
+		// }
+		
+		// 转换分组序列（参考 CLI 示例的 ConfigureGrouping 函数）
+		// for (EDreamMusicLyricTextRole Role : UEOptions.GroupingSequence)
+		// {
+		// 	// 跳过 None 角色
+		// 	if (Role == EDreamMusicLyricTextRole::None)
+		// 	{
+		// 		continue;
+		// 	}
+		// 	
+		// 	dream_lyric_parser::FLyricTextRole ParserRole;
+		// 	switch (Role)
+		// 	{
+		// 	case EDreamMusicLyricTextRole::Lyric:
+		// 		ParserRole = dream_lyric_parser::FLyricTextRole::Lyric;
+		// 		break;
+		// 	case EDreamMusicLyricTextRole::Romanization:
+		// 		ParserRole = dream_lyric_parser::FLyricTextRole::Romanization;
+		// 		break;
+		// 	case EDreamMusicLyricTextRole::Translation:
+		// 		ParserRole = dream_lyric_parser::FLyricTextRole::Translation;
+		// 		break;
+		// 	default:
+		// 		// 跳过无效角色
+		// 		continue;
+		// 	}
+		// 	NewGroupingRule.sequence.push_back(ParserRole);
+		// }
+		
+		// 如果转换后序列为空，手动创建默认规则
+		// if (NewGroupingRule.sequence.empty())
+		// {
+		// 	NewGroupingRule.sequence.push_back(dream_lyric_parser::FLyricTextRole::Lyric);
+		// 	NewGroupingRule.fallback = dream_lyric_parser::FLyricTextRole::Lyric;
+		// 	OutOptions.grouping = NewGroupingRule;
+		// 	return;
+		// }
+		
+		// 转换回退角色
+		// switch (UEOptions.FallbackRole)
+		// {
+		// case EDreamMusicLyricTextRole::Lyric:
+		// 	NewGroupingRule.fallback = dream_lyric_parser::FLyricTextRole::Lyric;
+		// 	break;
+		// case EDreamMusicLyricTextRole::Romanization:
+		// 	NewGroupingRule.fallback = dream_lyric_parser::FLyricTextRole::Romanization;
+		// 	break;
+		// case EDreamMusicLyricTextRole::Translation:
+		// 	NewGroupingRule.fallback = dream_lyric_parser::FLyricTextRole::Translation;
+		// 	break;
+		// default:
+		// 	// 如果回退角色无效，使用 Lyric 作为默认值
+		// 	NewGroupingRule.fallback = dream_lyric_parser::FLyricTextRole::Lyric;
+		// 	break;
+		// }
+		
+		// 使用配置的分组规则（赋值操作会在 DLL 内部正确处理内存）
+		// 关键：一次性赋值，让 DLL 内部的赋值运算符处理内存管理
+		// OutOptions.grouping = NewGroupingRule;
 	}
-	
-	// 如果转换后序列为空，使用默认规则
-	if (GroupingRule.sequence.empty())
+	catch (const std::exception& e)
 	{
-		Options.grouping = dream_lyric_parser::FGroupingRule::Default();
-		return Options;
+		// 如果发生异常，设置一个安全的默认配置
+		// 注意：不要使用 FParserOptions() 构造函数，避免调用 FGroupingRule::Default()
+		UE_LOG(LogTemp, Error, TEXT("ConvertParserOptions exception: %s"), UTF8_TO_TCHAR(e.what()));
+		dream_lyric_parser::FGroupingRule SafeGrouping;
+		SafeGrouping.sequence.push_back(dream_lyric_parser::FLyricTextRole::Lyric);
+		SafeGrouping.fallback = dream_lyric_parser::FLyricTextRole::Lyric;
+		OutOptions.grouping = SafeGrouping;
 	}
-	
-	// 转换回退角色
-	switch (UEOptions.FallbackRole)
+	catch (...)
 	{
-	case ELyricTextRole::Lyric:
-		GroupingRule.fallback = dream_lyric_parser::FLyricTextRole::Lyric;
-		break;
-	case ELyricTextRole::Romanization:
-		GroupingRule.fallback = dream_lyric_parser::FLyricTextRole::Romanization;
-		break;
-	case ELyricTextRole::Translation:
-		GroupingRule.fallback = dream_lyric_parser::FLyricTextRole::Translation;
-		break;
-	default:
-		// 如果回退角色无效，使用 Lyric 作为默认值
-		GroupingRule.fallback = dream_lyric_parser::FLyricTextRole::Lyric;
-		break;
+		// 捕获所有其他异常
+		// 注意：不要使用 FParserOptions() 构造函数，避免调用 FGroupingRule::Default()
+		UE_LOG(LogTemp, Error, TEXT("ConvertParserOptions unknown exception"));
+		dream_lyric_parser::FGroupingRule SafeGrouping;
+		SafeGrouping.sequence.push_back(dream_lyric_parser::FLyricTextRole::Lyric);
+		SafeGrouping.fallback = dream_lyric_parser::FLyricTextRole::Lyric;
+		OutOptions.grouping = SafeGrouping;
 	}
-	
-	// 使用配置的分组规则
-	Options.grouping = GroupingRule;
-	
-	return Options;
 }
 

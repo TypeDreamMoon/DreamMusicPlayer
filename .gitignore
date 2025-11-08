@@ -73,3 +73,6 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+!Source/DreamMusicPlayerLyric/ThirdParty/lib/**/*.lib
+!Source/DreamMusicPlayerLyric/ThirdParty/lib/**/*.dll

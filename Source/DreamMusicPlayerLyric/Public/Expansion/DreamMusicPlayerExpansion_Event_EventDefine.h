@@ -14,7 +14,7 @@ struct FDreamMusicLyric;
  * 
  */
 UCLASS(Abstract, Blueprintable, EditInlineNew, DisplayName = "Event Define")
-class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansion_Event_EventDefine : public UObject
+class DREAMMUSICPLAYERLYRIC_API UDreamMusicPlayerExpansion_Event_EventDefine : public UObject
 {
 	GENERATED_BODY()
 

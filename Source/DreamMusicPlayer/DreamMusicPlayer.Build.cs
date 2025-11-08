@@ -34,7 +34,6 @@ public class DreamMusicPlayer : ModuleRules
 			}
 		);
 
-
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
@@ -45,11 +44,10 @@ public class DreamMusicPlayer : ModuleRules
 				"AudioSynesthesia",
 				"AudioSynesthesiaCore",
 				"DeveloperSettings",
-				"AudioExtensions"
+				"AudioExtensions",
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);
-
 
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]

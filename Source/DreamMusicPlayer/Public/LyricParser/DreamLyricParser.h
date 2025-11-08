@@ -5,13 +5,13 @@
 struct FDreamMusicPlayerLyricFileParserBase;
 struct FDreamMusicLyric;
 enum class EDreamMusicPlayerLyricParseLineType : uint8;
-enum class EDreamMusicPlayerLyricParseFileType : uint8;
+enum class EDreamMusicPlayerLyricType : uint8;
 
 // Lyrics File Parser
 struct DREAMMUSICPLAYER_API FDreamLyricParser
 {
 	FDreamLyricParser() = delete;
-	FDreamLyricParser(FString InFilePath, EDreamMusicPlayerLyricParseFileType InFileType, EDreamMusicPlayerLyricParseLineType InLineType, EDreamMusicPlayerLrcLyricType InLrcParseMethod = EDreamMusicPlayerLrcLyricType::None);
+	FDreamLyricParser(FString InFilePath, EDreamMusicPlayerLyricType InFileType, EDreamMusicPlayerLyricParseLineType InLineType, EDreamMusicPlayerLrcLyricType InLrcParseMethod = EDreamMusicPlayerLrcLyricType::None);
 
 public:
 	FString FilePath;
@@ -19,7 +19,7 @@ public:
 	TArray<FString> CachedFileLines;
 	TMap<FString, FString> MetaData;
 	TArray<FDreamMusicLyric> Lyrics;
-	EDreamMusicPlayerLyricParseFileType FileType;
+	EDreamMusicPlayerLyricType FileType;
 	EDreamMusicPlayerLyricParseLineType LineType;
 	EDreamMusicPlayerLrcLyricType LrcParseMethod = EDreamMusicPlayerLrcLyricType::LineByLine;
 	TSharedPtr<FDreamMusicPlayerLyricFileParserBase> Parser;
@@ -37,7 +37,7 @@ public:
 	bool IsValidLyricFile() const;
 	FString GetFileExtension() const;
 
-	EDreamMusicPlayerLyricParseFileType DetectFileType() const;
+	EDreamMusicPlayerLyricType DetectFileType() const;
 	EDreamMusicPlayerLrcLyricType DetectLRCSubtype() const;
 
 	void ExtractMetadata();

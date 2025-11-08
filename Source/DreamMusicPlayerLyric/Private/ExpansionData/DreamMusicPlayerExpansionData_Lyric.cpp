@@ -2,3 +2,4 @@
 
 
 #include "ExpansionData/DreamMusicPlayerExpansionData_Lyric.h"
+#include "DreamLyricAsset.h"

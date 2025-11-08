@@ -1,7 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LyricAsset.h"
+#include "DreamLyricAsset.h"
+#include "DreamMusicPlayerCommon.h"  // 包含旧系统的类型定义
 #include "DreamLyricParser/DreamLyricParser.hpp"
 #include "DreamLyricParser/Types.hpp"
 #include "DreamLyricParserRuntime.generated.h"
@@ -34,13 +35,13 @@ struct DREAMMUSICPLAYERLYRIC_API FDreamLyricParserOptions
 	 * 例如：[Lyric, Translation] 表示先按原歌词分组，再按翻译分组
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parser Options", meta = (Bitflags))
-	TArray<ELyricTextRole> GroupingSequence;
+	TArray<EDreamMusicLyricTextRole> GroupingSequence;
 
 	/**
 	 * @brief 回退角色 - 当无法匹配序列中的角色时使用的默认角色
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parser Options")
-	ELyricTextRole FallbackRole = ELyricTextRole::Lyric;
+	EDreamMusicLyricTextRole FallbackRole = EDreamMusicLyricTextRole::Lyric;
 
 	/**
 	 * @brief 使用默认配置
@@ -48,15 +49,15 @@ struct DREAMMUSICPLAYERLYRIC_API FDreamLyricParserOptions
 	static FDreamLyricParserOptions GetDefault()
 	{
 		FDreamLyricParserOptions Options;
-		Options.GroupingSequence.Add(ELyricTextRole::Lyric);
-		Options.FallbackRole = ELyricTextRole::Lyric;
+		Options.GroupingSequence.Add(EDreamMusicLyricTextRole::Lyric);
+		Options.FallbackRole = EDreamMusicLyricTextRole::Lyric;
 		return Options;
 	}
 
 	FDreamLyricParserOptions()
 	{
-		GroupingSequence.Add(ELyricTextRole::Lyric);
-		FallbackRole = ELyricTextRole::Lyric;
+		GroupingSequence.Add(EDreamMusicLyricTextRole::Lyric);
+		FallbackRole = EDreamMusicLyricTextRole::Lyric;
 	}
 };
 
@@ -75,10 +76,10 @@ struct DREAMMUSICPLAYERLYRIC_API FDreamLyricImportResult
 	FString ErrorMessage;
 
 	UPROPERTY(BlueprintReadOnly)
-	ULyricAsset* Asset = nullptr;
+	UDreamLyricAsset* Asset = nullptr;
 
 	FDreamLyricImportResult() = default;
-	FDreamLyricImportResult(bool bInSuccess, const FString& InErrorMessage, ULyricAsset* InAsset = nullptr)
+	FDreamLyricImportResult(bool bInSuccess, const FString& InErrorMessage, UDreamLyricAsset* InAsset = nullptr)
 		: bSuccess(bInSuccess), ErrorMessage(InErrorMessage), Asset(InAsset) {}
 };
 
@@ -169,22 +170,24 @@ public:
 	static bool ParseLyricContent(
 		const FString& FileContent,
 		dream_lyric_parser::FParserFormat Format,
-		ULyricAsset* OutAsset,
+		UDreamLyricAsset* OutAsset,
 		FString& OutErrorMessage,
 		const FDreamLyricParserOptions& ParserOptions = FDreamLyricParserOptions()
 	);
 
 	/**
 	 * @brief 将 UE 解析选项转换为第三方库解析选项
+	 * @param UEOptions UE 解析选项
+	 * @param OutOptions 输出的解析选项（使用输出参数避免跨 DLL 边界返回值问题）
 	 */
-	static dream_lyric_parser::FParserOptions ConvertParserOptions(const FDreamLyricParserOptions& UEOptions);
+	static void ConvertParserOptions(const FDreamLyricParserOptions& UEOptions, dream_lyric_parser::FParserOptions& OutOptions);
 
 	/**
 	 * @brief 将第三方库的解析结果转换为 ULyricAsset
 	 */
 	static void ConvertParsedLyricToAsset(
 		const dream_lyric_parser::FParsedLyric& ParsedLyric,
-		ULyricAsset* Asset
+		UDreamLyricAsset* Asset
 	);
 };
 

@@ -14,7 +14,7 @@ class UDreamMusicPlayerExpansion_Event_EventDefine;
  * 继承自UDreamMusicPlayerExpansion基类，提供歌词事件定义和负载数据管理功能
  */
 UCLASS(DisplayName = "Event")
-class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansion_Event : public UDreamMusicPlayerExpansion
+class DREAMMUSICPLAYERLYRIC_API UDreamMusicPlayerExpansion_Event : public UDreamMusicPlayerExpansion
 {
 	GENERATED_BODY()
 
