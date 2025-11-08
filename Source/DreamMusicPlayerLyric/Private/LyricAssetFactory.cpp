@@ -1,6 +1,7 @@
 #include "LyricAssetFactory.h"
 #include "LyricAsset.h"
 #include "LyricImportDialog.h"
+#include "DreamLyricParserRuntime.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "HAL/PlatformFilemanager.h"
@@ -43,38 +44,67 @@ UObject* ULyricAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InParen
 	// 确定文件格式
 	FString Extension = FPaths::GetExtension(Filename).ToLower();
 	dream_lyric_parser::FParserFormat ParserFormat;
+	FString WindowTitle;
+	FString FileFormatName;
 
+	// 根据文件扩展名设置格式和窗口标题
 	if (Extension == TEXT("lrc"))
 	{
-		UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: LRC file detected, showing import dialog"));
-		
-		// 显示对话框选择导入模式
-		TSharedPtr<SLyricImportDialog> ImportDialog = SNew(SLyricImportDialog);
-		TSharedRef<SWindow> Window = SNew(SWindow)
-			.Title(NSLOCTEXT("LyricImport", "WindowTitle", "Import LRC File"))
-			.ClientSize(FVector2D(450, 300))
-			.SupportsMaximize(false)
-			.SupportsMinimize(false)
-			.SizingRule(ESizingRule::Autosized)
-			[
-				ImportDialog.ToSharedRef()
-			];
+		ParserFormat = dream_lyric_parser::FParserFormat::LrcLineByLine; // 默认值，会在对话框中修改
+		WindowTitle = TEXT("Import LRC File");
+		FileFormatName = TEXT("lrc");
+	}
+	else if (Extension == TEXT("ass"))
+	{
+		ParserFormat = dream_lyric_parser::FParserFormat::Ass;
+		WindowTitle = TEXT("Import ASS File");
+		FileFormatName = TEXT("ass");
+	}
+	else if (Extension == TEXT("srt"))
+	{
+		ParserFormat = dream_lyric_parser::FParserFormat::Srt;
+		WindowTitle = TEXT("Import SRT File");
+		FileFormatName = TEXT("srt");
+	}
+	else
+	{
+		Warn->Logf(ELogVerbosity::Error, TEXT("Unsupported file format: %s"), *Extension);
+		return nullptr;
+	}
 
-		// 设置父窗口引用，以便对话框可以关闭窗口
-		ImportDialog->SetParentWindow(Window);
+	UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: %s file detected, showing import dialog"), *FileFormatName.ToUpper());
+	
+	// 显示对话框选择导入选项
+	TSharedPtr<SLyricImportDialog> ImportDialog = SNew(SLyricImportDialog);
+	ImportDialog->SetFileFormat(FileFormatName);
+	
+	TSharedRef<SWindow> Window = SNew(SWindow)
+		.Title(FText::FromString(WindowTitle))
+		.ClientSize(FVector2D(450, 400))
+		.SupportsMaximize(false)
+		.SupportsMinimize(false)
+		.SizingRule(ESizingRule::Autosized)
+		[
+			ImportDialog.ToSharedRef()
+		];
 
-		UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Adding modal window"));
-		FSlateApplication::Get().AddModalWindow(Window, nullptr);
-		UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Modal window closed, should import: %d"), ImportDialog->ShouldImport() ? 1 : 0);
+	// 设置父窗口引用，以便对话框可以关闭窗口
+	ImportDialog->SetParentWindow(Window);
 
-		if (!ImportDialog->ShouldImport())
-		{
-			UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Import cancelled by user"));
-			bOutOperationCanceled = true;
-			return nullptr;
-		}
+	UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Adding modal window"));
+	FSlateApplication::Get().AddModalWindow(Window, nullptr);
+	UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Modal window closed, should import: %d"), ImportDialog->ShouldImport() ? 1 : 0);
 
-		// 根据选择的模式设置解析格式
+	if (!ImportDialog->ShouldImport())
+	{
+		UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Import cancelled by user"));
+		bOutOperationCanceled = true;
+		return nullptr;
+	}
+
+	// 对于 LRC 文件，根据选择的模式设置解析格式
+	if (Extension == TEXT("lrc"))
+	{
 		ELrcImportMode SelectedMode = ImportDialog->GetSelectedMode();
 		switch (SelectedMode)
 		{
@@ -90,27 +120,17 @@ UObject* ULyricAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InParen
 			break;
 		}
 	}
-	else if (Extension == TEXT("ass"))
-	{
-		ParserFormat = dream_lyric_parser::FParserFormat::Ass;
-	}
-	else if (Extension == TEXT("srt"))
-	{
-		ParserFormat = dream_lyric_parser::FParserFormat::Srt;
-	}
-	else
-	{
-		Warn->Logf(ELogVerbosity::Error, TEXT("Unsupported file format: %s"), *Extension);
-		return nullptr;
-	}
-
+	
+	// 获取用户配置的解析选项
+	FDreamLyricParserOptions ParserOptions = ImportDialog->GetParserOptions();
+	
 	// 创建资产
 	ULyricAsset* Asset = NewObject<ULyricAsset>(InParent, InClass, InName, Flags);
 	Asset->SourceFileName = FPaths::GetCleanFilename(Filename);
 
-	// 导入文件
-	UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Starting file import"));
-	if (!ImportLyricFile(Filename, Asset, ParserFormat))
+	// 导入文件（使用用户配置的解析选项）
+	UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Starting file import with custom parser options"));
+	if (!ImportLyricFile(Filename, Asset, ParserFormat, ParserOptions))
 	{
 		UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: Failed to import lyric file: %s"), *Filename);
 		Warn->Logf(ELogVerbosity::Error, TEXT("Failed to import lyric file: %s"), *Filename);
@@ -127,8 +147,14 @@ bool ULyricAssetFactory::FactoryCanImport(const FString& Filename)
 	return Extension == TEXT("lrc") || Extension == TEXT("ass") || Extension == TEXT("srt");
 }
 
-bool ULyricAssetFactory::ImportLyricFile(const FString& Filename, ULyricAsset* Asset, dream_lyric_parser::FParserFormat Format)
+bool ULyricAssetFactory::ImportLyricFile(const FString& Filename, ULyricAsset* Asset, dream_lyric_parser::FParserFormat Format, const FDreamLyricParserOptions& ParserOptions)
 {
+	if (!Asset)
+	{
+		UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: Asset is null"));
+		return false;
+	}
+
 	// 读取文件内容
 	FString FileContent;
 	if (!FFileHelper::LoadFileToString(FileContent, *Filename))
@@ -137,22 +163,19 @@ bool ULyricAssetFactory::ImportLyricFile(const FString& Filename, ULyricAsset* A
 		return false;
 	}
 
+	UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: File read successfully, size: %d bytes"), FileContent.Len());
+
 	// 转换为std::string
 	std::string ContentStr = TCHAR_TO_UTF8(*FileContent);
 
 	UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Attempting to create parser for format: %d"), (int32)Format);
 
-	// 检查 DLL 是否存在
-	FString DllPath = FPaths::Combine(FPaths::EngineDir(), TEXT("Binaries"), TEXT("Win64"), TEXT("DreamLyricParser.dll"));
-	if (!FPaths::FileExists(DllPath))
+	// 验证第三方库（参考 DreamLyricParserRuntime 的实现）
+	FString LibraryError;
+	if (!UDreamLyricParserRuntime::ValidateThirdPartyLibrary(LibraryError))
 	{
-		// 尝试在项目目录中查找
-		DllPath = FPaths::Combine(FPaths::ProjectDir(), TEXT("Binaries"), TEXT("Win64"), TEXT("DreamLyricParser.dll"));
-		if (!FPaths::FileExists(DllPath))
-		{
-			UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: DreamLyricParser.dll not found. Please ensure the DLL is in Engine/Binaries/Win64/ or Project/Binaries/Win64/"));
-			return false;
-		}
+		UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: %s"), *LibraryError);
+		return false;
 	}
 
 	// 使用 try-catch 来捕获异常
@@ -173,19 +196,26 @@ bool ULyricAssetFactory::ImportLyricFile(const FString& Filename, ULyricAsset* A
 			return false;
 		}
 
-		// 解析文件
-		dream_lyric_parser::FParserOptions Options;
+		// 解析文件 - 使用用户定义的解析选项
+		dream_lyric_parser::FParserOptions Options = UDreamLyricParserRuntime::ConvertParserOptions(ParserOptions);
+		
+		// 执行解析
 		dream_lyric_parser::FParsedLyric ParsedLyric = Parser->Parse(ContentStr, Options);
 
 		// 转换为资产数据
 		ConvertParsedLyricToAsset(ParsedLyric, Asset);
 
-		UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Successfully parsed and converted lyric file"));
+		UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Successfully parsed and converted lyric file with %d groups"), Asset->Groups.Num());
 		return true;
+	}
+	catch (const std::exception& e)
+	{
+		UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: Exception occurred: %s"), UTF8_TO_TCHAR(e.what()));
+		return false;
 	}
 	catch (...)
 	{
-		UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: Exception occurred while importing lyric file. This may be due to missing DreamLyricParser.dll or incompatible DLL version."));
+		UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: Unknown exception occurred while importing lyric file. This may be due to missing DreamLyricParser.dll or incompatible DLL version."));
 		return false;
 	}
 }

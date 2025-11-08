@@ -23,6 +23,7 @@ public class DreamMusicPlayerLyric : ModuleRules
 			new string[]
 			{
 				"CoreUObject",
+				"InputCore",
 				"Engine",
 				"Slate",
 				"SlateCore",

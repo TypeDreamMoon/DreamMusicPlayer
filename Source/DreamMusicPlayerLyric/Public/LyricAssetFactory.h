@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "DreamLyricParser/Parser_Interface.hpp"
 #include "DreamLyricParser/Types.hpp"
+#include "DreamLyricParserRuntime.h"
 #include "UObject/NoExportTypes.h"
 #include "Factories/Factory.h"
 #include "LyricAssetFactory.generated.h"
@@ -19,7 +20,7 @@ public:
 	virtual bool FactoryCanImport(const FString& Filename) override;
 
 private:
-	bool ImportLyricFile(const FString& Filename, ULyricAsset* Asset, dream_lyric_parser::FParserFormat Format);
+	bool ImportLyricFile(const FString& Filename, ULyricAsset* Asset, dream_lyric_parser::FParserFormat Format, const FDreamLyricParserOptions& ParserOptions = FDreamLyricParserOptions());
 	void ConvertParsedLyricToAsset(const dream_lyric_parser::FParsedLyric& ParsedLyric, ULyricAsset* Asset);
 };
 
