@@ -16,10 +16,10 @@ class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansionData_AudioAnalysis : public
 
 public:
 	// 频谱可视化对象
-	UPROPERTY(Category="Visual", EditAnywhere, BlueprintReadWrite, meta=(MetaClass = "ConstantQNRT"))
+	UPROPERTY(Category="Visual", EditAnywhere, BlueprintReadWrite, meta=(MetaClass = "/Script/AudioSynesthesia.ConstantQNRT"))
 	FSoftObjectPath ConstantQ;
 
 	// 响度可视化对象
-	UPROPERTY(Category="Visual", EditAnywhere, BlueprintReadWrite, meta=(MetaClass = "LoudnessNRT"))
+	UPROPERTY(Category="Visual", EditAnywhere, BlueprintReadWrite, meta=(MetaClass = "/Script/AudioSynesthesia.LoudnessNRT"))
 	FSoftObjectPath Loudness;
 };
