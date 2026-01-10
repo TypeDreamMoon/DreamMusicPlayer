@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 2,
-	"VersionName": "2.0.0",
+	"VersionName": "2.1.0",
 	"FriendlyName": "DreamMusicPlayer",
 	"Description": "梦月虚幻音乐播放器 ~ 逐字歌词 LRC ASS SRT 文件解析 主题色计算 音频可视化 ~",
 	"Category": "DreamPlugin",
