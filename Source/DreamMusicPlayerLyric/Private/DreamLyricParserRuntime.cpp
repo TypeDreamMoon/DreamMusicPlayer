@@ -4,9 +4,12 @@
 #include "HAL/PlatformFilemanager.h"
 #include <string>
 
+#include "DreamLyricAssetConverter.h"
+#include "DreamLyricParser/Parser.hpp"
+
 FDreamLyricImportResult UDreamLyricParserRuntime::ImportLyricFileFromPath(
 	const FString& FilePath,
-	EDreamLyricParserFormat Format,
+	EDreamMusicPlayerLyricType Format,
 	const FDreamLyricParserOptions& ParserOptions)
 {
 	FDreamLyricImportResult Result;
@@ -29,18 +32,6 @@ FDreamLyricImportResult UDreamLyricParserRuntime::ImportLyricFileFromPath(
 		return Result;
 	}
 
-	// 如果格式为默认值，尝试自动检测
-	if (Format == EDreamLyricParserFormat::LrcLineByLine)
-	{
-		Format = DetectFileFormat(AbsolutePath);
-		if (Format == EDreamLyricParserFormat::LrcLineByLine)
-		{
-			// 如果检测失败，尝试根据扩展名判断
-			FString Extension = FPaths::GetExtension(AbsolutePath).ToLower();
-			Format = DetectFormatFromExtension(Extension);
-		}
-	}
-
 	// 读取文件内容
 	FString FileContent;
 	if (!FFileHelper::LoadFileToString(FileContent, *AbsolutePath))
@@ -56,7 +47,7 @@ FDreamLyricImportResult UDreamLyricParserRuntime::ImportLyricFileFromPath(
 
 	// 解析文件内容
 	FString ParseError;
-	dream_lyric_parser::FParserFormat ParserFormat = ConvertFormat(Format);
+	dream_lyric_parser::parser::EParserFileFormat ParserFormat = ConvertFormat(Format);
 	if (!ParseLyricContent(FileContent, ParserFormat, Asset, ParseError, ParserOptions))
 	{
 		Result.bSuccess = false;
@@ -72,7 +63,7 @@ FDreamLyricImportResult UDreamLyricParserRuntime::ImportLyricFileFromPath(
 
 FDreamLyricImportResult UDreamLyricParserRuntime::ImportLyricFileFromString(
 	const FString& FileContent,
-	EDreamLyricParserFormat Format,
+	EDreamMusicPlayerLyricType Format,
 	const FString& SourceFileName,
 	const FDreamLyricParserOptions& ParserOptions)
 {
@@ -93,7 +84,7 @@ FDreamLyricImportResult UDreamLyricParserRuntime::ImportLyricFileFromString(
 
 	// 解析文件内容
 	FString ParseError;
-	dream_lyric_parser::FParserFormat ParserFormat = ConvertFormat(Format);
+	dream_lyric_parser::parser::EParserFileFormat ParserFormat = ConvertFormat(Format);
 	if (!ParseLyricContent(FileContent, ParserFormat, Asset, ParseError, ParserOptions))
 	{
 		Result.bSuccess = false;
@@ -107,7 +98,7 @@ FDreamLyricImportResult UDreamLyricParserRuntime::ImportLyricFileFromString(
 	return Result;
 }
 
-EDreamLyricParserFormat UDreamLyricParserRuntime::DetectFileFormat(const FString& FilePath)
+EDreamMusicPlayerLyricType UDreamLyricParserRuntime::DetectFileFormat(const FString& FilePath)
 {
 	FString Extension = FPaths::GetExtension(FilePath).ToLower();
 	return DetectFormatFromExtension(Extension);
@@ -119,47 +110,38 @@ bool UDreamLyricParserRuntime::CanImportFile(const FString& FilePath)
 	return Extension == TEXT("lrc") || Extension == TEXT("ass") || Extension == TEXT("srt");
 }
 
-dream_lyric_parser::FParserFormat UDreamLyricParserRuntime::ConvertFormat(EDreamLyricParserFormat Format)
+dream_lyric_parser::parser::EParserFileFormat UDreamLyricParserRuntime::ConvertFormat(EDreamMusicPlayerLyricType Format)
 {
 	switch (Format)
 	{
-	case EDreamLyricParserFormat::LrcLineByLine:
-		return dream_lyric_parser::FParserFormat::LrcLineByLine;
-	case EDreamLyricParserFormat::LrcWordByWord:
-		return dream_lyric_parser::FParserFormat::LrcWordByWord;
-	case EDreamLyricParserFormat::LrcEsLyric:
-		return dream_lyric_parser::FParserFormat::LrcEsLyric;
-	case EDreamLyricParserFormat::Srt:
-		return dream_lyric_parser::FParserFormat::Srt;
-	case EDreamLyricParserFormat::Ass:
-		return dream_lyric_parser::FParserFormat::Ass;
-	default:
-		return dream_lyric_parser::FParserFormat::LrcLineByLine;
+	case EDreamMusicPlayerLyricType::LRC:
+		return dream_lyric_parser::parser::EParserFileFormat::LRC;
+	case EDreamMusicPlayerLyricType::LRCES:
+		return dream_lyric_parser::parser::EParserFileFormat::ESLyric;
+	case EDreamMusicPlayerLyricType::LYS:
+		return dream_lyric_parser::parser::EParserFileFormat::LYS;
+	case EDreamMusicPlayerLyricType::QRC:
+		return dream_lyric_parser::parser::EParserFileFormat::QRC;
+	case EDreamMusicPlayerLyricType::YRC:
+		return dream_lyric_parser::parser::EParserFileFormat::YRC;
 	}
+	return dream_lyric_parser::parser::EParserFileFormat::LRC;
 }
 
-EDreamLyricParserFormat UDreamLyricParserRuntime::DetectFormatFromExtension(const FString& Extension)
+EDreamMusicPlayerLyricType UDreamLyricParserRuntime::DetectFormatFromExtension(const FString& Extension)
 {
 	FString LowerExtension = Extension.ToLower();
 	if (LowerExtension == TEXT("lrc"))
 	{
-		return EDreamLyricParserFormat::LrcLineByLine;
+		return EDreamMusicPlayerLyricType::LRC;
 	}
-	else if (LowerExtension == TEXT("ass") || LowerExtension == TEXT("ssa"))
-	{
-		return EDreamLyricParserFormat::Ass;
-	}
-	else if (LowerExtension == TEXT("srt"))
-	{
-		return EDreamLyricParserFormat::Srt;
-	}
-	
-	return EDreamLyricParserFormat::LrcLineByLine;
+
+	return EDreamMusicPlayerLyricType::LRC;
 }
 
 bool UDreamLyricParserRuntime::ParseLyricContent(
 	const FString& FileContent,
-	dream_lyric_parser::FParserFormat Format,
+	dream_lyric_parser::parser::EParserFileFormat Format,
 	UDreamLyricAsset* OutAsset,
 	FString& OutErrorMessage,
 	const FDreamLyricParserOptions& ParserOptions)
@@ -177,7 +159,7 @@ bool UDreamLyricParserRuntime::ParseLyricContent(
 	try
 	{
 		// 创建解析器
-		auto Parser = dream_lyric_parser::CreateParser(Format);
+		auto Parser = dream_lyric_parser::parser::FParserFactory::CreateParser(Format);
 		if (!Parser)
 		{
 			OutErrorMessage = TEXT("无法创建解析器");
@@ -196,7 +178,7 @@ bool UDreamLyricParserRuntime::ParseLyricContent(
 		// 但 ConvertParserOptions 会立即覆盖它，所以这里是安全的
 		dream_lyric_parser::FParserOptions Options;
 		ConvertParserOptions(ParserOptions, Options);
-		
+
 		// 执行解析
 		dream_lyric_parser::FParsedLyric ParsedLyric = Parser->Parse(ContentStr, Options);
 
@@ -214,6 +196,123 @@ bool UDreamLyricParserRuntime::ParseLyricContent(
 	{
 		OutErrorMessage = TEXT("发生未知异常，可能是 DLL 版本不兼容或缺失");
 		return false;
+	}
+}
+
+void UDreamLyricParserRuntime::ConvertParsedLyricToUnreal(dream_lyric_parser::FParsedLyric ParsedLyric, TArray<FDreamMusicLyricGroup>& OutGroups)
+{
+	// 转换组
+	for (const auto& Group : ParsedLyric.groups)
+	{
+		FDreamMusicLyricGroup LyricGroup;
+
+		// 转换时间戳
+		LyricGroup.Timestamp = FDreamMusicLyricTimestamp(
+			Group.timestamp.hours,
+			Group.timestamp.minutes,
+			Group.timestamp.seconds,
+			Group.timestamp.milliseconds
+		);
+
+		// 转换行
+		for (const auto& Line : Group.GetLines())
+		{
+			FDreamMusicLyricLine LyricLine;
+
+			// 转换角色
+			switch (Line.role)
+			{
+			case dream_lyric_parser::FLyricTextRole::Lyric:
+				LyricLine.Role = EDreamMusicLyricTextRole::Lyric;
+				break;
+			case dream_lyric_parser::FLyricTextRole::Romanization:
+				LyricLine.Role = EDreamMusicLyricTextRole::Romanization;
+				break;
+			case dream_lyric_parser::FLyricTextRole::Translation:
+				LyricLine.Role = EDreamMusicLyricTextRole::Translation;
+				break;
+			default:
+				LyricLine.Role = EDreamMusicLyricTextRole::None;
+				break;
+			}
+
+			LyricLine.Text = UTF8_TO_TCHAR(Line.text.c_str());
+
+			// 转换词
+			for (const auto& Word : Line.words)
+			{
+				FDreamMusicLyricWord LyricWord;
+				LyricWord.Content = UTF8_TO_TCHAR(Word.text.c_str());
+				LyricWord.StartTimestamp = FDreamMusicLyricTimestamp(
+					Word.start_time.hours,
+					Word.start_time.minutes,
+					Word.start_time.seconds,
+					Word.start_time.milliseconds
+				);
+
+				if (Word.end_time.has_value())
+				{
+					LyricWord.bHasEndTimestamp = true;
+					LyricWord.EndTimestamp = FDreamMusicLyricTimestamp(
+						Word.end_time->hours,
+						Word.end_time->minutes,
+						Word.end_time->seconds,
+						Word.end_time->milliseconds
+					);
+				}
+				else
+				{
+					LyricWord.bHasEndTimestamp = false;
+				}
+
+				// 转换角色
+				switch (Word.role)
+				{
+				case dream_lyric_parser::FLyricTextRole::Lyric:
+					LyricWord.Role = EDreamMusicLyricTextRole::Lyric;
+					break;
+				case dream_lyric_parser::FLyricTextRole::Romanization:
+					LyricWord.Role = EDreamMusicLyricTextRole::Romanization;
+					break;
+				case dream_lyric_parser::FLyricTextRole::Translation:
+					LyricWord.Role = EDreamMusicLyricTextRole::Translation;
+					break;
+				default:
+					LyricWord.Role = EDreamMusicLyricTextRole::None;
+					break;
+				}
+
+				LyricLine.Words.Add(LyricWord);
+			}
+
+			LyricGroup.Lines.Add(LyricLine);
+		}
+
+		OutGroups.Add(LyricGroup);
+	}
+}
+
+void UDreamLyricParserRuntime::ConvertLyricGroupsToLyrics(TArray<FDreamMusicLyricGroup> LyricGroups, TArray<FDreamMusicLyric>& OutLyrics)
+{
+	// 转换所有组
+	for (int32 i = 0; i < LyricGroups.Num(); i++)
+	{
+		const FDreamMusicLyricGroup& Group = LyricGroups[i];
+		FDreamMusicLyric OldLyric = ULyricAssetConverter::ConvertLyric(Group);
+
+		// 如果当前歌词的 EndTimestamp 无效或未设置，使用下一个组的开始时间
+		if (OldLyric.EndTimestamp.ToMilliseconds() == 0 ||
+			OldLyric.EndTimestamp.ToMilliseconds() <= OldLyric.StartTimestamp.ToMilliseconds())
+		{
+			if (i + 1 < LyricGroups.Num())
+			{
+				// 使用下一个组的开始时间作为当前组的结束时间
+				OldLyric.EndTimestamp = LyricGroups[i + 1].Timestamp;
+			}
+			// 如果没有下一个组，EndTimestamp 已经在 ConvertLyric 中设置了默认值
+		}
+
+		OutLyrics.Add(OldLyric);
 	}
 }
 
@@ -236,7 +335,7 @@ void UDreamLyricParserRuntime::ConvertParsedLyricToAsset(
 	for (const auto& Group : ParsedLyric.groups)
 	{
 		FDreamMusicLyricGroup LyricGroup;
-		
+
 		// 转换时间戳
 		LyricGroup.Timestamp = FDreamMusicLyricTimestamp(
 			Group.timestamp.hours,
@@ -246,10 +345,10 @@ void UDreamLyricParserRuntime::ConvertParsedLyricToAsset(
 		);
 
 		// 转换行
-		for (const auto& Line : Group.lines)
+		for (const auto& Line : Group.GetLines())
 		{
 			FDreamMusicLyricLine LyricLine;
-			
+
 			// 转换角色
 			switch (Line.role)
 			{
@@ -329,7 +428,7 @@ bool UDreamLyricParserRuntime::ValidateThirdPartyLibrary(FString& OutErrorMessag
 	// 如果 DLL 已经通过 RuntimeDependencies 复制到输出目录，应该可以直接使用
 	try
 	{
-		auto TestParser = dream_lyric_parser::CreateParser(dream_lyric_parser::FParserFormat::LrcLineByLine);
+		auto TestParser = dream_lyric_parser::parser::FParserFactory::CreateParser(dream_lyric_parser::parser::EParserFileFormat::LRC);
 		if (!TestParser)
 		{
 			OutErrorMessage = TEXT("无法创建解析器，DLL 可能不兼容或未正确加载");
@@ -360,7 +459,7 @@ bool UDreamLyricParserRuntime::ValidateThirdPartyLibrary(FString& OutErrorMessag
 				}
 			}
 		}
-		
+
 		OutErrorMessage = TEXT("DLL 加载失败或版本不兼容。请检查 DLL 是否正确编译并与当前引擎版本兼容");
 		return false;
 	}
@@ -377,9 +476,9 @@ void UDreamLyricParserRuntime::ConvertParserOptions(const FDreamLyricParserOptio
 		// 这可能在跨 DLL 边界时导致堆损坏。
 		// 策略：创建一个新的 FGroupingRule 对象（在 UE 的堆上），然后一次性赋值给 OutOptions.grouping
 		// 这样可以避免直接操作可能在不同 DLL 中分配的 vector
-		
+
 		// dream_lyric_parser::FGroupingRule NewGroupingRule;
-		
+
 		// 如果分组序列为空，手动创建默认规则（避免调用可能不安全的 Default()）
 		// if (UEOptions.GroupingSequence.Num() == 0)
 		// {
@@ -388,7 +487,7 @@ void UDreamLyricParserRuntime::ConvertParserOptions(const FDreamLyricParserOptio
 		// 	OutOptions.grouping = NewGroupingRule;
 		// 	return;
 		// }
-		
+
 		// 转换分组序列（参考 CLI 示例的 ConfigureGrouping 函数）
 		// for (EDreamMusicLyricTextRole Role : UEOptions.GroupingSequence)
 		// {
@@ -416,7 +515,7 @@ void UDreamLyricParserRuntime::ConvertParserOptions(const FDreamLyricParserOptio
 		// 	}
 		// 	NewGroupingRule.sequence.push_back(ParserRole);
 		// }
-		
+
 		// 如果转换后序列为空，手动创建默认规则
 		// if (NewGroupingRule.sequence.empty())
 		// {
@@ -425,7 +524,7 @@ void UDreamLyricParserRuntime::ConvertParserOptions(const FDreamLyricParserOptio
 		// 	OutOptions.grouping = NewGroupingRule;
 		// 	return;
 		// }
-		
+
 		// 转换回退角色
 		// switch (UEOptions.FallbackRole)
 		// {
@@ -443,7 +542,7 @@ void UDreamLyricParserRuntime::ConvertParserOptions(const FDreamLyricParserOptio
 		// 	NewGroupingRule.fallback = dream_lyric_parser::FLyricTextRole::Lyric;
 		// 	break;
 		// }
-		
+
 		// 使用配置的分组规则（赋值操作会在 DLL 内部正确处理内存）
 		// 关键：一次性赋值，让 DLL 内部的赋值运算符处理内存管理
 		// OutOptions.grouping = NewGroupingRule;
@@ -469,4 +568,3 @@ void UDreamLyricParserRuntime::ConvertParserOptions(const FDreamLyricParserOptio
 		OutOptions.grouping = SafeGrouping;
 	}
 }
-

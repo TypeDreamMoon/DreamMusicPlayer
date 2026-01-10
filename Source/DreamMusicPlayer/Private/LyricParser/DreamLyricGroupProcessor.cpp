@@ -89,7 +89,7 @@ void FDreamLyricGroupProcessor::AssignContentByLineType(FDreamMusicLyric& Lyric,
 
 void FDreamLyricGroupProcessor::ProcessLineToField(FDreamMusicLyric& Lyric, const FString& Line, const FString& TargetField)
 {
-	switch (ParseMethod)
+	/*switch (ParseMethod)
 	{
 	case EDreamMusicPlayerLrcLyricType::WordByWord:
 		ProcessWordByWordToField(Lyric, Line, TargetField);
@@ -101,7 +101,7 @@ void FDreamLyricGroupProcessor::ProcessLineToField(FDreamMusicLyric& Lyric, cons
 	default:
 		ProcessLineByLineToField(Lyric, Line, TargetField);
 		break;
-	}
+	}*/
 }
 
 void FDreamLyricGroupProcessor::ProcessWordByWordToField(FDreamMusicLyric& Lyric, const FString& Line, const FString& TargetField)

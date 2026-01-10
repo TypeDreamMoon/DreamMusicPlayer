@@ -19,7 +19,7 @@ ULyricAssetFactory::ULyricAssetFactory(const FObjectInitializer& ObjectInitializ
 	Formats.Add(TEXT("lrc;LRC Lyrics File"));
 	Formats.Add(TEXT("ass;ASS Subtitle File"));
 	Formats.Add(TEXT("srt;SRT Subtitle File"));
-	
+
 	bCreateNew = false;
 	bEditAfterNew = true;
 	bEditorImport = true;
@@ -45,42 +45,42 @@ UObject* ULyricAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InParen
 
 	// 确定文件格式
 	FString Extension = FPaths::GetExtension(Filename).ToLower();
-	dream_lyric_parser::FParserFormat ParserFormat;
+	dream_lyric_parser::parser::EParserFileFormat ParserFormat;
 	FString WindowTitle;
 	FString FileFormatName;
 
 	// 根据文件扩展名设置格式和窗口标题
 	if (Extension == TEXT("lrc"))
 	{
-		ParserFormat = dream_lyric_parser::FParserFormat::LrcLineByLine; // 默认值，会在对话框中修改
+		ParserFormat = dream_lyric_parser::parser::EParserFileFormat::LRC; // 默认值，会在对话框中修改
 		WindowTitle = TEXT("Import LRC File");
 		FileFormatName = TEXT("lrc");
-	}
-	else if (Extension == TEXT("ass"))
-	{
-		ParserFormat = dream_lyric_parser::FParserFormat::Ass;
-		WindowTitle = TEXT("Import ASS File");
-		FileFormatName = TEXT("ass");
-	}
-	else if (Extension == TEXT("srt"))
-	{
-		ParserFormat = dream_lyric_parser::FParserFormat::Srt;
-		WindowTitle = TEXT("Import SRT File");
-		FileFormatName = TEXT("srt");
 	}
 	else
 	{
 		Warn->Logf(ELogVerbosity::Error, TEXT("Unsupported file format: %s"), *Extension);
 		return nullptr;
 	}
+	/*else if (Extension == TEXT("ass"))
+	{
+		ParserFormat = dream_lyric_parser::parser::EParserFileFormat::;
+		WindowTitle = TEXT("Import ASS File");
+		FileFormatName = TEXT("ass");
+	}*/
+	/*else if (Extension == TEXT("srt"))
+	{
+		ParserFormat = dream_lyric_parser::parser::EParserFileFormat::SRT;
+		WindowTitle = TEXT("Import SRT File");
+		FileFormatName = TEXT("srt");
+	}*/
 
 	UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: %s file detected, showing import dialog"), *FileFormatName.ToUpper());
-	
+
 	// 显示对话框选择导入选项
 	TSharedPtr<SLyricImportDialog> ImportDialog = SNew(SLyricImportDialog);
 	ImportDialog->SetFileFormat(FileFormatName);
 	ImportDialog->SetFilePath(Filename); // 设置文件路径以启用预览
-	
+
 	TSharedRef<SWindow> Window = SNew(SWindow)
 		.Title(FText::FromString(WindowTitle))
 		.ClientSize(FVector2D(1000, 600))
@@ -106,6 +106,7 @@ UObject* ULyricAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InParen
 	}
 
 	// 对于 LRC 文件，根据选择的模式设置解析格式
+	/*
 	if (Extension == TEXT("lrc"))
 	{
 		ELrcImportMode SelectedMode = ImportDialog->GetSelectedMode();
@@ -123,10 +124,11 @@ UObject* ULyricAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InParen
 			break;
 		}
 	}
-	
+	*/
+
 	// 获取用户配置的解析选项
 	FDreamLyricParserOptions ParserOptions = ImportDialog->GetParserOptions();
-	
+
 	// 创建资产
 	UDreamLyricAsset* Asset = NewObject<UDreamLyricAsset>(InParent, InClass, InName, Flags);
 	Asset->SourceFileName = FPaths::GetCleanFilename(Filename);
@@ -155,7 +157,7 @@ FText ULyricAssetFactory::GetDisplayName() const
 	return LOCTEXT("FactoryDisplayName", "Dream Lyric Asset");
 }
 
-bool ULyricAssetFactory::ImportLyricFile(const FString& Filename, UDreamLyricAsset* Asset, dream_lyric_parser::FParserFormat Format, const FDreamLyricParserOptions& ParserOptions)
+bool ULyricAssetFactory::ImportLyricFile(const FString& Filename, UDreamLyricAsset* Asset, dream_lyric_parser::parser::EParserFileFormat Format, const FDreamLyricParserOptions& ParserOptions)
 {
 	if (!Asset)
 	{
@@ -190,7 +192,7 @@ bool ULyricAssetFactory::ImportLyricFile(const FString& Filename, UDreamLyricAss
 	try
 	{
 		// 创建解析器
-		auto Parser = dream_lyric_parser::CreateParser(Format);
+		auto Parser = dream_lyric_parser::parser::FParserFactory::CreateParser(Format);
 		if (!Parser)
 		{
 			UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: Failed to create parser"));
@@ -209,7 +211,7 @@ bool ULyricAssetFactory::ImportLyricFile(const FString& Filename, UDreamLyricAss
 		// 但 ConvertParserOptions 会立即覆盖它，所以这里是安全的
 		dream_lyric_parser::FParserOptions Options;
 		UDreamLyricParserRuntime::ConvertParserOptions(ParserOptions, Options);
-		
+
 		// 执行解析
 		dream_lyric_parser::FParsedLyric ParsedLyric = Parser->Parse(ContentStr, Options);
 
@@ -243,7 +245,7 @@ void ULyricAssetFactory::ConvertParsedLyricToAsset(const dream_lyric_parser::FPa
 	for (const auto& Group : ParsedLyric.groups)
 	{
 		FDreamMusicLyricGroup LyricGroup;
-		
+
 		// 转换时间戳
 		LyricGroup.Timestamp = FDreamMusicLyricTimestamp(
 			Group.timestamp.hours,
@@ -253,10 +255,10 @@ void ULyricAssetFactory::ConvertParsedLyricToAsset(const dream_lyric_parser::FPa
 		);
 
 		// 转换行
-		for (const auto& Line : Group.lines)
+		for (const auto& Line : Group.GetLines())
 		{
 			FDreamMusicLyricLine LyricLine;
-			
+
 			// 转换角色
 			switch (Line.role)
 			{

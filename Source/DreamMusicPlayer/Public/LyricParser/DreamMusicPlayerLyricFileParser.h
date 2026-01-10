@@ -120,15 +120,13 @@ protected:
 struct DREAMMUSICPLAYER_API FDreamMusicPlayerLyricFileParser_LRC : public FDreamMusicPlayerLyricFileParserBase
 {
 public:
-	FDreamMusicPlayerLyricFileParser_LRC(const FString& InFileContent, const TArray<FString>& InLines, EDreamMusicPlayerLrcLyricType InParseMethod, EDreamMusicPlayerLyricParseLineType InLineType)
+	FDreamMusicPlayerLyricFileParser_LRC(const FString& InFileContent, const TArray<FString>& InLines, EDreamMusicPlayerLyricParseLineType InLineType)
 		: FDreamMusicPlayerLyricFileParserBase(InFileContent, InLines, InLineType),
-		  ParseMethod(InParseMethod),
-		  GroupProcessor(InParseMethod, InLineType)
+		  GroupProcessor(InLineType)
 	{
 	}
 
 protected:
-	EDreamMusicPlayerLrcLyricType ParseMethod;
 	FDreamLyricGroupProcessor GroupProcessor;
 
 public:

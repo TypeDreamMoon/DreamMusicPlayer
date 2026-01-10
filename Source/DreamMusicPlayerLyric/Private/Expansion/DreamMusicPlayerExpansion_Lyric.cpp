@@ -10,6 +10,7 @@
 #include "LyricParser/DreamMusicPlayerLyricTools.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "DreamLyricAsset.h"
+#include "DreamLyricParser/Parsers/Parser_ESLyric.hpp"
 
 using namespace FDreamMusicPlayerLyricTools;
 
@@ -25,16 +26,42 @@ void UDreamMusicPlayerExpansion_Lyric::InitializeLyricList()
 
 	UDreamMusicPlayerExpansionData_Lyric* ExpansionData = CurrentMusicData.GetExpansionData<UDreamMusicPlayerExpansionData_Lyric>();
 
-	if (ExpansionData->LyricFileType != EDreamMusicPlayerLyricType::Asset && ExpansionData->LyricFileType != EDreamMusicPlayerLyricType::Stream)
+	if (ExpansionData->LyricSourceType != EDreamMuiscPlayerLyricSourceType::Asset && ExpansionData->LyricSourceType != EDreamMuiscPlayerLyricSourceType::Stream)
 	{
-		FDreamLyricParser Parser(GetLyricFilePath(ExpansionData->LyricFileName),
-		                         ExpansionData->LyricFileType,
-		                         ExpansionData->LyricParseLineType,
-		                         ExpansionData->LrcLyricType);
-
-		CurrentMusicLyricList = Parser.GetLyrics();
+		dream_lyric_parser::parser::EParserFileFormat Format = dream_lyric_parser::parser::EParserFileFormat::LRC;
+		switch (ExpansionData->LyricFileType)
+		{
+		case EDreamMusicPlayerLyricType::LRC:
+			Format = dream_lyric_parser::parser::EParserFileFormat::LRC;
+			break;
+		case EDreamMusicPlayerLyricType::LYS:
+			Format = dream_lyric_parser::parser::EParserFileFormat::LYS;
+			break;
+		case EDreamMusicPlayerLyricType::QRC:
+			Format = dream_lyric_parser::parser::EParserFileFormat::QRC;
+			break;
+		case EDreamMusicPlayerLyricType::YRC:
+			Format = dream_lyric_parser::parser::EParserFileFormat::YRC;
+			break;
+		case EDreamMusicPlayerLyricType::LRCES:
+			Format = dream_lyric_parser::parser::EParserFileFormat::ESLyric;
+			break;
+		/*case EDreamMusicPlayerLyricType::SRT:
+			Format = dream_lyric_parser::parser::EParserFileFormat::SRT;*/
+		}
+		
+		FString Path = GetLyricFilePath(ExpansionData->LyricFileName);
+		FString Datas;
+		FFileHelper::LoadFileToString(Datas, *Path);
+		std::unique_ptr<dream_lyric_parser::parser::IParserLyric> Parser = dream_lyric_parser::parser::FParserFactory::CreateParser(Format);
+		dream_lyric_parser::FParserOptions Options;
+		UDreamLyricParserRuntime::ConvertParserOptions(ExpansionData->LyricParserOptions, Options);
+		dream_lyric_parser::FParsedLyric Lyric = Parser->Parse(TCHAR_TO_UTF8(*Datas), Options);
+		TArray<FDreamMusicLyricGroup> Groups;
+		UDreamLyricParserRuntime::ConvertParsedLyricToUnreal(Lyric, Groups);
+		UDreamLyricParserRuntime::ConvertLyricGroupsToLyrics(Groups, CurrentMusicLyricList);
 	}
-	else if (ExpansionData->LyricFileType == EDreamMusicPlayerLyricType::Asset)
+	else if (ExpansionData->LyricSourceType == EDreamMuiscPlayerLyricSourceType::Asset)
 	{
 		UDreamLyricAsset* Asset = ExpansionData->LyricAsset.LoadSynchronous();
 		if (Asset != nullptr)
@@ -46,7 +73,7 @@ void UDreamMusicPlayerExpansion_Lyric::InitializeLyricList()
 			DMP_LOG_DEBUG_EXPANSION(Error, TEXT("Failed to load LyricAsset: %s"), *ExpansionData->LyricAsset.ToSoftObjectPath().ToString());
 		}
 	}
-	else if (ExpansionData->LyricFileType == EDreamMusicPlayerLyricType::Stream)
+	else if (ExpansionData->LyricSourceType == EDreamMuiscPlayerLyricSourceType::Stream)
 	{
 		UE_LOG(LogDreamMusicPlayer, Error, TEXT("%hs Stream Lyric Not Supported !!!"), __FUNCTION__);
 	}

@@ -14,11 +14,10 @@ public:
 	/**
 	 * @brief Constructor
 	 * 
-	 * @param InParseMethod The lyric parsing method (LineByLine, WordByWord, ESLyric)
 	 * @param InLineType The line type configuration for content assignment
 	 */
-	FDreamLyricGroupProcessor(EDreamMusicPlayerLrcLyricType InParseMethod, EDreamMusicPlayerLyricParseLineType InLineType)
-		: ParseMethod(InParseMethod), LineType(InLineType)
+	FDreamLyricGroupProcessor(EDreamMusicPlayerLyricParseLineType InLineType)
+		: LineType(InLineType)
 	{
 	}
 
@@ -31,7 +30,6 @@ public:
 	void ProcessGroup(const TArray<FString>& LinesInGroup, FDreamMusicLyric& OutLyric);
 
 public:
-	EDreamMusicPlayerLrcLyricType ParseMethod;
 	EDreamMusicPlayerLyricParseLineType LineType;
 
 	/**
@@ -67,7 +65,7 @@ public:
 	/**
 	 * @brief Build detailed character-level timings within word segments
 	 */
-	FString BuildDetailedWordTimingsFromSegments(const TArray<FDreamMusicLyricTimestamp>& Timestamps, const TArray<FString>& Contents, TArray<FDreamMusicLyricWord>& OutWords);
+	// FString BuildDetailedWordTimingsFromSegments(const TArray<FDreamMusicLyricTimestamp>& Timestamps, const TArray<FString>& Contents, TArray<FDreamMusicLyricWord>& OutWords);
 
 	/**
 	 * @brief Calculate end timestamp for a character

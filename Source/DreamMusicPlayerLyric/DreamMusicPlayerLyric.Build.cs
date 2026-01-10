@@ -47,14 +47,14 @@ public class DreamMusicPlayerLyric : ModuleRules
             
 			// A. 链接静态库 (.lib)
 			// 务必确保文件名准确，包含后缀 .lib
-			PublicAdditionalLibraries.Add(Path.Combine(LibFolderPath, "DreamLyricParser.lib"));
+			PublicAdditionalLibraries.Add(Path.Combine(LibFolderPath, "DreamLyricParser_static.lib"));
 
 			// B. 处理动态库 (.dll) 拷贝
 			// 这行代码告诉 UBT：编译时把这个 DLL 拷贝到项目的 Binaries/Win64 目录下
-			string DllPath = Path.Combine(LibFolderPath, "DreamLyricParser.dll");
+			// string DllPath = Path.Combine(LibFolderPath, "DreamLyricParser.dll");
             
 			// $(BinaryOutputDir) 是引擎宏，指向最终生成的 exe/dll 所在目录
-			RuntimeDependencies.Add("$(BinaryOutputDir)/DreamLyricParser.dll", DllPath);
+			// RuntimeDependencies.Add("$(BinaryOutputDir)/DreamLyricParser.dll", DllPath);
 		}
 	}
 }

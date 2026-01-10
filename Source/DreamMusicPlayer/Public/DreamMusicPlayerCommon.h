@@ -27,35 +27,65 @@ enum class EDreamMusicPlayerPlayMode : uint8
 };
 
 /**
+ * Lyric Source Type
+ */
+UENUM(BlueprintType)
+enum class EDreamMuiscPlayerLyricSourceType : uint8
+{
+	Asset UMETA(DisplayName = "Asset"),
+	Stream UMETA(DisplayName = "Stream"),
+	// 使用QQ音乐 酷狗 网易云 Lrclib进行搜索
+	Search UMETA(DisplayName = "Network Search (Unsupport)"),
+	File UMETA(DisplayName = "File")
+};
+
+/**
  * Lyric File Type
  */
 UENUM(BlueprintType)
 enum class EDreamMusicPlayerLyricType : uint8
 {
-	// Asset
-	Asset UMETA(DisplayName = "Asset"),
-	// Network Stream
-	Stream UMETA(DisplayName = "Stream [UnderDevelopment]"),
-	// Three Types of LRC File
+	/**
+	 * LyRiC Format
+	 */
 	LRC UMETA(DisplayName = "LRC"),
 	/**
-	 * [Sample] SRT
-	 * 1
-	 * 00:00:48,710 --> 00:00:58,770
-	 * 風 触れる ホシの 願い
-	 *
-	 * 2
-	 * 00:00:59,210 --> 00:01:08,690
-	 * 見上げ 地に縛られている
+	 * ESLyric Word-by-word Format
 	 */
-	SRT UMETA(DisplayName = "SRT"),
+	LRCES UMETA(DisplayName = "LRCES"),
 	/**
-	 * [Sample] ASS
+	 * SubRip
+	 */
+	// SRT UMETA(DisplayName = "SRT"),
+	/**
+	 * ASS Subtitle Format
 	 * @see https://fileinfo.com/extension/ass
 	 */
-	ASS UMETA(DisplayName = "ASS"),
+	// ASS UMETA(DisplayName = "ASS"),
+	/**
+	 * NetEase Cloud Music Word-by-word Format
+	 */
+	YRC UMETA(DisplayName = "YRC"),
+	/**
+	 * QQ Music Word-by-word Format
+	 */
+	QRC UMETA(DisplayName = "QRC"),
+	/**
+	 * Lyricify Syllable Word-by-word Format
+	 */
+	LYS UMETA(DisplayName = "LYS"),
+	/**
+	 * TTML Lyric Format
+	 */
+	// TTML UMETA(DisplayName = "TTML (Unsupport)"),
+	/**
+	 * Dream Music Player Unify lyrics
+	 */
+	// DMPUL UMETA(DisplayName = "DMPUL (Unsupport)"),
 };
 
+// Dream Lyric Parser 已经支持自动识别
+/*
 UENUM(BlueprintType)
 enum class EDreamMusicPlayerLrcLyricType : uint8
 {
@@ -64,21 +94,16 @@ enum class EDreamMusicPlayerLrcLyricType : uint8
 	 * [Sample] Line By Line LRC Lyric
 	 * [00:48.710]風 触れる ホシの 願い
 	 * [00:59.210]見上げ 地に縛られている
-	 */
+	 #1#
 	LineByLine UMETA(DisplayName = "LineByLine"),
 	/**
 	 * [Sample] Word By Word LRC Lyric
 	 * [00:48.710]風 [00:50.560]触[00:51.060]れ[00:51.270]る [00:53.570]ホ[00:53.920]シ[00:54.800]の [00:56.620]願[00:57.270]い[00:58.770]
 	 * [00:59.210]見[01:00.090]上[01:00.130]げ [01:02.610]地[01:03.030]に[01:03.640]縛[01:04.640]ら[01:06.010]れ[01:06.170]て[01:07.560]い[01:07.590]る[01:08.690]
-	 */
+	 #1#
 	WordByWord UMETA(DisplayName = "WordByWord"),
-	/**
-	 * [Sample] ESLyric
-	 * [00:48.710]<00:48.710>風 <00:50.560>触<00:51.060>れ<00:51.270>る <00:53.570>ホ<00:53.920>シ<00:54.800>の <00:56.620>願<00:57.270>い<00:58.770>
-	 * [00:59.210]<00:59.210>見<01:00.090>上<01:00.130>げ <01:02.610>地<01:03.030>に<01:03.640>縛<01:04.640>ら<01:06.010>れ<01:06.170>て<01:07.560>い<01:07.590>る<01:08.690>
-	 */
-	ESLyric UMETA(DisplayName = "ESLyric"),
 };
+*/
 
 UENUM(BlueprintType)
 enum class EDreamMusicPlayerLyricParseLineType: uint8

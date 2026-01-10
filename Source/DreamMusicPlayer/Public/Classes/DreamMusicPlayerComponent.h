@@ -109,47 +109,47 @@ public:
 	// State
 
 	// Current Music Wave
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	UPROPERTY(BlueprintReadOnly, Category = "State")
 	TObjectPtr<USoundWave> SoundWave;
 
 	// Current Music Cover
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	UPROPERTY(BlueprintReadOnly, Category = "State")
 	TObjectPtr<UTexture2D> Cover;
 
 	// Current Is Playing?
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	UPROPERTY(BlueprintReadOnly, Category = "State")
 	bool bIsPlaying = false;
 
 	// Current Is Pause?
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	UPROPERTY(BlueprintReadOnly, Category = "State")
 	bool bIsPaused = false;
 
 	// Music Player Play Mode
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	UPROPERTY(BlueprintReadOnly, Category = "State")
 	EDreamMusicPlayerPlayMode PlayMode = EDreamMusicPlayerPlayMode::EDMPPS_Normal;
 
 	// Music Player Play State
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	UPROPERTY(BlueprintReadOnly, Category = "State")
 	EDreamMusicPlayerPlayState PlayState = EDreamMusicPlayerPlayState::EDMPPS_Stop;
 
 	// Current Play Duration
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	UPROPERTY(BlueprintReadOnly, Category = "State")
 	float CurrentDuration = 0.0f;
 
 	// Current Music Data Struct
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	UPROPERTY(BlueprintReadOnly, Category = "State")
 	FDreamMusicDataStruct CurrentMusicData;
 
 	// Music End Duration
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	UPROPERTY(BlueprintReadOnly, Category = "State")
 	float CurrentMusicDuration = 0.0f;
 
 	// Current Music Duration Percent
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	UPROPERTY(BlueprintReadOnly, Category = "State")
 	float CurrentMusicPercent = 0.f;
 
 	// Current Music Timestamp
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "State")
+	UPROPERTY(BlueprintReadOnly, Category = "State")
 	FDreamMusicLyricTimestamp CurrentTimestamp;
 
 

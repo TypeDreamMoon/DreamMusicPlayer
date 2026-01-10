@@ -8,10 +8,11 @@ enum class EDreamMusicPlayerLyricParseLineType : uint8;
 enum class EDreamMusicPlayerLyricType : uint8;
 
 // Lyrics File Parser
-struct DREAMMUSICPLAYER_API FDreamLyricParser
+// FDreamLyricParser已经弃用 请使用DreamLyricParser库
+struct UE_DEPRECATED(5.7, "FDreamLyricParser已弃用 请使用DreamLyricParser库 此结构将在下个版本中删除") DREAMMUSICPLAYER_API FDreamLyricParser
 {
 	FDreamLyricParser() = delete;
-	FDreamLyricParser(FString InFilePath, EDreamMusicPlayerLyricType InFileType, EDreamMusicPlayerLyricParseLineType InLineType, EDreamMusicPlayerLrcLyricType InLrcParseMethod = EDreamMusicPlayerLrcLyricType::None);
+	FDreamLyricParser(FString InFilePath, EDreamMusicPlayerLyricType InFileType, EDreamMusicPlayerLyricParseLineType InLineType);
 
 public:
 	FString FilePath;
@@ -21,7 +22,7 @@ public:
 	TArray<FDreamMusicLyric> Lyrics;
 	EDreamMusicPlayerLyricType FileType;
 	EDreamMusicPlayerLyricParseLineType LineType;
-	EDreamMusicPlayerLrcLyricType LrcParseMethod = EDreamMusicPlayerLrcLyricType::LineByLine;
+	// EDreamMusicPlayerLrcLyricType LrcParseMethod = EDreamMusicPlayerLrcLyricType::LineByLine;
 	TSharedPtr<FDreamMusicPlayerLyricFileParserBase> Parser;
 
 public:
@@ -38,7 +39,7 @@ public:
 	FString GetFileExtension() const;
 
 	EDreamMusicPlayerLyricType DetectFileType() const;
-	EDreamMusicPlayerLrcLyricType DetectLRCSubtype() const;
+	// EDreamMusicPlayerLrcLyricType DetectLRCSubtype() const;
 
 	void ExtractMetadata();
 	FString GetMetadata(const FString& Key) const;

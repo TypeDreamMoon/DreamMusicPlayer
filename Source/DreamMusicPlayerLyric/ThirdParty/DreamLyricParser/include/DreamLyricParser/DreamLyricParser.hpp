@@ -3,11 +3,13 @@
 
 #pragma once
 
-#include "DreamLyricParser/Parser_Ass.hpp"
-#include "DreamLyricParser/Parser_Interface.hpp"
-#include "DreamLyricParser/Parser_Lrc.hpp"
-#include "DreamLyricParser/Parser_Srt.hpp"
-#include "DreamLyricParser/Parser_TimeGroup.hpp"
 #include "DreamLyricParser/Types.hpp"
+
+#include "DreamLyricParser/Parser.hpp"
+#include "DreamLyricParser/Parsers/Parser_LRC.hpp"
+#include "DreamLyricParser/Parsers/Parser_ESLyric.hpp"
+#include "DreamLyricParser/Parsers/Parser_YRC.hpp"
+#include "DreamLyricParser/Parsers/Parser_QRC.hpp"
+#include "DreamLyricParser/Parsers/Parser_LYS.hpp"
 
 

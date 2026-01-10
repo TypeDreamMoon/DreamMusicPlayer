@@ -3,22 +3,8 @@
 #include "CoreMinimal.h"
 #include "DreamLyricAsset.h"
 #include "DreamMusicPlayerCommon.h"  // 包含旧系统的类型定义
-#include "DreamLyricParser/DreamLyricParser.hpp"
 #include "DreamLyricParser/Types.hpp"
 #include "DreamLyricParserRuntime.generated.h"
-
-/**
- * @brief 歌词解析格式枚举（用于运行时导入）
- */
-UENUM(BlueprintType)
-enum class EDreamLyricParserFormat : uint8
-{
-	LrcLineByLine = 0,
-	LrcWordByWord = 1,
-	LrcEsLyric = 2,
-	Srt = 3,
-	Ass = 4
-};
 
 /**
  * @brief 歌词解析选项配置
@@ -106,7 +92,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Dream Music Player|Lyric|Runtime Import", CallInEditor, meta = (AutoCreateRefTerm = "ParserOptions"))
 	static FDreamLyricImportResult ImportLyricFileFromPath(
 		const FString& FilePath,
-		EDreamLyricParserFormat Format = EDreamLyricParserFormat::LrcLineByLine,
+		EDreamMusicPlayerLyricType Format = EDreamMusicPlayerLyricType::LRC,
 		const FDreamLyricParserOptions& ParserOptions = FDreamLyricParserOptions()
 	);
 
@@ -122,7 +108,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Dream Music Player|Lyric|Runtime Import", CallInEditor, meta = (AutoCreateRefTerm = "ParserOptions"))
 	static FDreamLyricImportResult ImportLyricFileFromString(
 		const FString& FileContent,
-		EDreamLyricParserFormat Format,
+		EDreamMusicPlayerLyricType Format,
 		const FString& SourceFileName = TEXT(""),
 		const FDreamLyricParserOptions& ParserOptions = FDreamLyricParserOptions()
 	);
@@ -134,7 +120,7 @@ public:
 	 * @return EDreamLyricParserFormat 检测到的格式
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Dream Music Player|Lyric|Runtime Import", CallInEditor)
-	static EDreamLyricParserFormat DetectFileFormat(const FString& FilePath);
+	static EDreamMusicPlayerLyricType DetectFileFormat(const FString& FilePath);
 
 	/**
 	 * @brief 检查文件是否可以导入
@@ -157,23 +143,27 @@ public:
 	/**
 	 * @brief 将 UE 格式枚举转换为第三方库格式枚举
 	 */
-	static dream_lyric_parser::FParserFormat ConvertFormat(EDreamLyricParserFormat Format);
+	static dream_lyric_parser::parser::EParserFileFormat ConvertFormat(EDreamMusicPlayerLyricType Format);
 
 	/**
 	 * @brief 从文件扩展名检测格式
 	 */
-	static EDreamLyricParserFormat DetectFormatFromExtension(const FString& Extension);
+	static EDreamMusicPlayerLyricType DetectFormatFromExtension(const FString& Extension);
 
 	/**
 	 * @brief 使用第三方库解析歌词内容
 	 */
 	static bool ParseLyricContent(
 		const FString& FileContent,
-		dream_lyric_parser::FParserFormat Format,
+		dream_lyric_parser::parser::EParserFileFormat Format,
 		UDreamLyricAsset* OutAsset,
 		FString& OutErrorMessage,
 		const FDreamLyricParserOptions& ParserOptions = FDreamLyricParserOptions()
 	);
+	
+	static void ConvertParsedLyricToUnreal(dream_lyric_parser::FParsedLyric ParsedLyric, TArray<FDreamMusicLyricGroup>& OutGroups);
+	
+	static void ConvertLyricGroupsToLyrics(TArray<FDreamMusicLyricGroup> LyricGroups, TArray<FDreamMusicLyric>& OutLyrics);
 
 	/**
 	 * @brief 将 UE 解析选项转换为第三方库解析选项
