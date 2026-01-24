@@ -296,7 +296,7 @@ TSharedRef<SDockTab> FDreamLyricAssetEditor::SpawnLyricListTab(const FSpawnTabAr
 							{
 								FString TimeStr = ItemStr.Left(TabIndex);
 								// 从 GroupData 中查找对应的组索引
-								FDreamMusicLyricTimestamp Time = FDreamMusicLyricTimestamp::Parse(TimeStr);
+								FDreamMusicTimestamp Time = FDreamMusicTimestamp::Parse(TimeStr);
 								SelectedGroupIndex = INDEX_NONE;
 								for (const auto& GroupData : LyricGroupData)
 								{
@@ -438,7 +438,7 @@ void FDreamLyricAssetEditor::RefreshLyricList()
 	}
 	GroupsWithIndex.Sort([](const FGroupWithIndex& A, const FGroupWithIndex& B)
 	{
-		return A.Group->Timestamp < B.Group->Timestamp;
+		return A.Group->StartTimestamp < B.Group->StartTimestamp;
 	});
 
 	// 生成列表项（保持向后兼容）
@@ -447,9 +447,9 @@ void FDreamLyricAssetEditor::RefreshLyricList()
 		const FDreamMusicLyricGroup& Group = *GroupsWithIndex[i].Group;
 		int32 OriginalIndex = GroupsWithIndex[i].OriginalIndex;
 		FString TimeStr = FString::Printf(TEXT("%02d:%02d.%03d"), 
-			Group.Timestamp.Minute, 
-			Group.Timestamp.Seconds, 
-			Group.Timestamp.Millisecond);
+			Group.StartTimestamp.Minute, 
+			Group.StartTimestamp.Seconds, 
+			Group.StartTimestamp.Millisecond);
 
 		FString ContentStr;
 		for (const FDreamMusicLyricLine& Line : Group.Lines)
@@ -493,7 +493,7 @@ void FDreamLyricAssetEditor::RefreshLyricList()
 
 		// 创建组显示数据
 		TSharedPtr<FLyricGroupDisplayData> GroupData = MakeShareable(new FLyricGroupDisplayData());
-		GroupData->Timestamp = Group.Timestamp;
+		GroupData->Timestamp = Group.StartTimestamp;
 		GroupData->GroupIndex = OriginalIndex; // 使用原始数组索引
 		for (const FDreamMusicLyricLine& Line : Group.Lines)
 		{
@@ -906,20 +906,20 @@ FReply FDreamLyricAssetEditor::OnAddNewGroup()
 	}
 
 	// 创建新组，时间戳为当前最后一个组的时间 + 1秒，或者为 00:00.000
-	FDreamMusicLyricTimestamp NewTimestamp;
+	FDreamMusicTimestamp NewTimestamp;
 	if (LyricAsset->Groups.Num() > 0)
 	{
 		// 找到最大时间戳
-		FDreamMusicLyricTimestamp MaxTime = LyricAsset->Groups[0].Timestamp;
+		FDreamMusicTimestamp MaxTime = LyricAsset->Groups[0].StartTimestamp;
 		for (const FDreamMusicLyricGroup& Group : LyricAsset->Groups)
 		{
-			if (Group.Timestamp > MaxTime)
+			if (Group.StartTimestamp > MaxTime)
 			{
-				MaxTime = Group.Timestamp;
+				MaxTime = Group.StartTimestamp;
 			}
 		}
 		// 添加1秒
-		NewTimestamp = FDreamMusicLyricTimestamp::FromTotalMilliseconds(MaxTime.ToTotalMilliseconds() + 1000);
+		NewTimestamp = FDreamMusicTimestamp::FromTotalMilliseconds(MaxTime.ToTotalMilliseconds() + 1000);
 	}
 
 	FDreamMusicLyricGroup NewGroup(NewTimestamp);

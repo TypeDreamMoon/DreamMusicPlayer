@@ -3,16 +3,14 @@
 
 #include "Classes/DreamMusicPlayerComponent.h"
 
-#include "DreamMusicPlayerBlueprint.h"
+#include "DreamMusicTimestamp.h"
 #include "Algo/RandomShuffle.h"
 #include "Containers/Array.h"
 #include "DreamMusicPlayerLog.h"
 #include "AudioManager/DreamMusicAudioManager_Default.h"
-#include "LyricParser/DreamLyricParser.h"
 #include "Classes/DreamMusicData.h"
 #include "Classes/DreamMusicPlayerExpansion.h"
 #include "Classes/DreamMusicAudioManager.h"
-#include "Classes/DreamMusicPlayerExpansionData.h"
 
 UDreamMusicPlayerComponent::UDreamMusicPlayerComponent()
 {
@@ -62,7 +60,7 @@ void UDreamMusicPlayerComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 	{
 		if (Expansion == nullptr)
 			continue;
-		
+
 		Expansion->Deinitialize();
 	}
 	Super::EndPlay(EndPlayReason);
@@ -239,7 +237,7 @@ void UDreamMusicPlayerComponent::GetExpansionByClass(TSubclassOf<UDreamMusicPlay
 	{
 		if (Expansion == nullptr)
 			continue;
-		
+
 		if (Expansion->GetClass() == InExpansionClass)
 		{
 			OutExpansion = Expansion;
@@ -254,7 +252,7 @@ bool UDreamMusicPlayerComponent::HasExpansion(TSubclassOf<UDreamMusicPlayerExpan
 	{
 		if (Expansion == nullptr)
 			continue;
-		
+
 		if (Expansion->GetClass() == InExpansionClass)
 		{
 			return true;
@@ -292,11 +290,6 @@ float UDreamMusicPlayerComponent::GetAccuratePlayTime() const
 	return CurrentDuration;
 }
 
-TArray<FString> UDreamMusicPlayerComponent::GetNames() const
-{
-	return UDreamMusicPlayerBlueprint::GetLyricFileNames();
-}
-
 void UDreamMusicPlayerComponent::StartMusic()
 {
 	if (!CurrentMusicData.IsValid())
@@ -312,7 +305,7 @@ void UDreamMusicPlayerComponent::StartMusic()
 	LastSeekPosition = 0.0f;
 	MusicStartWorldTime = FPlatformTime::Seconds(); // 记录开始时间
 	bJustSeeked = false;
-	CurrentTimestamp = FDreamMusicLyricTimestamp();
+	CurrentTimestamp = FDreamMusicTimestamp();
 
 	// Validate SoundWave before playing
 	if (!SoundWave || !SoundWave->IsValidLowLevel())
@@ -329,7 +322,7 @@ void UDreamMusicPlayerComponent::StartMusic()
 	{
 		if (Expansion == nullptr)
 			continue;
-		
+
 		Expansion->MusicStart();
 	}
 
@@ -364,7 +357,7 @@ void UDreamMusicPlayerComponent::EndMusic(bool Native)
 	{
 		if (Expansion == nullptr)
 			continue;
-		
+
 		Expansion->MusicEnd();
 	}
 
@@ -453,7 +446,7 @@ void UDreamMusicPlayerComponent::UnPauseMusic()
 	{
 		if (Expansion == nullptr)
 			continue;
-		
+
 		Expansion->MusicUnPause();
 	}
 
@@ -472,7 +465,7 @@ void UDreamMusicPlayerComponent::SetMusicData(FDreamMusicDataStruct InData)
 	{
 		if (Expansion == nullptr)
 			continue;
-		
+
 		Expansion->ChangeMusic(InData);
 	}
 
@@ -507,7 +500,7 @@ void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
 
 	// 应用歌词偏移
 	float LyricTime = CurrentDuration;
-	CurrentTimestamp = *FDreamMusicLyricTimestamp().FromSeconds(LyricTime);
+	CurrentTimestamp = *FDreamMusicTimestamp().FromSeconds(LyricTime);
 
 	// 停止并重新开始播放
 	if (AudioManager->IsPlaying())
@@ -522,7 +515,7 @@ void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
 	{
 		if (Expansion == nullptr)
 			continue;
-		
+
 		Expansion->MusicSetPercent(InPercent);
 	}
 
@@ -538,7 +531,7 @@ void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
 	        CurrentMusicPercent, TargetTime, LyricTime);
 }
 
-void UDreamMusicPlayerComponent::SetMusicPercentFromTimestamp(FDreamMusicLyricTimestamp InTimestamp)
+void UDreamMusicPlayerComponent::SetMusicPercentFromTimestamp(FDreamMusicTimestamp InTimestamp)
 {
 	SetMusicPercent(InTimestamp.ToSeconds() / CurrentMusicDuration);
 }
@@ -550,7 +543,7 @@ void UDreamMusicPlayerComponent::MusicTick(float DeltaTime)
 	// 更新时间状态
 	CurrentDuration = AccuratePlayTime;
 	CurrentMusicPercent = FMath::Clamp(CurrentDuration / CurrentMusicDuration, 0.0f, 1.0f);
-	CurrentTimestamp = *FDreamMusicLyricTimestamp().FromSeconds(CurrentDuration);
+	CurrentTimestamp = *FDreamMusicTimestamp().FromSeconds(CurrentDuration);
 
 	// Auto Next
 	if (CurrentTimestamp >= CurrentMusicDuration)
@@ -563,7 +556,7 @@ void UDreamMusicPlayerComponent::MusicTick(float DeltaTime)
 	{
 		if (Expansion == nullptr)
 			continue;
-		
+
 		Expansion->Tick(CurrentTimestamp, DeltaTime);
 	}
 

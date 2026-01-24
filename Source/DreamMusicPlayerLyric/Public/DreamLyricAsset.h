@@ -1,8 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
-#include "DreamMusicPlayerCommon.h"
+#include "DreamLyricTypes.h"
+#include "DreamMusicTimestamp.h"
 #include "DreamLyricAsset.generated.h"
 
 /**
@@ -26,10 +26,10 @@ struct DREAMMUSICPLAYERLYRIC_API FLyricAssetStatistics
 	float TotalDurationSeconds = 0.0f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Statistics")
-	FDreamMusicLyricTimestamp StartTime;
+	FDreamMusicTimestamp StartTime;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Statistics")
-	FDreamMusicLyricTimestamp EndTime;
+	FDreamMusicTimestamp EndTime;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Statistics")
 	bool bHasWordTimings = false;
@@ -72,7 +72,7 @@ public:
 	 * @return 找到的歌词组索引，如果未找到返回 INDEX_NONE
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Lyric|Query")
-	int32 FindGroupByTime(const FDreamMusicLyricTimestamp& Time, float ToleranceSeconds = 0.1f) const;
+	int32 FindGroupByTime(const FDreamMusicTimestamp& Time, float ToleranceSeconds = 0.1f) const;
 
 	/**
 	 * @brief 根据时间获取对应的歌词组
@@ -82,7 +82,7 @@ public:
 	 * @return 找到的歌词组指针，如果未找到返回 nullptr
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Lyric|Query")
-	FDreamMusicLyricGroup GetGroupByTime(const FDreamMusicLyricTimestamp& Time, float ToleranceSeconds = 0.1f);
+	FDreamMusicLyricGroup GetGroupByTime(const FDreamMusicTimestamp& Time, float ToleranceSeconds = 0.1f);
 	
 	/**
 	 * @brief 获取指定角色的所有行
@@ -108,7 +108,7 @@ public:
 	 * @brief 获取总时长（时间跨度）
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Lyric|Statistics")
-	FDreamMusicLyricTimestamp GetTotalDuration() const;
+	FDreamMusicTimestamp GetTotalDuration() const;
 
 	/**
 	 * @brief 获取组数量
@@ -161,34 +161,10 @@ public:
 	bool IsEmpty() const;
 
 	/**
-	 * @brief 检查是否包含逐词时间信息
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Lyric|Tools")
-	bool HasWordTimings() const;
-
-	/**
 	 * @brief 检查是否包含多种角色（原歌词、音译、翻译等）
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Lyric|Tools")
 	bool HasMultipleRoles() const;
-
-	// ============ 向后兼容接口 ============
-	
-	/**
-	 * @brief 转换为旧的 FDreamMusicLyric 数组格式（向后兼容）
-	 * @return TArray<FDreamMusicLyric> 旧格式的歌词数组
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Lyric Asset|Compatibility")
-	TArray<FDreamMusicLyric> ToLegacyLyrics() const;
-
-	/**
-	 * @brief 从旧的 FDreamMusicLyric 数组创建资产（向后兼容）
-	 * @param LegacyLyrics 旧格式的歌词数组
-	 * @param Outer 外部对象（用于创建资产）
-	 * @return ULyricAsset* 创建的资产对象
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Lyric Asset|Compatibility", meta = (CallInEditor = "true"))
-	static UDreamLyricAsset* FromLegacyLyrics(const TArray<FDreamMusicLyric>& LegacyLyrics, UObject* Outer = nullptr);
 
 	// ========== 元数据便捷访问 ==========
 

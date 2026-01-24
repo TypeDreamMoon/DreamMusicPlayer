@@ -11,7 +11,7 @@ void UDreamMusicPlayerExpansion::BP_ChangeMusic_Implementation(const FDreamMusic
 {
 }
 
-void UDreamMusicPlayerExpansion::BP_Tick_Implementation(const FDreamMusicLyricTimestamp& InTimestamp, float InDeltaTime)
+void UDreamMusicPlayerExpansion::BP_Tick_Implementation(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime)
 {
 }
 
@@ -25,7 +25,7 @@ void UDreamMusicPlayerExpansion::Initialize(UDreamMusicPlayerComponent* InCompon
 	BP_Initialize(InComponent);
 }
 
-void UDreamMusicPlayerExpansion::Tick(const FDreamMusicLyricTimestamp& InTimestamp, float InDeltaTime)
+void UDreamMusicPlayerExpansion::Tick(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime)
 {
 	CurrentTimestamp = InTimestamp;
 	BP_Tick(InTimestamp, InDeltaTime);

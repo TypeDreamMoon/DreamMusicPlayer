@@ -3,6 +3,7 @@
 
 #include "Expansion/DreamMusicPlayerExpansion_Event_EventDefine.h"
 
+#include "DreamLyricTypes.h"
 #include "DreamMusicPlayerCommon.h"
 #include "DreamMusicPlayerDebugLog.h"
 #include "DreamMusicPlayerLog.h"
@@ -18,7 +19,7 @@ UObject* UDreamMusicPlayerExpansion_Event_EventDefine::GetPayload() const
 	return Payload;
 }
 
-void UDreamMusicPlayerExpansion_Event_EventDefine::CallEvent(const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& InEvent, const FDreamMusicLyric& InLyric)
+void UDreamMusicPlayerExpansion_Event_EventDefine::CallEvent(const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& InEvent, const FDreamMusicLyricGroup& InLyric)
 {
 	if (InEvent.EventName.IsNone() || InEvent.Payload == nullptr)
 	{
@@ -35,17 +36,17 @@ void UDreamMusicPlayerExpansion_Event_EventDefine::CallEvent(const FDreamMusicPl
 
 	struct FParams
 	{
-		FParams(const FDreamMusicLyric& Lyric, UDreamMusicPlayerPayload* InPayload)
+		FParams(const FDreamMusicLyricGroup& Lyric, UDreamMusicPlayerPayload* InPayload)
 			: Lyric(Lyric), EventPayload(InPayload)
 		{
 		}
 
-		FParams(const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& InEvent, const FDreamMusicLyric& InLyric)
+		FParams(const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& InEvent, const FDreamMusicLyricGroup& InLyric)
 			: Lyric(InLyric), EventPayload(InEvent.Payload)
 		{
 		}
 
-		FDreamMusicLyric Lyric;
+		FDreamMusicLyricGroup Lyric;
 		UDreamMusicPlayerPayload* EventPayload;
 	};
 
@@ -56,7 +57,7 @@ void UDreamMusicPlayerExpansion_Event_EventDefine::CallEvent(const FDreamMusicPl
 
 void UDreamMusicPlayerExpansion_Event_EventDefine::CallEvent(const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& InEvent)
 {
-	CallEvent(InEvent, FDreamMusicLyric());
+	CallEvent(InEvent, FDreamMusicLyricGroup());
 }
 
 class UWorld* UDreamMusicPlayerExpansion_Event_EventDefine::GetWorld() const

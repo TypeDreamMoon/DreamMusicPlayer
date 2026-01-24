@@ -8,7 +8,7 @@
 
 class UDreamMusicPlayerExpansionData;
 struct FDreamMusicDataStruct;
-struct FDreamMusicLyricTimestamp;
+struct FDreamMusicTimestamp;
 /**
  * 
  */
@@ -18,14 +18,13 @@ class DREAMMUSICPLAYER_API UDreamMusicPlayerBlueprint : public UBlueprintFunctio
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintPure, Category = "DreamMusicPlayer|Functions|Lyric")
-	static TArray<FString> GetLyricFileNames();
+	
 
 	UFUNCTION(BlueprintPure, Category = "DreamMusicPlayer|Functions|Types")
-	static float ConvLyricTimestampToFloat(FDreamMusicLyricTimestamp InTimestamp);
+	static float ConvLyricTimestampToFloat(FDreamMusicTimestamp InTimestamp);
 
 	UFUNCTION(BlueprintPure, Category = "DreamMusicPlayer|Functions|Types")
-	static FDreamMusicLyricTimestamp ConvFloatToLyricTimestamp(float InFloat);
+	static FDreamMusicTimestamp ConvFloatToLyricTimestamp(float InFloat);
 
 	UFUNCTION(BlueprintPure, Category = "DreamMusicPlayer|Functions|Expansion", Meta = (DeterminesOutputType="InExpansionDataClass", DynamicOutputParam="OutExpansionData"))
 	static bool GetExpansionDataByClass(const FDreamMusicDataStruct& InMusicData, TSubclassOf<UDreamMusicPlayerExpansionData> InExpansionDataClass, UDreamMusicPlayerExpansionData*& OutExpansionData);

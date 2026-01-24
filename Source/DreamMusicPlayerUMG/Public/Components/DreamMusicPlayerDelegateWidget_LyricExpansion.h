@@ -6,6 +6,8 @@
 #include "DreamMusicPlayerDelegateWidget.h"
 #include "DreamMusicPlayerDelegateWidget_LyricExpansion.generated.h"
 
+struct FDreamMusicLyricGroup;
+struct FDreamMusicLyric;
 class UDreamMusicPlayerExpansion_Lyric;
 
 /**
@@ -21,10 +23,10 @@ public:
 	virtual void NativeDestruct() override;
 
 	UFUNCTION(BlueprintNativeEvent, Category = "DreamMusicPlayerDelegateWidget", Meta = (DisplayName = "On Lyric List Changed"))
-	void BP_OnLyricListChanged(const TArray<FDreamMusicLyric>& InLyricList);
+	void BP_OnLyricListChanged(const TArray<FDreamMusicLyricGroup>& InLyricList);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "DreamMusicPlayerDelegateWidget", Meta = (DisplayName = "On Lyric Changed"))
-	void BP_OnLyricChanged(FDreamMusicLyric InLyric, int Index);
+	void BP_OnLyricChanged(FDreamMusicLyricGroup InLyric, int Index);
 
 	UFUNCTION(BlueprintPure, Category = "DreamMusicPlayerDelegateWidget")
 	UDreamMusicPlayerExpansion_Lyric* GetLyricExpansion() const;

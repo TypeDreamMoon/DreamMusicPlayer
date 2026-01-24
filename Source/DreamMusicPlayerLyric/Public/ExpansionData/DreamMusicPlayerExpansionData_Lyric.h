@@ -3,10 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DreamLyricParserRuntime.h"
-#include "DreamMusicPlayerCommon.h"
+#include "DreamLyricTypes.h"
 #include "Classes/DreamMusicPlayerExpansionData.h"
-#include "UObject/SoftObjectPtr.h"
 #include "DreamMusicPlayerExpansionData_Lyric.generated.h"
 
 class UDreamLyricAsset;
@@ -29,23 +27,13 @@ public:
 	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite, meta=(EditConditionHides, EditCondition="LyricSourceType == EDreamMuiscPlayerLyricSourceType::Asset"))
 	TSoftObjectPtr<UDreamLyricAsset> LyricAsset;
 
-	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite, meta=(EditConditionHides, EditCondition="LyricSourceType == EDreamMuiscPlayerLyricSourceType::Stream"))
-	FString LyricStreamSource;
-	
+	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite, meta=(EditConditionHides, EditCondition="LyricSourceType == EDreamMuiscPlayerLyricSourceType::URL"))
+	FString LyricURL;
+
 	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite, meta=(EditConditionHides, EditCondition="LyricSourceType == EDreamMuiscPlayerLyricSourceType::File"))
 	FDreamLyricParserOptions LyricParserOptions;
 
-	/*
-	// LRC歌词类型
-	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite, meta=(EditConditionHides, EditCondition="LyricFileType == EDreamMusicPlayerLyricType::LRC"))
-	EDreamMusicPlayerLrcLyricType LrcLyricType = EDreamMusicPlayerLrcLyricType::None;
-	*/
-
-	// 歌词行类型
-	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite, meta=(EditConditionHides, EditCondition="LyricSourceType != EDreamMuiscPlayerLyricSourceType::Asset && LyricSourceType != EDreamMuiscPlayerLyricSourceType::Stream"))
-	EDreamMusicPlayerLyricParseLineType LyricParseLineType = EDreamMusicPlayerLyricParseLineType::Romanization_Lyric;
-
 	// 内容路径请在ProjectSetting -> DreamPlugins -> Musicplayer -> LyricContentPath 中配置
-	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite, meta=(GetOptions = "DreamMusicPlayer.DreamMusicPlayerBlueprint.GetLyricFileNames", EditConditionHides, EditCondition="LyricSourceType != EDreamMuiscPlayerLyricSourceType::Asset && LyricSourceType != EDreamMuiscPlayerLyricSourceType::Stream"))
+	UPROPERTY(Category="Lyric", EditAnywhere, BlueprintReadWrite, meta=(GetOptions = "DreamMusicPlayer.DreamMusicPlayerBlueprint.GetLyricFileNames", EditConditionHides, EditCondition="LyricSourceType != EDreamMuiscPlayerLyricSourceType::Asset && LyricSourceType != EDreamMuiscPlayerLyricSourceType::URL"))
 	FString LyricFileName;
 };

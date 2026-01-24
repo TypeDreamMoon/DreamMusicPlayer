@@ -11,7 +11,8 @@ public class DreamMusicPlayerUMG : ModuleRules
             {
                 "Core",
                 "UMG",
-                "DreamMusicPlayer"
+                "DreamMusicPlayer",
+                "DreamMusicPlayerLyric",
             }
         );
 
@@ -21,7 +22,7 @@ public class DreamMusicPlayerUMG : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "Slate",
-                "SlateCore", "DreamMusicPlayerLyric",
+                "SlateCore", 
             }
         );
     }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DreamLyricTypes.h"
 #include "UObject/NoExportTypes.h"
 #include "DreamMusicPlayerCommon.h"
 #include "DreamLyricGroupWrapper.generated.h"

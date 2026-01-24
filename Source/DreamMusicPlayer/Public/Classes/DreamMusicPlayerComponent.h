@@ -150,7 +150,7 @@ public:
 
 	// Current Music Timestamp
 	UPROPERTY(BlueprintReadOnly, Category = "State")
-	FDreamMusicLyricTimestamp CurrentTimestamp;
+	FDreamMusicTimestamp CurrentTimestamp;
 
 
 #pragma endregion State
@@ -255,7 +255,7 @@ public:
 	 * @param InTimestamp Timestamp
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Functions")
-	void SetMusicPercentFromTimestamp(FDreamMusicLyricTimestamp InTimestamp);
+	void SetMusicPercentFromTimestamp(FDreamMusicTimestamp InTimestamp);
 
 	/**
 	 * Play Music From Music Data
@@ -294,10 +294,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Functions|Expansion")
 	bool HasExpansion(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass) const;
-
-public:
-	UFUNCTION()
-	TArray<FString> GetNames() const;
 
 private:
 	/**

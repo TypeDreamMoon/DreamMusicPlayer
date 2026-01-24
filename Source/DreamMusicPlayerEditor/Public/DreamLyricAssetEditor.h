@@ -181,7 +181,7 @@ private:
 	/** 歌词组数据结构 */
 	struct FLyricGroupDisplayData
 	{
-		FDreamMusicLyricTimestamp Timestamp;
+		FDreamMusicTimestamp Timestamp;
 		TArray<TPair<EDreamMusicLyricTextRole, FString>> Lines; // 角色和文本的配对
 		int32 GroupIndex;
 	};

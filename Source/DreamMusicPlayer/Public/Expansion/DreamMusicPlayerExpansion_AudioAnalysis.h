@@ -92,7 +92,7 @@ protected:
 	void UpdateAudioAnalysisData();
 
 	virtual void BP_ChangeMusic_Implementation(const FDreamMusicDataStruct& InData) override;
-	virtual void BP_Tick_Implementation(const FDreamMusicLyricTimestamp& InTimestamp, float InDeltaTime) override;
+	virtual void BP_Tick_Implementation(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime) override;
 	virtual void BP_MusicStart_Implementation() override;
 
 	static uint8* BuildPixelArray(const TArray<float>& Data);

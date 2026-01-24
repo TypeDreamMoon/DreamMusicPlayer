@@ -44,10 +44,10 @@ UDreamMusicPlayerExpansion_Lyric* UDreamMusicPlayerDelegateWidget_LyricExpansion
 	return GetMusicPlayerComponent()->GetExpansion<UDreamMusicPlayerExpansion_Lyric>();
 }
 
-void UDreamMusicPlayerDelegateWidget_LyricExpansion::BP_OnLyricChanged_Implementation(FDreamMusicLyric InLyric, int Index)
+void UDreamMusicPlayerDelegateWidget_LyricExpansion::BP_OnLyricChanged_Implementation(FDreamMusicLyricGroup InLyric, int Index)
 {
 }
 
-void UDreamMusicPlayerDelegateWidget_LyricExpansion::BP_OnLyricListChanged_Implementation(const TArray<FDreamMusicLyric>& InLyricList)
+void UDreamMusicPlayerDelegateWidget_LyricExpansion::BP_OnLyricListChanged_Implementation(const TArray<FDreamMusicLyricGroup>& InLyricList)
 {
 }

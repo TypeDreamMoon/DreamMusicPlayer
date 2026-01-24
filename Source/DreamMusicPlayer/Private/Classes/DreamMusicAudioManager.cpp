@@ -21,7 +21,7 @@ bool UDreamMusicAudioManager::IsPlaying() const
 	return false;
 }
 
-void UDreamMusicAudioManager::Tick(const FDreamMusicLyricTimestamp& InTimestamp, float DeltaTime)
+void UDreamMusicAudioManager::Tick(const FDreamMusicTimestamp& InTimestamp, float DeltaTime)
 {
 }
 

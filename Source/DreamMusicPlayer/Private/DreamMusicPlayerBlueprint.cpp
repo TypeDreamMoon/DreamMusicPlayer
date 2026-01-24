@@ -3,24 +3,19 @@
 
 #include "DreamMusicPlayerBlueprint.h"
 
-#include "LyricParser/DreamMusicPlayerLyricTools.h"
-
 #include "Classes/DreamMusicPlayerExpansionData.h"
 #include "Classes/DreamMusicData.h"
 
-TArray<FString> UDreamMusicPlayerBlueprint::GetLyricFileNames()
-{
-	return FDreamMusicPlayerLyricTools::GetLyricFileNames();
-}
 
-float UDreamMusicPlayerBlueprint::ConvLyricTimestampToFloat(FDreamMusicLyricTimestamp InTimestamp)
+
+float UDreamMusicPlayerBlueprint::ConvLyricTimestampToFloat(FDreamMusicTimestamp InTimestamp)
 {
 	return InTimestamp.ToSeconds();
 }
 
-FDreamMusicLyricTimestamp UDreamMusicPlayerBlueprint::ConvFloatToLyricTimestamp(float InFloat)
+FDreamMusicTimestamp UDreamMusicPlayerBlueprint::ConvFloatToLyricTimestamp(float InFloat)
 {
-	return *FDreamMusicLyricTimestamp().FromSeconds(InFloat);
+	return *FDreamMusicTimestamp().FromSeconds(InFloat);
 }
 
 bool UDreamMusicPlayerBlueprint::GetExpansionDataByClass(const FDreamMusicDataStruct& InMusicData, TSubclassOf<UDreamMusicPlayerExpansionData> InExpansionDataClass, UDreamMusicPlayerExpansionData*& OutExpansionData)

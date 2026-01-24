@@ -1,51 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DreamLyricAsset.h"
-#include "DreamMusicPlayerCommon.h"  // 包含旧系统的类型定义
-#include "DreamLyricParser/Types.hpp"
+#include "DreamLyricTypes.h"
+#include "dlp/File.hpp"
 #include "DreamLyricParserRuntime.generated.h"
-
-/**
- * @brief 歌词解析选项配置
- * 
- * 用于配置歌词解析器的行为，包括分组规则等
- */
-USTRUCT(BlueprintType)
-struct DREAMMUSICPLAYERLYRIC_API FDreamLyricParserOptions
-{
-	GENERATED_BODY()
-
-	/**
-	 * @brief 分组序列 - 指定歌词行的分组顺序（按角色）
-	 * 例如：[Lyric, Translation] 表示先按原歌词分组，再按翻译分组
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parser Options", meta = (Bitflags))
-	TArray<EDreamMusicLyricTextRole> GroupingSequence;
-
-	/**
-	 * @brief 回退角色 - 当无法匹配序列中的角色时使用的默认角色
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parser Options")
-	EDreamMusicLyricTextRole FallbackRole = EDreamMusicLyricTextRole::Lyric;
-
-	/**
-	 * @brief 使用默认配置
-	 */
-	static FDreamLyricParserOptions GetDefault()
-	{
-		FDreamLyricParserOptions Options;
-		Options.GroupingSequence.Add(EDreamMusicLyricTextRole::Lyric);
-		Options.FallbackRole = EDreamMusicLyricTextRole::Lyric;
-		return Options;
-	}
-
-	FDreamLyricParserOptions()
-	{
-		GroupingSequence.Add(EDreamMusicLyricTextRole::Lyric);
-		FallbackRole = EDreamMusicLyricTextRole::Lyric;
-	}
-};
 
 /**
  * @brief 运行时歌词导入结果
@@ -132,20 +90,6 @@ public:
 	static bool CanImportFile(const FString& FilePath);
 
 	/**
-	 * @brief 验证第三方库 DLL 是否可用
-	 * 
-	 * @param OutErrorMessage 错误信息输出
-	 * @return bool 是否可用
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Dream Music Player|Lyric|Runtime Import", CallInEditor)
-	static bool ValidateThirdPartyLibrary(FString& OutErrorMessage);
-	
-	/**
-	 * @brief 将 UE 格式枚举转换为第三方库格式枚举
-	 */
-	static dream_lyric_parser::parser::EParserFileFormat ConvertFormat(EDreamMusicPlayerLyricType Format);
-
-	/**
 	 * @brief 从文件扩展名检测格式
 	 */
 	static EDreamMusicPlayerLyricType DetectFormatFromExtension(const FString& Extension);
@@ -155,28 +99,19 @@ public:
 	 */
 	static bool ParseLyricContent(
 		const FString& FileContent,
-		dream_lyric_parser::parser::EParserFileFormat Format,
+		dlp::EFileFormat Format,
 		UDreamLyricAsset* OutAsset,
 		FString& OutErrorMessage,
 		const FDreamLyricParserOptions& ParserOptions = FDreamLyricParserOptions()
 	);
 	
-	static void ConvertParsedLyricToUnreal(dream_lyric_parser::FParsedLyric ParsedLyric, TArray<FDreamMusicLyricGroup>& OutGroups);
-	
-	static void ConvertLyricGroupsToLyrics(TArray<FDreamMusicLyricGroup> LyricGroups, TArray<FDreamMusicLyric>& OutLyrics);
-
-	/**
-	 * @brief 将 UE 解析选项转换为第三方库解析选项
-	 * @param UEOptions UE 解析选项
-	 * @param OutOptions 输出的解析选项（使用输出参数避免跨 DLL 边界返回值问题）
-	 */
-	static void ConvertParserOptions(const FDreamLyricParserOptions& UEOptions, dream_lyric_parser::FParserOptions& OutOptions);
+	static void ConvertParsedLyric(dlp::File::FLyricFile ParsedFile, TArray<FDreamMusicLyricGroup>& OutGroups);
 
 	/**
 	 * @brief 将第三方库的解析结果转换为 ULyricAsset
 	 */
 	static void ConvertParsedLyricToAsset(
-		const dream_lyric_parser::FParsedLyric& ParsedLyric,
+		const dlp::File::FLyricFile& ParsedFile,
 		UDreamLyricAsset* Asset
 	);
 };

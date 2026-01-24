@@ -48,7 +48,7 @@ protected:
 	virtual void BP_MusicStart_Implementation() override;
 	virtual void BP_MusicEnd_Implementation() override;
 	virtual void BP_MusicSetPercent_Implementation(float InPercent) override;
-	virtual void BP_Tick_Implementation(const FDreamMusicLyricTimestamp& InTimestamp, float InDeltaTime) override;
+	virtual void BP_Tick_Implementation(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime) override;
 
 	/**
 	 * 歌词变更事件处理函数
@@ -56,7 +56,7 @@ protected:
 	 * @param Lyric 当前歌词信息结构体
 	 * @param Index 当前歌词在列表中的索引位置
 	 */
-	void OnLyricChangedHandle(FDreamMusicLyric Lyric, int Index);
+	void OnLyricChangedHandle(FDreamMusicLyricGroup Lyric, int Index);
 
-	TArray<FDreamMusicLyricTimestamp> IgnoreTimestamp;
+	TArray<FDreamMusicTimestamp> IgnoreTimestamp;
 };

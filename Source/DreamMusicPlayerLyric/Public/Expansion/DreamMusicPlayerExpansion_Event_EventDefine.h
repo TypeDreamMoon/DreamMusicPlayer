@@ -28,7 +28,7 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	UObject* Payload;
 
-	void CallEvent(const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& InEvent, const FDreamMusicLyric& InLyric);
+	void CallEvent(const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& InEvent, const FDreamMusicLyricGroup& InLyric);
 	void CallEvent(const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& InEvent);
 
 public:

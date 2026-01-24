@@ -97,7 +97,7 @@ void UDreamMusicPlayerExpansion_AudioAnalysis::BP_ChangeMusic_Implementation(con
 	LoadAudioNrt();
 }
 
-void UDreamMusicPlayerExpansion_AudioAnalysis::BP_Tick_Implementation(const FDreamMusicLyricTimestamp& InTimestamp, float InDeltaTime)
+void UDreamMusicPlayerExpansion_AudioAnalysis::BP_Tick_Implementation(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime)
 {
 	UpdateAudioAnalysisData();
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DreamLyricTypes.h"
 #include "Classes/DreamMusicPlayerExpansion.h"
 #include "DreamMusicPlayerExpansion_Lyric.generated.h"
 
@@ -15,26 +16,34 @@ class DREAMMUSICPLAYERLYRIC_API UDreamMusicPlayerExpansion_Lyric : public UDream
 	GENERATED_BODY()
 
 public:
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMusicPlayerLyircListDelegate, const TArray<FDreamMusicLyric>&,
-	                                            LyricList);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+		FMusicPlayerLyircListDelegate,
+		const TArray<FDreamMusicLyricGroup>&, LyricList);
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMusicPlayerLyricDelegate, FDreamMusicLyric, Lyric);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+		FMusicPlayerLyricDelegate,
+		FDreamMusicLyricGroup, Lyric);
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FMusicPlayerLyricAndIndexDelegate, FDreamMusicLyric, Lyric, int, Index);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+		FMusicPlayerLyricAndIndexDelegate,
+		FDreamMusicLyricGroup, Lyric, int, Index);
 
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FMusicPlayerLyricAndIndexMulticaseDelegate, FDreamMusicLyric, int);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(
+		FMusicPlayerLyricAndIndexMulticaseDelegate,
+		FDreamMusicLyricGroup, int);
+
 public:
 	// Lyric Offset
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	float LyricOffset = 0.0f;
-	
+
 	// Current Music Lyric List
 	UPROPERTY(BlueprintReadOnly, Category = "State")
-	TArray<FDreamMusicLyric> CurrentMusicLyricList;
+	TArray<FDreamMusicLyricGroup> CurrentMusicLyricList;
 
 	// Current Music Lyric
 	UPROPERTY(BlueprintReadOnly, Category = "State")
-	FDreamMusicLyric CurrentLyric;
+	FDreamMusicLyricGroup CurrentLyric;
 
 public:
 	/**
@@ -58,7 +67,7 @@ public:
 	 * @return Progress information based on line timestamps
 	 */
 	UFUNCTION(BlueprintPure, Category = "Functions|Lyric")
-	FDreamMusicLyricProgress GetCurrentLyricLineProgress(const FDreamMusicLyricTimestamp& InTimestamp) const;
+	FDreamMusicLyricProgress GetCurrentLyricLineProgress(const FDreamMusicTimestamp& InTimestamp) const;
 
 	/**
 	* Get Current Lyric Word Progress for regular lyrics
@@ -66,7 +75,7 @@ public:
 	* @return Progress information for word timings
 	*/
 	UFUNCTION(BlueprintPure, Category = "Functions|Lyric")
-	FDreamMusicLyricProgress GetCurrentLyricWordProgress(const FDreamMusicLyricTimestamp& InTimestamp) const;
+	FDreamMusicLyricProgress GetCurrentLyricWordProgress(const FDreamMusicTimestamp& InTimestamp) const;
 
 	/**
 	 * Get Current Romanization Word Progress
@@ -74,14 +83,14 @@ public:
 	 * @return Progress information for romanization word timings
 	 */
 	UFUNCTION(BlueprintPure, Category = "Functions|Lyric")
-	FDreamMusicLyricProgress GetCurrentRomanizationProgress(const FDreamMusicLyricTimestamp& InTimestamp) const;
+	FDreamMusicLyricProgress GetCurrentRomanizationProgress(const FDreamMusicTimestamp& InTimestamp) const;
 
 	/**
 	 * Play Music Time From Lyric Timestamp
 	 * @param InLyric Lyric
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Functions")
-	void PlayMusicWithLyric(FDreamMusicLyric InLyric);
+	void PlayMusicWithLyric(FDreamMusicLyricGroup InLyric);
 
 	/**
 	 * Initialize Lyric List
@@ -96,23 +105,23 @@ protected:
 	 * @param bUseRoma Array of word timings
 	 * @return Progress information
 	 */
-	FDreamMusicLyricProgress CalculateWordProgress(FDreamMusicLyricTimestamp InCurrentTime, bool bUseRoma = false) const;
+	FDreamMusicLyricProgress CalculateWordProgress(FDreamMusicTimestamp InCurrentTime, bool bUseRoma = false) const;
 
 	/**
 	 * Helper function to calculate line progress
 	 * @param InCurrentTime Current playback time in seconds
 	 * @return Progress information
 	 */
-	FDreamMusicLyricProgress CalculateLineProgress(FDreamMusicLyricTimestamp InCurrentTime) const;
+	FDreamMusicLyricProgress CalculateLineProgress(FDreamMusicTimestamp InCurrentTime) const;
 
 	/**
 	 * Set Current Lyric
 	 * @param InLyric New Lyric
 	 */
-	void SetCurrentLyric(FDreamMusicLyric InLyric);
+	void SetCurrentLyric(FDreamMusicLyricGroup InLyric);
 
 	mutable int32 CachedCurrentWordIndex = -1;
-	mutable FDreamMusicLyricTimestamp LastCalculationTime;
+	mutable FDreamMusicTimestamp LastCalculationTime;
 	mutable TArray<int32> WordDurationPrefixSum; // 前缀和数组，提升查找性能
 	mutable bool bCacheValid = false;
 	mutable bool bLastUseRoma = false;
@@ -123,10 +132,10 @@ protected:
 	{
 		CachedCurrentWordIndex = -1;
 		bCacheValid = false;
-		LastCalculationTime = FDreamMusicLyricTimestamp{};
+		LastCalculationTime = FDreamMusicTimestamp{};
 	}
 
 protected:
 	virtual void BP_MusicStart_Implementation() override;
-	virtual void BP_Tick_Implementation(const FDreamMusicLyricTimestamp& InTimestamp, float InDeltaTime) override;
+	virtual void BP_Tick_Implementation(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime) override;
 };

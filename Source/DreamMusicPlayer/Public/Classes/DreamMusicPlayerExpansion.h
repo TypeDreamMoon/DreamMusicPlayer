@@ -23,14 +23,14 @@ public:
 	UDreamMusicPlayerComponent* MusicPlayerComponent;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Dream Music Player Expansion")
-	FDreamMusicLyricTimestamp CurrentTimestamp;
+	FDreamMusicTimestamp CurrentTimestamp;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Dream Music Player Expansion")
 	FDreamMusicDataStruct CurrentMusicData;
 
 public:
 	virtual void Initialize(UDreamMusicPlayerComponent* InComponent);
-	virtual void Tick(const FDreamMusicLyricTimestamp& InTimestamp, float InDeltaTime);
+	virtual void Tick(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime);
 	virtual void ChangeMusic(const FDreamMusicDataStruct& InData);
 	virtual void MusicSetPercent(float InPercent);
 	virtual void MusicStart();
@@ -46,7 +46,7 @@ protected:
 	void BP_Initialize(UDreamMusicPlayerComponent* InComponent);
 
 	UFUNCTION(BlueprintNativeEvent, DisplayName = "On Tick")
-	void BP_Tick(const FDreamMusicLyricTimestamp& InTimestamp, float InDeltaTime);
+	void BP_Tick(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime);
 
 	UFUNCTION(BlueprintNativeEvent, DisplayName = "On Change Music")
 	void BP_ChangeMusic(const FDreamMusicDataStruct& InData);

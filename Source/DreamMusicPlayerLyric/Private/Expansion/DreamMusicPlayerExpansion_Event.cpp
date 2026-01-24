@@ -64,7 +64,7 @@ void UDreamMusicPlayerExpansion_Event::BP_MusicSetPercent_Implementation(float I
 	IgnoreTimestamp.Empty();
 }
 
-void UDreamMusicPlayerExpansion_Event::BP_Tick_Implementation(const FDreamMusicLyricTimestamp& InTimestamp, float InDeltaTime)
+void UDreamMusicPlayerExpansion_Event::BP_Tick_Implementation(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime)
 {
 	if (CurrentMusicData.HasExpansionData(UDreamMusicPlayerExpansionData_Event::StaticClass()))
 	{
@@ -84,7 +84,7 @@ void UDreamMusicPlayerExpansion_Event::BP_Tick_Implementation(const FDreamMusicL
 	}
 }
 
-void UDreamMusicPlayerExpansion_Event::OnLyricChangedHandle(FDreamMusicLyric Lyric, int Index)
+void UDreamMusicPlayerExpansion_Event::OnLyricChangedHandle(FDreamMusicLyricGroup Lyric, int Index)
 {
 	if (CurrentMusicData.HasExpansionData(UDreamMusicPlayerExpansionData_Event::StaticClass()))
 	{

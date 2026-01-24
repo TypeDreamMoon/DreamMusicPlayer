@@ -6,13 +6,10 @@
 #include "DreamMusicPlayerDebugLog.h"
 #include "Classes/DreamMusicPlayerComponent.h"
 #include "ExpansionData/DreamMusicPlayerExpansionData_Lyric.h"
-#include "LyricParser/DreamLyricParser.h"
-#include "LyricParser/DreamMusicPlayerLyricTools.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "DreamLyricAsset.h"
-#include "DreamLyricParser/Parsers/Parser_ESLyric.hpp"
-
-using namespace FDreamMusicPlayerLyricTools;
+#include "DreamLyricUtils.h"
+#include "dlp/Process.hpp"
 
 void UDreamMusicPlayerExpansion_Lyric::InitializeLyricList()
 {
@@ -26,56 +23,32 @@ void UDreamMusicPlayerExpansion_Lyric::InitializeLyricList()
 
 	UDreamMusicPlayerExpansionData_Lyric* ExpansionData = CurrentMusicData.GetExpansionData<UDreamMusicPlayerExpansionData_Lyric>();
 
-	if (ExpansionData->LyricSourceType != EDreamMuiscPlayerLyricSourceType::Asset && ExpansionData->LyricSourceType != EDreamMuiscPlayerLyricSourceType::Stream)
+	if (ExpansionData->LyricSourceType != EDreamMuiscPlayerLyricSourceType::Asset && ExpansionData->LyricSourceType != EDreamMuiscPlayerLyricSourceType::URL)
 	{
-		dream_lyric_parser::parser::EParserFileFormat Format = dream_lyric_parser::parser::EParserFileFormat::LRC;
-		switch (ExpansionData->LyricFileType)
-		{
-		case EDreamMusicPlayerLyricType::LRC:
-			Format = dream_lyric_parser::parser::EParserFileFormat::LRC;
-			break;
-		case EDreamMusicPlayerLyricType::LYS:
-			Format = dream_lyric_parser::parser::EParserFileFormat::LYS;
-			break;
-		case EDreamMusicPlayerLyricType::QRC:
-			Format = dream_lyric_parser::parser::EParserFileFormat::QRC;
-			break;
-		case EDreamMusicPlayerLyricType::YRC:
-			Format = dream_lyric_parser::parser::EParserFileFormat::YRC;
-			break;
-		case EDreamMusicPlayerLyricType::LRCES:
-			Format = dream_lyric_parser::parser::EParserFileFormat::ESLyric;
-			break;
-		/*case EDreamMusicPlayerLyricType::SRT:
-			Format = dream_lyric_parser::parser::EParserFileFormat::SRT;*/
-		}
-		
-		FString Path = GetLyricFilePath(ExpansionData->LyricFileName);
+		FString Path = FDreamLyricUtils::GetLyricFilePath(ExpansionData->LyricFileName);
 		FString Datas;
 		FFileHelper::LoadFileToString(Datas, *Path);
-		std::unique_ptr<dream_lyric_parser::parser::IParserLyric> Parser = dream_lyric_parser::parser::FParserFactory::CreateParser(Format);
-		dream_lyric_parser::FParserOptions Options;
-		UDreamLyricParserRuntime::ConvertParserOptions(ExpansionData->LyricParserOptions, Options);
-		dream_lyric_parser::FParsedLyric Lyric = Parser->Parse(TCHAR_TO_UTF8(*Datas), Options);
-		TArray<FDreamMusicLyricGroup> Groups;
-		UDreamLyricParserRuntime::ConvertParsedLyricToUnreal(Lyric, Groups);
-		UDreamLyricParserRuntime::ConvertLyricGroupsToLyrics(Groups, CurrentMusicLyricList);
+		std::string Content = TCHAR_TO_UTF8(*Datas);
+		dlp::FProcess Process;
+		dlp::File::FLyricFile File = Process.Process(FDreamLyricUtils::ConvertFormat(ExpansionData->LyricFileType), Content, ExpansionData->LyricParserOptions.ToLibraryType());
+
+		CurrentMusicLyricList = FDreamLyricUtils::ReadLyricFile(File);
 	}
 	else if (ExpansionData->LyricSourceType == EDreamMuiscPlayerLyricSourceType::Asset)
 	{
 		UDreamLyricAsset* Asset = ExpansionData->LyricAsset.LoadSynchronous();
 		if (Asset != nullptr)
 		{
-			CurrentMusicLyricList = Asset->ToLegacyLyrics();
+			CurrentMusicLyricList = Asset->Groups;
 		}
 		else
 		{
 			DMP_LOG_DEBUG_EXPANSION(Error, TEXT("Failed to load LyricAsset: %s"), *ExpansionData->LyricAsset.ToSoftObjectPath().ToString());
 		}
 	}
-	else if (ExpansionData->LyricSourceType == EDreamMuiscPlayerLyricSourceType::Stream)
+	else if (ExpansionData->LyricSourceType == EDreamMuiscPlayerLyricSourceType::URL)
 	{
-		UE_LOG(LogDreamMusicPlayer, Error, TEXT("%hs Stream Lyric Not Supported !!!"), __FUNCTION__);
+		UE_LOG(LogDreamMusicPlayer, Error, TEXT("%hs URL Lyric Not Supported !!!"), __FUNCTION__);
 	}
 	else
 	{
@@ -86,7 +59,7 @@ void UDreamMusicPlayerExpansion_Lyric::InitializeLyricList()
 	DMP_LOG_DEBUG_EXPANSION(Log, TEXT("InitializeLyricList Count : %02d - End"), CurrentMusicLyricList.Num());
 }
 
-void UDreamMusicPlayerExpansion_Lyric::PlayMusicWithLyric(FDreamMusicLyric InLyric)
+void UDreamMusicPlayerExpansion_Lyric::PlayMusicWithLyric(FDreamMusicLyricGroup InLyric)
 {
 	if (CurrentMusicLyricList.Contains(InLyric))
 	{
@@ -100,17 +73,17 @@ void UDreamMusicPlayerExpansion_Lyric::PlayMusicWithLyric(FDreamMusicLyric InLyr
 	}
 }
 
-FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::GetCurrentLyricWordProgress(const FDreamMusicLyricTimestamp& InTimestamp) const
+FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::GetCurrentLyricWordProgress(const FDreamMusicTimestamp& InTimestamp) const
 {
 	return CalculateWordProgress(InTimestamp);
 }
 
-FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::GetCurrentRomanizationProgress(const FDreamMusicLyricTimestamp& InTimestamp) const
+FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::GetCurrentRomanizationProgress(const FDreamMusicTimestamp& InTimestamp) const
 {
 	return CalculateWordProgress(InTimestamp, true);
 }
 
-FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::GetCurrentLyricLineProgress(const FDreamMusicLyricTimestamp& InTimestamp) const
+FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::GetCurrentLyricLineProgress(const FDreamMusicTimestamp& InTimestamp) const
 {
 	return CalculateLineProgress(InTimestamp);
 }
@@ -122,7 +95,7 @@ void UDreamMusicPlayerExpansion_Lyric::BuildWordDurationCache(bool bUseRoma) con
 		return;
 	}
 
-	const TArray<FDreamMusicLyricWord>& Words = bUseRoma ? CurrentLyric.RomanizationWordTimings : CurrentLyric.WordTimings;
+	const TArray<FDreamMusicLyricWord>& Words = bUseRoma ? CurrentLyric[EDreamMusicLyricTextRole::Romanization]->Words : CurrentLyric[EDreamMusicLyricTextRole::Lyric]->Words;
 
 	WordDurationPrefixSum.Empty();
 	WordDurationPrefixSum.Reserve(Words.Num());
@@ -144,13 +117,13 @@ void UDreamMusicPlayerExpansion_Lyric::BP_MusicStart_Implementation()
 	InitializeLyricList();
 }
 
-void UDreamMusicPlayerExpansion_Lyric::BP_Tick_Implementation(const FDreamMusicLyricTimestamp& InTimestamp, float InDeltaTime)
+void UDreamMusicPlayerExpansion_Lyric::BP_Tick_Implementation(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime)
 {
-	SetCurrentLyric(FDreamMusicPlayerLyricTools::GetLyricAtTimestamp(CurrentTimestamp, CurrentMusicLyricList));
+	SetCurrentLyric(FDreamLyricUtils::GetLyricAtTimestamp(CurrentTimestamp, CurrentMusicLyricList));
 }
 
 
-FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::CalculateWordProgress(FDreamMusicLyricTimestamp InCurrentTime, bool bUseRoma) const
+FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::CalculateWordProgress(FDreamMusicTimestamp InCurrentTime, bool bUseRoma) const
 {
 	// 边界检查
 	if (CurrentLyric.IsEmpty())
@@ -185,7 +158,7 @@ FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::CalculateWordProgress
 	// 构建缓存
 	BuildWordDurationCache(bUseRoma);
 
-	const TArray<FDreamMusicLyricWord>& Words = bUseRoma ? CurrentLyric.RomanizationWordTimings : CurrentLyric.WordTimings;
+	const TArray<FDreamMusicLyricWord>& Words = bUseRoma ? CurrentLyric[EDreamMusicLyricTextRole::Romanization]->Words : CurrentLyric[EDreamMusicLyricTextRole::Lyric]->Words;
 
 	// 性能优化：从上次位置开始查找，通常时间是递增的
 	int32 StartIndex = 0;
@@ -230,8 +203,8 @@ FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::CalculateWordProgress
 	if (Words.Num() > 0)
 	{
 		// Use the actual span of word timings for LRC files
-		FDreamMusicLyricTimestamp LastWordEnd = Words.Last().EndTimestamp;
-		FDreamMusicLyricTimestamp FirstWordStart = Words[0].StartTimestamp;
+		FDreamMusicTimestamp LastWordEnd = Words.Last().EndTimestamp;
+		FDreamMusicTimestamp FirstWordStart = Words[0].StartTimestamp;
 		ActualWordTimingDuration = LastWordEnd.ToMilliseconds() - FirstWordStart.ToMilliseconds();
 	}
 
@@ -261,7 +234,7 @@ FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::CalculateWordProgress
 		// 回退到基于实际单词时间的进度计算
 		if (Words.Num() > 0)
 		{
-			FDreamMusicLyricTimestamp FirstWordStart = Words[0].StartTimestamp;
+			FDreamMusicTimestamp FirstWordStart = Words[0].StartTimestamp;
 			int32 Elapsed = InCurrentTime.ToMilliseconds() - FirstWordStart.ToMilliseconds();
 			float LineProgress = static_cast<float>(Elapsed) / static_cast<float>(EffectiveDuration);
 			LineProgress = FMath::Clamp(LineProgress, 0.0f, 1.0f);
@@ -276,7 +249,7 @@ FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::CalculateWordProgress
 	}
 }
 
-FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::CalculateLineProgress(FDreamMusicLyricTimestamp InCurrentTime) const
+FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::CalculateLineProgress(FDreamMusicTimestamp InCurrentTime) const
 {
 	if (InCurrentTime < CurrentLyric.StartTimestamp || InCurrentTime > CurrentLyric.EndTimestamp)
 	{
@@ -292,15 +265,15 @@ FDreamMusicLyricProgress UDreamMusicPlayerExpansion_Lyric::CalculateLineProgress
 	return FDreamMusicLyricProgress(-1, Progress, false, FDreamMusicLyricWord{});
 }
 
-void UDreamMusicPlayerExpansion_Lyric::SetCurrentLyric(FDreamMusicLyric InLyric)
+void UDreamMusicPlayerExpansion_Lyric::SetCurrentLyric(FDreamMusicLyricGroup InLyric)
 {
-	if (InLyric != CurrentLyric && InLyric.IsNotEmpty())
+	if (InLyric != CurrentLyric && !InLyric.IsEmpty())
 	{
 		ClearLyricProgressCache();
 		CurrentLyric = InLyric;
 		OnLyricChanged.Broadcast(CurrentLyric, CurrentMusicLyricList.Find(CurrentLyric));
 		OnLyricChangedNative.Broadcast(CurrentLyric, CurrentMusicLyricList.Find(CurrentLyric));
 		DMP_LOG_DEBUG_EXPANSION(Log, "Lyric", TEXT("Set : Time : %02d:%02d.%02d Content : %s"),
-		                        InLyric.StartTimestamp.Minute, InLyric.StartTimestamp.Seconds, InLyric.StartTimestamp.Millisecond, *InLyric.Content);
+		                        InLyric.StartTimestamp.Minute, InLyric.StartTimestamp.Seconds, InLyric.StartTimestamp.Millisecond, *InLyric[EDreamMusicLyricTextRole::Lyric]->Text);
 	}
 }

@@ -3,6 +3,8 @@
 
 #include "ExpansionData/DreamMusicPlayerExpansionData_Event.h"
 
+#include "DreamLyricTypes.h"
+
 void FDreamMusicPlayerExpansionData_BaseEvent::Call(FDreamEventCallback Callback) const
 {
 	for (const FDreamMusicPlayerExpansionData_BaseEvent_SingleEventDefine& Event : Events)
@@ -16,7 +18,7 @@ bool FDreamMusicPlayerExpansionData_Event_LyricEventDefine::operator==(int Other
 	return Other == Index;
 }
 
-bool FDreamMusicPlayerExpansionData_Event_TimeEventDefine::operator==(const FDreamMusicLyricTimestamp& Other) const
+bool FDreamMusicPlayerExpansionData_Event_TimeEventDefine::operator==(const FDreamMusicTimestamp& Other) const
 {
 	return Other == Time;
 }

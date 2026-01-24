@@ -60,12 +60,12 @@ struct FDreamMusicPlayerExpansionData_Event_TimeEventDefine
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FDreamMusicLyricTimestamp Time;
+	FDreamMusicTimestamp Time;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FDreamMusicPlayerExpansionData_BaseEvent Event;
 
-	bool operator==(const FDreamMusicLyricTimestamp& Other) const;
+	bool operator==(const FDreamMusicTimestamp& Other) const;
 };
 
 /**
