@@ -1,5 +1,5 @@
 ﻿// Dream Lyric Parser Library CXX20
-// Common lyric data structures
+// Core type definitions and enumeration constants
 // Copyright (C) 2026 Type Dream Moon. All rights reserved.
 
 #pragma once
@@ -13,46 +13,51 @@
 
 /**
  * @namespace dlp
- * @brief Main namespace for the Dream Lyric Parser library.
+ * @brief Root namespace for the Dream Lyric Parser library.
  */
 namespace dlp
 {
-    /** @brief Represents a timestamp in seconds. */
+    /** * @brief High-precision timestamp representation.
+     * Uses std::chrono::duration with double-precision seconds to handle
+     * sub-millisecond accuracy required by advanced formats.
+     */
     typedef std::chrono::duration<double> timestamp;
 
-    /** @brief Supported lyric file formats. */
+    /** @brief Supported lyric and subtitle file formats. */
     enum class EFileFormat : int
     {
-        /** Standard LRC Format */
+        /** Standard synchronized lyrics (.lrc) */
         LRC = 0,
-        /** SubRip Text */
+        /** SubRip subtitle format (.srt) */
         SRT = 1,
-        /** ESLyric Word-by-word Format */
+        /** Enhanced word-by-word synchronized format */
         ESLyric = 2,
-        /** ASS Subtitle Format */
+        /** Advanced Substation Alpha format (.ass/.ssa) */
         ASS = 3,
     };
 
-    /** @brief Roles that a lyric content line can represent. */
+    /** * @brief Categorization of lyric line content.
+     * Designed as a bitmask to allow a single line to fulfill multiple roles if necessary.
+     */
     enum class ELyricContentRole : std::uint8_t
     {
-        /** No role */
+        /** Unclassified or default content */
         None = 0,
-        /** Lyric role*/
+        /** Primary lyric text (Original language) */
         Lyric = 1 << 0,
-        /** Romanization of the lyrics*/
+        /** Phonetic transcription (e.g., Romaji, Pinyin) */
         Romanization = 1 << 1,
-        /** Translation of the lyrics*/
+        /** Translated text */
         Translation = 1 << 2
     };
 
-    /** @brief Bitwise flags for ELyricContentRole. */
+    /** @brief Type alias for combined ELyricContentRole bitwise flags. */
     using FLyricContentFlags = std::uint8_t;
 
     /**
-     * @brief Converts a single role to its bitwise flag representation.
-     * @param Role The role to convert.
-     * @return The flag representation.
+     * @brief Converts a role enum value to its raw bitmask flag.
+     * @param Role The specific role to convert.
+     * @return The underlying bitmask value.
      */
     [[nodiscard]] constexpr FLyricContentFlags ToFlags(ELyricContentRole Role) noexcept
     {
@@ -60,10 +65,7 @@ namespace dlp
     }
 
     /**
-     * @brief Combines two roles into a flag set.
-     * @param lhs Left-hand side role.
-     * @param rhs Right-hand side role.
-     * @return Combined flags.
+     * @brief Overloaded OR operator to combine roles into a flag set.
      */
     [[nodiscard]] constexpr FLyricContentFlags operator|(ELyricContentRole lhs, ELyricContentRole rhs) noexcept
     {
@@ -71,10 +73,7 @@ namespace dlp
     }
 
     /**
-     * @brief Adds a role to an existing flag set.
-     * @param lhs Existing flags.
-     * @param rhs Role to add.
-     * @return Combined flags.
+     * @brief Overloaded OR operator to append a role to an existing flag set.
      */
     [[nodiscard]] constexpr FLyricContentFlags operator|(FLyricContentFlags lhs, ELyricContentRole rhs) noexcept
     {
@@ -82,10 +81,10 @@ namespace dlp
     }
 
     /**
-     * @brief Checks if a specific role is present in the flags.
-     * @param flags The flags to check.
-     * @param role The role to look for.
-     * @return True if the role is present.
+     * @brief Utility to check if a flag set contains a specific content role.
+     * @param flags The combined flag set.
+     * @param role The role to search for.
+     * @return True if the role bit is set.
      */
     [[nodiscard]] constexpr bool HasFlag(FLyricContentFlags flags, ELyricContentRole role) noexcept
     {

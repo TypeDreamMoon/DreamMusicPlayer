@@ -7,19 +7,27 @@
 #include "DreamLyricAsset.h"
 
 #include "DreamLyricUtils.h"
+#include "DreamLyricTypes.h"
 #include "dlp/Process.hpp"
 
 dlp::File::FLyricGroupRoleOption FDreamLyricParserOptions::ToLibraryType() const
 {
 	std::vector<dlp::ELyricContentRole> Roles;
+	dlp::File::FLyricGroupRoleOption Result;
 
 	for (auto elem : GroupingSequence)
 	{
-		Roles.push_back(FDreamLyricUtils::ConvertRole(elem));
+		std::vector<dlp::ELyricContentRole> cache;
+		for (EDreamMusicLyricTextRole Role : elem.Roles)
+		{
+			cache.push_back(FDreamLyricUtils::ConvertRole(Role));
+		}
+		Result.AddRoleGroup(cache);
 	}
 
+	Result.SetFallbackRole(FDreamLyricUtils::ConvertRole(FallbackRole));
 
-	return {Roles, FDreamLyricUtils::ConvertRole(FallbackRole)};
+	return Result;
 }
 
 FDreamLyricImportResult UDreamLyricParserRuntime::ImportLyricFileFromPath(

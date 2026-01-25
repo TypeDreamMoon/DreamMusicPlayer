@@ -1,6 +1,7 @@
 ﻿#include "DreamMusicPlayerEditorModule.h"
-#include "DreamLyricAssetTypeActions.h"
+#include "LyricModule/DreamLyricAssetTypeActions.h"
 #include "AssetToolsModule.h"
+#include "DreamMusicPlayerEditorStyles.h"
 #include "IAssetTools.h"
 
 #define LOCTEXT_NAMESPACE "FDreamMusicPlayerEditorModule"
@@ -9,10 +10,13 @@ void FDreamMusicPlayerEditorModule::StartupModule()
 {
 	// 注册资产类型操作
 	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-	
+
 	TSharedPtr<FDreamLyricAssetTypeActions> LyricAssetTypeActions = MakeShareable(new FDreamLyricAssetTypeActions());
 	AssetTools.RegisterAssetTypeActions(LyricAssetTypeActions.ToSharedRef());
 	CreatedAssetTypeActions.Add(LyricAssetTypeActions);
+
+	FDreamMusicPlayerEditorStyles::Initialize();
+	FDreamMusicPlayerEditorStyles::Register();
 }
 
 void FDreamMusicPlayerEditorModule::ShutdownModule()
@@ -27,8 +31,10 @@ void FDreamMusicPlayerEditorModule::ShutdownModule()
 		}
 	}
 	CreatedAssetTypeActions.Empty();
+
+	FDreamMusicPlayerEditorStyles::Unregister();
 }
 
 #undef LOCTEXT_NAMESPACE
-    
+
 IMPLEMENT_MODULE(FDreamMusicPlayerEditorModule, DreamMusicPlayerEditor)

@@ -75,8 +75,19 @@ bool FDreamMusicLyricWord::operator==(const FDreamMusicLyricWord& Target) const
 	{
 		return false;
 	}
-	
+
 	return true;
+}
+
+FString FDreamMusicLyricWord::ToString() const
+{
+	FStringBuilderBase StringBuilder;
+
+	StringBuilder << "[Content]:" << Content << "\n";
+	StringBuilder << "[StartTime]:" << StartTimestamp.ToString() << "\n";
+	StringBuilder << "[EndTime]:" << EndTimestamp.ToString() << "\n";
+
+	return StringBuilder.ToString();
 }
 
 FDreamMusicTimestamp FDreamMusicLyricLine::GetStartTimestamp() const
@@ -129,6 +140,21 @@ bool FDreamMusicLyricLine::operator==(const FDreamMusicLyricLine& Target) const
 		return false;
 	}
 	return true;
+}
+
+FString FDreamMusicLyricLine::ToString() const
+{
+	FStringBuilderBase StringBuilder;
+
+	StringBuilder << "[Text]:" << Text << "\n";
+	StringBuilder << "[Words]:" << "\n";
+	for (const FDreamMusicLyricWord& Word : Words)
+	{
+		StringBuilder << "  " << Word.ToString() << "\n";
+	}
+	StringBuilder << "[Role]:" << UEnum::GetDisplayValueAsText(Role).ToString() << "\n";
+
+	return StringBuilder.ToString();
 }
 
 FDreamMusicLyricLine* FDreamMusicLyricGroup::GetLineByRole(EDreamMusicLyricTextRole Role)
@@ -224,6 +250,27 @@ bool FDreamMusicLyricGroup::operator==(const FDreamMusicLyricGroup& Other) const
 	return true;
 }
 
+bool FDreamMusicLyricGroup::operator==(const FDreamMusicLyricGroup* Other) const
+{
+	return *this == *Other;
+}
+
+FString FDreamMusicLyricGroup::ToString() const
+{
+	FStringBuilderBase StringBuilder;
+
+	StringBuilder << "[StartTime]:" << StartTimestamp.ToString() << "\n";
+	StringBuilder << "[EndTime]:" << EndTimestamp.ToString() << "\n";
+	StringBuilder << "[Lines]:" << "\n";
+	for (const FDreamMusicLyricLine& Line : Lines)
+	{
+		StringBuilder << "  " << Line.ToString() << "\n";
+	}
+	StringBuilder << "[Metadata]:" << "\n";
+
+	return StringBuilder.ToString();
+}
+
 FString FDreamMusicLyricMetadata::GetValue(const FString& Key, const FString& DefaultValue) const
 {
 	const FString* Value = Items.Find(Key);
@@ -238,4 +285,47 @@ void FDreamMusicLyricMetadata::SetValue(const FString& Key, const FString& Value
 bool FDreamMusicLyricMetadata::HasKey(const FString& Key) const
 {
 	return Items.Contains(Key);
+}
+
+bool FDreamLyricParserOptionGroup::operator==(const FDreamLyricParserOptionGroup& Other) const
+{
+	for (const EDreamMusicLyricTextRole& Role : Roles)
+	{
+		if (!Other.Roles.Contains(Role))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool FDreamLyricParserOptions::IsEmpty() const
+{
+	return GroupingSequence.IsEmpty();
+}
+
+void FDreamLyricParserOptions::operator+=(EDreamMusicLyricTextRole Role)
+{
+	if (GroupingSequence.Contains(Role))
+	{
+		return;
+	}
+	else
+	{
+		GroupingSequence.AddUnique(Role);
+	}
+}
+
+void FDreamLyricParserOptions::operator-=(EDreamMusicLyricTextRole Role)
+{
+	if (GroupingSequence.Contains(Role))
+	{
+		GroupingSequence.Remove(Role);
+	}
+}
+
+bool FDreamLyricParserOptions::operator[](EDreamMusicLyricTextRole Role)
+{
+	return GroupingSequence.Contains(Role);
 }

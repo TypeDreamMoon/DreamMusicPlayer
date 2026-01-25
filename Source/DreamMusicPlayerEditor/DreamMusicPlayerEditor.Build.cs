@@ -33,7 +33,8 @@ public class DreamMusicPlayerEditor : ModuleRules
                 "UnrealEd",
                 "ApplicationCore",
                 "InputCore",
-                "EditorScriptingUtilities"
+                "EditorScriptingUtilities",
+                "Projects"
             }
         );
     }

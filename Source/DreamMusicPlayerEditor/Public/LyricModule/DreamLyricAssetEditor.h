@@ -44,6 +44,8 @@ public:
 	virtual bool OnRequestClose(EAssetEditorCloseReason InCloseReason) override;
 
 private:
+	void ExtendToolBar();
+	
 	/**
 	 * @brief 创建属性详情视图
 	 */
@@ -82,7 +84,7 @@ private:
 	/**
 	 * @brief 生成歌词列表项
 	 */
-	TSharedRef<ITableRow> GenerateLyricListRow(TSharedPtr<FString> InItem, const TSharedRef<STableViewBase>& OwnerTable);
+	TSharedRef<ITableRow> GenerateLyricListRow(TSharedPtr<FDreamMusicLyricGroup> InItem, const TSharedRef<STableViewBase>& OwnerTable);
 
 	// 前向声明结构体
 	struct FLyricGroupDisplayData;
@@ -170,19 +172,18 @@ private:
 	TSharedPtr<IDetailsView> DetailsView;
 
 	/** 歌词列表视图 */
-	TSharedPtr<SListView<TSharedPtr<FString>>> LyricListView;
+	TSharedPtr<SListView<TSharedPtr<FDreamMusicLyricGroup>>> LyricListView;
 
 	/** 搜索框 */
 	TSharedPtr<class SSearchBox> SearchBox;
 
 	/** 歌词列表数据 */
-	TArray<TSharedPtr<FString>> LyricListItems;
+	TArray<TSharedPtr<FDreamMusicLyricGroup>> LyricListItems;
 
 	/** 歌词组数据结构 */
 	struct FLyricGroupDisplayData
 	{
-		FDreamMusicTimestamp Timestamp;
-		TArray<TPair<EDreamMusicLyricTextRole, FString>> Lines; // 角色和文本的配对
+		FDreamMusicLyricGroup Group;
 		int32 GroupIndex;
 	};
 
@@ -202,10 +203,8 @@ private:
 	TSharedPtr<IDetailsView> EditDetailsView;
 
 	/** 当前编辑的组对象（临时对象用于编辑） */
-	UPROPERTY()
 	TObjectPtr<UObject> EditingGroupObject;
 
 	/** 属性变更委托句柄 */
 	FDelegateHandle PropertyChangedHandle;
 };
-

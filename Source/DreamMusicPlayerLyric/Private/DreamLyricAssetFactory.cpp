@@ -11,7 +11,9 @@
 
 #include "DreamLyricTypes.h"
 #include "DreamLyricUtils.h"
+#include "dlp/Parser.hpp"
 #include "dlp/Process.hpp"
+#include "dlp/Parser/Parser_ASS.hpp"
 
 #define LOCTEXT_NAMESPACE "DreamLyricAssetFactory"
 
@@ -127,20 +129,33 @@ UObject* ULyricAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InParen
 		}
 	}
 
-	// 获取用户配置的解析选项
-	FDreamLyricParserOptions ParserOptions = ImportDialog->GetParserOptions();
-
 	// 创建资产
 	UDreamLyricAsset* Asset = NewObject<UDreamLyricAsset>(InParent, InClass, InName, Flags);
 	Asset->SourceFileName = FPaths::GetCleanFilename(Filename);
 
-	// 导入文件（使用用户配置的解析选项）
-	UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Starting file import with custom parser options"));
-	if (!ImportLyricFile(Filename, Asset, ParserFormat, ParserOptions))
+	if (Extension != TEXT("ass"))
 	{
-		UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: Failed to import lyric file: %s"), *Filename);
-		Warn->Logf(ELogVerbosity::Error, TEXT("Failed to import lyric file: %s"), *Filename);
-		return nullptr;
+		// 获取用户配置的解析选项
+		FDreamLyricParserOptions ParserOptions = ImportDialog->GetParserOptions();
+		UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Starting file import with custom parser options"));
+		if (!ImportLyricFile(Filename, Asset, ParserFormat, ParserOptions))
+		{
+			UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: Failed to import lyric file: %s"), *Filename);
+			Warn->Logf(ELogVerbosity::Error, TEXT("Failed to import lyric file: %s"), *Filename);
+			return nullptr;
+		}
+	}
+	else
+	{
+		FString Key_Lyric, Key_Romanization, Key_Translation;
+		ImportDialog->GetAssFileRoleKeys(Key_Lyric, Key_Translation, Key_Romanization);
+		dlp::Parser::FParserOptions* ParserOptions = dlp::Parser::FParserOptions::NewOption<dlp::Parser::FParserOptions_ASS>(TCHAR_TO_UTF8(*Key_Lyric), TCHAR_TO_UTF8(*Key_Romanization), TCHAR_TO_UTF8(*Key_Translation));
+		if (!ImportLyricFile(Filename, Asset, ParserFormat, ParserOptions))
+		{
+			UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: Failed to import lyric file: %s"), *Filename);
+			Warn->Logf(ELogVerbosity::Error, TEXT("Failed to import lyric file: %s"), *Filename);
+			return nullptr;
+		}
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Import successful, created asset with %d groups"), Asset->Groups.Num());
@@ -191,6 +206,55 @@ bool ULyricAssetFactory::ImportLyricFile(const FString& Filename,
 		// auto Parser = dream_lyric_parser::parser::FParserFactory::CreateParser(Format);
 		dlp::FProcess Process;
 		dlp::File::FLyricFile ParsedLyricFile = Process.Process(Format, ContentStr, ParserOptions.ToLibraryType());
+
+		// 转换为资产数据
+		ConvertParsedLyricToAsset(ParsedLyricFile, Asset);
+
+		UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Successfully parsed and converted lyric file with %d groups"), Asset->Groups.Num());
+		return true;
+	}
+	catch (const std::exception& e)
+	{
+		UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: Exception occurred: %s"), UTF8_TO_TCHAR(e.what()));
+		return false;
+	}
+	catch (...)
+	{
+		UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: Unknown exception occurred while importing lyric file. This may be due to missing DreamLyricParser.dll or incompatible DLL version."));
+		return false;
+	}
+}
+
+bool ULyricAssetFactory::ImportLyricFile(const FString& Filename, UDreamLyricAsset* Asset, dlp::EFileFormat Format, dlp::Parser::FParserOptions* ParserOptions)
+{
+	if (!Asset)
+	{
+		UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: Asset is null"));
+		return false;
+	}
+
+	// 读取文件内容
+	FString FileContent;
+	if (!FFileHelper::LoadFileToString(FileContent, *Filename))
+	{
+		UE_LOG(LogTemp, Error, TEXT("LyricAssetFactory: Failed to read file: %s"), *Filename);
+		return false;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: File read successfully, size: %d bytes"), FileContent.Len());
+
+	// 转换为std::string
+	std::string ContentStr = TCHAR_TO_UTF8(*FileContent);
+
+	UE_LOG(LogTemp, Log, TEXT("LyricAssetFactory: Attempting to create parser for format: %d"), (int32)Format);
+
+	// 使用 try-catch 来捕获异常
+	try
+	{
+		// 创建解析器
+		// auto Parser = dream_lyric_parser::parser::FParserFactory::CreateParser(Format);
+		dlp::FProcess Process;
+		dlp::File::FLyricFile ParsedLyricFile = Process.Process(Format, ContentStr, ParserOptions);
 
 		// 转换为资产数据
 		ConvertParsedLyricToAsset(ParsedLyricFile, Asset);

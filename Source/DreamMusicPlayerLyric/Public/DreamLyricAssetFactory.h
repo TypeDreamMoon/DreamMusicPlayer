@@ -6,6 +6,13 @@
 #include "Factories/Factory.h"
 #include "DreamLyricAssetFactory.generated.h"
 
+class UDreamLyricAsset;
+
+namespace dlp::Parser
+{
+	class FParserOptions;
+}
+
 UCLASS()
 class DREAMMUSICPLAYERLYRIC_API ULyricAssetFactory : public UFactory
 {
@@ -24,6 +31,11 @@ private:
 		UDreamLyricAsset* Asset,
 		dlp::EFileFormat Format,
 		const FDreamLyricParserOptions& ParserOptions = FDreamLyricParserOptions());
+	bool ImportLyricFile(
+		const FString& Filename,
+		UDreamLyricAsset* Asset,
+		dlp::EFileFormat Format,
+		dlp::Parser::FParserOptions* ParserOptions);
 	void ConvertParsedLyricToAsset(
 		const dlp::File::FLyricFile& ParsedFile,
 		UDreamLyricAsset* Asset);

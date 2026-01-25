@@ -1,11 +1,12 @@
 ﻿// Dream Lyric Parser Library CXX20
-// Unified lyrics file format
+// Unified lyrics file format definitions
 // Copyright (C) 2026 Type Dream Moon. All rights reserved.
 
 #pragma once
 
 #include <map>
 #include <vector>
+#include <string>
 
 #include "Export.hpp"
 #include "Types.hpp"
@@ -18,237 +19,146 @@ namespace dlp::Parser
 namespace dlp::File
 {
     /**
-     * @brief Lyrics metadata structure for storing metadata information of lyric files
-     * Stores key-value pairs of metadata such as song title, artist, etc.
+     * @brief Container for lyric file metadata.
+     * Stores key-value pairs such as title (ti), artist (ar), album (al), and time offset.
      */
     struct DLP_API FLyricMetadata
     {
     public:
-        /**
-         * @brief Constructor, initializes the lyric metadata object
-         */
         FLyricMetadata();
-
-        /**
-         * @brief Destructor, cleans up resources of the lyric metadata object
-         */
         ~FLyricMetadata();
 
         /**
-         * @brief Adds a metadata item
-         * @param in_key Key name of the metadata
-         * @param in_content Content of the metadata
+         * @brief Inserts or updates a metadata entry.
+         * @param in_key Attribute name (e.g., "artist").
+         * @param in_content Attribute value content.
          */
         void AddMetadata(const std::string& in_key, const std::string& in_content);
 
-        /**
-         * @brief Map storing lyric metadata, key is string type, value is also string type
-         */
+        /** @brief Internal storage map for metadata tags. */
         std::map<std::string, std::string> metadata;
     };
 
     /**
-     * @brief Lyric word structure, representing a single word in lyrics and its timestamp information
+     * @brief Represents a single word or syllable within a lyric line.
+     * Used for "karaoke-style" or word-by-word synchronized lyrics.
      */
     struct DLP_API FLyricWord
     {
     public:
-        /**
-         * @brief Constructor, initializes the lyric word object
-         */
-        FLyricWord();
-
-        /**
-         * @brief Destructor, cleans up resources of the lyric word object
-         */
+        FLyricWord() noexcept;
         ~FLyricWord();
 
-        /**
-         * @brief Stores the word text content
-         */
-        std::string word;
-
-        /**
-         * @brief Word start timestamp, default is zero
-         */
+        /** @brief Start timestamp relative to the beginning of the song. */
         timestamp time_start = timestamp::zero();
-
-        /**
-         * @brief Word end timestamp, default is zero
-         */
+        /** @brief End timestamp relative to the beginning of the song. */
         timestamp time_end = timestamp::zero();
+        /** @brief Text content of the word (e.g., a single character or word). */
+        std::string word;
     };
 
     /**
-     * @brief Lyric line structure, representing a line of lyrics and its parsed content
+     * @brief Represents a single line of lyrics and its synchronization data.
      */
     struct DLP_API FLyricLine
     {
     public:
-        /**
-         * @brief Constructor, initializes the lyric line object
-         */
         FLyricLine();
-
         FLyricLine(std::string in_lyric, timestamp in_time_start, timestamp in_time_end);
-
-        /**
-         * @brief Virtual destructor, ensures proper destruction of derived classes
-         */
         virtual ~FLyricLine();
 
         /**
-         * @brief Parses the lyric line content, converting raw lyrics to parsed word list
+         * @brief Parses raw lyric text into a list of words.
+         * Fills parsed_words if the format supports word-level timestamps.
          */
         void Parser();
 
-        /**
-         * @brief Checks if it is word-by-word lyric mode
-         * @return Returns true if it is word-by-word lyric mode, otherwise returns false
-         */
-        [[nodiscard]] bool IsWordByWord() const;
+        /** @brief Checks if the line contains word-level synchronization. */
+        [[nodiscard]] bool IsWordByWord() const noexcept;
 
-        /**
-         * @brief Lyric content role identifier, indicating the role type of this line of lyrics
-         */
-        ELyricContentRole role = ELyricContentRole::None;
-
-        /**
-         * @brief Parsed word list, containing timestamp information for each word
-         */
-        std::vector<FLyricWord> parsed_words;
-
-        /**
-         * @brief Original lyric text content
-         */
-        std::string lyric;
-
-        /**
-         * @brief Lyric line start timestamp, default is zero
-         */
+        /** @brief Start timestamp for the line to appear. */
         timestamp time_start = timestamp::zero();
-
-        /**
-         * @brief Lyric line end timestamp, default is zero
-         */
+        /** @brief End timestamp for the line to disappear. */
         timestamp time_end = timestamp::zero();
-
-        /**
-         * @brief Flag indicating whether it is word-by-word lyric mode
-         */
+        /** @brief Identifies the role of the line (e.g., Main, Romaji, Translation). */
+        ELyricContentRole role = ELyricContentRole::None;
+        /** @brief Flag indicating if word-by-word mode is active. */
         bool word_by_word = false;
+
+        /** @brief Raw text content of the lyric line. */
+        std::string lyric;
+        /** @brief List of parsed words with individual timestamps if word_by_word is true. */
+        std::vector<FLyricWord> parsed_words;
     };
 
     /**
-     * @brief Lyric group role option structure, defining role configuration when processing lyric groups
+     * @brief Configuration for assigning roles to lines within a group.
+     * Defines how the parser distinguishes between primary lyrics and translations.
      */
     struct DLP_API FLyricGroupRoleOption
     {
-        /**
-         * @brief Constructor, initializes options with specified role list and fallback role
-         * @param in_roles Role list
-         * @param in_fallback Fallback role used when role list is empty
-         */
-        FLyricGroupRoleOption(std::vector<ELyricContentRole> in_roles, ELyricContentRole in_fallback);
+        FLyricGroupRoleOption();
+        FLyricGroupRoleOption(std::vector<std::vector<ELyricContentRole>> in_roles, ELyricContentRole in_fallback);
 
-        /**
-         * @brief Stores the list of available roles
-         */
-        std::vector<ELyricContentRole> roles;
-
-        /**
-         * @brief Fallback role used when no suitable role is available
-         */
-        ELyricContentRole fallback;
-
-        /**
-         * @brief Applies role options to the specified vector of lyric lines
-         * @param in_lines Vector of lyric lines to apply roles to
-         */
+        /** @brief Applies role assignment logic to a vector of lyric lines. */
         void ApplyRole(std::vector<FLyricLine>& in_lines) const;
+
+        /** @brief Clears existing role matching rules. */
+        FLyricGroupRoleOption* ClearRoles() noexcept;
+        /** @brief Adds a priority-ordered role matching group. */
+        FLyricGroupRoleOption* AddRoleGroup(const std::vector<ELyricContentRole>& in_role_group);
+        /** @brief Sets the fallback role when no rules match. */
+        FLyricGroupRoleOption* SetFallbackRole(ELyricContentRole in_fallback_role) noexcept;
+
+        /** @brief Priority-ordered list of available roles. */
+        std::vector<std::vector<ELyricContentRole>> roles;
+        /** @brief Default role used as a fallback. */
+        ELyricContentRole fallback = ELyricContentRole::None;
+
+        static FLyricGroupRoleOption Default();
     };
 
     /**
-     * @brief Lyric group structure, managing a group of related lyric lines and providing parsing functionality
+     * @brief Manages a collection of related lyric lines.
+     * A "group" usually represents different versions of a line at the same time (e.g., Original + Romaji + Translation).
      */
     struct DLP_API FLyricGroup
     {
     public:
-        /**
-         * @brief Constructor, initializes the lyric group with specified parser, start time, and role options
-         * @param in_start_time Start time of the lyric group
-         * @param in_role_option Role options for the lyric group
-         */
         FLyricGroup(timestamp in_start_time, FLyricGroupRoleOption in_role_option);
-
-        /**
-         * @brief Virtual destructor, ensures proper destruction of derived classes
-         */
         virtual ~FLyricGroup();
 
-        /**
-         * @brief Processes the entire lyric group, executing parsing operations
-         */
+        /** @brief Executes role assignment and timestamp validation within the group. */
         void ProcessGroup();
 
-        /**
-         * @brief Checks if the current lyric group is valid
-         * @return Returns true if the lyric group is valid, otherwise returns false
-         */
-        [[nodiscard]] bool IsValidGroup() const;
+        /** @brief Validates if the group contains usable lyric content. */
+        [[nodiscard]] bool IsValidGroup() const noexcept;
 
-        /**
-         * @brief Start timestamp of the lyric group
-         */
+        /** @brief Overall start time for the lyric group. */
         timestamp group_time_start = timestamp::zero();
-
-        /**
-         * @brief End timestamp of the lyric group
-         */
+        /** @brief Overall end time (determined by the longest line in the group). */
         timestamp group_time_end = timestamp::zero();
 
-        /**
-         * @brief Role options for the lyric group
-         */
+        /** @brief Role identification configuration used by this group. */
         FLyricGroupRoleOption role_option;
-
-        /**
-         * @brief Stores the parsed lyric line list
-         */
+        /** @brief List of lyric lines within this group (e.g., line 1 is Main, line 2 is Trans). */
         std::vector<FLyricLine> parsed_lines;
     };
 
     /**
-     * @brief Lyric file structure, representing a complete lyric file containing metadata and lyric groups
+     * @brief Top-level representation of a parsed lyric file.
+     * Encapsulates all metadata and synchronized lyric groups.
      */
     struct DLP_API FLyricFile
     {
     public:
-        /**
-         * @brief Default constructor, creates an empty lyric file object
-         */
         FLyricFile();
-
-        /**
-         * @brief Constructor, initializes the lyric file with specified metadata and lyric group list
-         * @param in_metadata Metadata of the lyric file
-         * @param in_groups List of lyric groups in the lyric file
-         */
         FLyricFile(const FLyricMetadata& in_metadata, const std::vector<FLyricGroup>& in_groups);
-
-        /**
-         * @brief Destructor, cleans up resources of the lyric file object
-         */
         virtual ~FLyricFile();
 
-        /**
-         * @brief Metadata of the lyric file
-         */
+        /** @brief Metadata for the song (Artist, Title, etc.). */
         FLyricMetadata metadata;
-
-        /**
-         * @brief List of lyric groups in the lyric file
-         */
+        /** @brief List of lyric groups sorted by time. */
         std::vector<FLyricGroup> groups;
     };
 }

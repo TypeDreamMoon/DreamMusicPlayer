@@ -1,5 +1,5 @@
 ﻿// Dream Lyric Parser Library CXX20
-// Basic input string analysis
+// Main entry point for lyric processing and orchestration
 // Copyright (C) 2026 Type Dream Moon. All rights reserved.
 
 #pragma once
@@ -10,8 +10,16 @@
 
 namespace dlp
 {
+    namespace Parser
+    {
+        class FParserOptions;
+        struct IParser;
+    }
+
     /**
-     * @brief Main processor class for handling lyric string analysis and conversion.
+     * @brief Orchestrator class for analyzing and converting raw lyric strings.
+     * Acts as the primary interface for the library, managing the lifecycle
+     * of specific parser implementations.
      */
     struct FProcess
     {
@@ -20,22 +28,43 @@ namespace dlp
         virtual ~FProcess();
 
         /**
-         * @brief Processes a raw lyric string into a structured lyric file object.
+         * @brief Converts a raw lyric string into a structured FLyricFile object.
          *
-         * @param in_file_format The format of the input lyric string.
-         * @param in_lyric_string The string view containing the lyric data.
-         * @param in_role_option Options for how roles/groups should be handled during processing.
-         * @return File::FLyricFile The resulting structured lyric data.
+         * @param in_file_format The specific lyric format (LRC, SRT, ASS, etc.).
+         * @param in_lyric_string The raw text content to be analyzed.
+         * @param in_role_option Logic configuration for lyric roles (e.g., Main vs. Translation).
+         * @param in_parser_option Optional format-specific settings (use nullptr for defaults).
+         * @return File::FLyricFile A complete object containing metadata and synchronized groups.
          */
-        virtual File::FLyricFile Process(EFileFormat in_file_format, std::string_view in_lyric_string, File::FLyricGroupRoleOption in_role_option);
+        static File::FLyricFile Process(
+            EFileFormat in_file_format,
+            std::string_view in_lyric_string,
+            File::FLyricGroupRoleOption in_role_option,
+            Parser::FParserOptions* in_parser_option = nullptr
+        );
+
+        /**
+         * @brief Converts a raw lyric string into a structured FLyricFile object.
+         *
+         * @param in_file_format The specific lyric format (LRC, SRT, ASS, etc.).
+         * @param in_lyric_string The raw text content to be analyzed.
+         * @param in_parser_option Optional format-specific settings (use nullptr for defaults).
+         * @return File::FLyricFile A complete object containing metadata and synchronized groups.
+         */
+        static File::FLyricFile Process(
+            EFileFormat in_file_format,
+            std::string_view in_lyric_string,
+            Parser::FParserOptions* in_parser_option = nullptr
+        );
 
     private:
         /**
-         * @brief Retrieves the appropriate parser instance for the specified file format.
+         * @brief Internal Factory method to retrieve the correct parser implementation.
          *
-         * @param in_file_format The format to get a parser for.
-         * @return Parser::IParser* A pointer to the parser implementation.
+         * @param in_file_format The format identifier.
+         * @param in_parser_option Configuration for the requested parser.
+         * @return Parser::IParser* A pointer to the concrete parser (e.g., FParser_LRC).
          */
-        static Parser::IParser* GetParser(EFileFormat in_file_format);
+        static Parser::IParser* GetParser(EFileFormat in_file_format, Parser::FParserOptions* in_parser_option = nullptr);
     };
 }

@@ -1,4 +1,6 @@
 #include "DreamLyricAsset.h"
+
+#include "DreamMusicPlayerLog.h"
 #include "Misc/App.h"
 
 // ========== ULyricAsset 实现 ==========
@@ -51,36 +53,37 @@ FLyricAssetStatistics UDreamLyricAsset::GetStatistics() const
 {
 	FLyricAssetStatistics Stats;
 	Stats.TotalGroups = Groups.Num();
-
-	FDreamMusicTimestamp MinTime = FDreamMusicTimestamp::FromTotalMilliseconds(INT64_MAX);
-	FDreamMusicTimestamp MaxTime = FDreamMusicTimestamp();
-
-	TArray<EDreamMusicLyricTextRole> Roles;
-
+	bool bHasWordTimings = false;
 	for (const FDreamMusicLyricGroup& Group : Groups)
 	{
+		if (auto ptr = Group[EDreamMusicLyricTextRole::Lyric])
+		{
+			if (!ptr->Words.IsEmpty())
+			{
+				bHasWordTimings = true;
+			}
+		}
+
 		Stats.TotalLines += Group.Lines.Num();
+		DMP_LOG(Log, TEXT("Line: %d"), Group.Lines.Num());
 
-		if (Group.StartTimestamp < MinTime)
+		for (const auto& Line : Group.Lines)
 		{
-			MinTime = Group.StartTimestamp;
-		}
-		if (Group.StartTimestamp > MaxTime)
-		{
-			MaxTime = Group.StartTimestamp;
-		}
-
-		for (const FDreamMusicLyricLine& Line : Group.Lines)
-		{
-			Roles.Add(Line.Role);
 			Stats.TotalWords += Line.Words.Num();
 		}
 	}
+	Stats.bHasWordTimings = bHasWordTimings;
 
-	Stats.StartTime = MinTime;
-	Stats.EndTime = MaxTime;
-	Stats.TotalDurationSeconds = (MaxTime - MinTime).ToSeconds();
+	TArray<EDreamMusicLyricTextRole> Roles;
+
+	if (Groups.IsValidIndex(0))
+	{
+		Stats.StartTime = Groups[0].StartTimestamp;
+		Stats.EndTime = Groups.Last().EndTimestamp;
+		Stats.TotalDurationSeconds = (Stats.EndTime - Stats.StartTime).ToSeconds();
+	}
 	Stats.bHasMultipleRoles = Roles.Num() > 1;
+
 
 	return Stats;
 }

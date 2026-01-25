@@ -1,10 +1,11 @@
 ﻿// Dream Lyric Parser Library CXX20
-// Universal parser type
+// Universal parser interface and base options
 // Copyright (C) 2026 Type Dream Moon. All rights reserved.
 
 #pragma once
 
 #include <string_view>
+#include <type_traits> // 补充必要的头文件
 
 #include "Export.hpp"
 #include "File.hpp"
@@ -16,40 +17,44 @@ namespace dlp::File
 
 namespace dlp::Parser
 {
-    /** @brief Structure containing parsed lyric data */
-    struct DLP_API FParsedData
+    /** * @brief Base class for parser configuration.
+     */
+    class DLP_API FParserOptions
     {
-        ~FParsedData();
-    };
+    public:
+        FParserOptions() noexcept; // 构造函数通常不抛异常
+        virtual ~FParserOptions();
 
-    /** @brief Defines the grouping role for the parser */
-    struct DLP_API FParserGroupingRole
-    {
-        ~FParserGroupingRole();
-    };
+        bool is_implemented = false;
 
-    /** @brief Options for configuring the parser behavior */
-    struct DLP_API FParserOptions
-    {
-        ~FParserOptions();
+        [[nodiscard]] static FParserOptions NoImplemented() noexcept;
+
+        /**
+         * @brief Factory method with support for constructor arguments.
+         * @tparam T The specialized option type.
+         * @tparam Args Argument types for T's constructor.
+         */
+        template <typename T, typename... Args>
+        [[nodiscard]] static T* NewOption(Args&&... args)
+        {
+            static_assert(std::is_base_of_v<FParserOptions, T>, "T must be derived from FParserOptions");
+            return new T(std::forward<Args>(args)...);
+        }
     };
 
     /**
-     * @brief Interface for lyric parsers
+     * @brief Abstract base class (Interface) for all lyric parsers.
      */
     struct IParser
     {
     public:
         IParser() = default;
-        virtual ~IParser() = default;
+        explicit IParser(FParserOptions* in_parser_option) noexcept;
+        virtual ~IParser();
 
     public:
         /**
-         * @brief Parses a lyric string into groups and metadata
-         * @param in_lyric_string The raw lyric string to parse
-         * @param in_role_option Options for grouping roles
-         * @param out_groups Output vector for parsed lyric groups
-         * @param out_metadata Output structure for parsed metadata
+         * @brief Primary entry point for parsing a full lyric document.
          */
         virtual void Parse(
             std::string_view in_lyric_string,
@@ -59,33 +64,26 @@ namespace dlp::Parser
         ) = 0;
 
         /**
-         * @brief Parses a single line of lyrics
-         * @param in_string The line string to parse
-         * @return The parsed lyric line structure
+         * @brief Parses a single raw string into a lyric line structure.
          */
-        virtual File::FLyricLine ParserLine(std::string_view in_string) = 0;
+        [[nodiscard]] virtual File::FLyricLine ParserLine(std::string_view in_string) = 0;
 
     protected:
         /**
-         * @brief Extracts the start time from a lyric line string
-         * @param in_string The line string
-         * @return The start timestamp
+         * @brief Extracts the starting timestamp from a line of text.
          */
-        virtual timestamp ParserLineStartTime(std::string_view in_string) = 0;
+        [[nodiscard]] virtual timestamp ParserLineStartTime(std::string_view in_string) const = 0;
 
         /**
-         * @brief Parses a metadata line into key and content
-         * @param in_string The metadata line string
-         * @param out_key Output string for the metadata key
-         * @param out_content Output string for the metadata content
+         * @brief Decomposes a metadata line (ID-tag) into a Key-Value pair.
          */
         virtual void ParserMetadata(std::string_view in_string, std::string& out_key, std::string& out_content) = 0;
 
         /**
-         * @brief Checks if a line is a metadata line
-         * @param in_string The line string to check
-         * @return True if it's a metadata line, false otherwise
+         * @brief Heuristic check to see if a line contains metadata tags or lyric text.
          */
-        virtual bool IsMetadataLine(std::string_view in_string) = 0;
+        [[nodiscard]] virtual bool IsMetadataLine(std::string_view in_string) const noexcept = 0;
+
+        FParserOptions* options = nullptr;
     };
 }

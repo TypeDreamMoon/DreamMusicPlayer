@@ -55,8 +55,10 @@ public:
 	 * @brief 判断是否为空单词
 	 */
 	bool IsEmpty() const;
-	
+
 	bool operator==(const FDreamMusicLyricWord&) const;
+
+	FString ToString() const;
 };
 
 USTRUCT(BlueprintType)
@@ -279,6 +281,8 @@ struct DREAMMUSICPLAYERLYRIC_API FDreamMusicLyricLine
 	int32 GetWordCount() const { return Words.Num(); }
 
 	bool operator==(const FDreamMusicLyricLine& Target) const;
+
+	FString ToString() const;
 };
 
 /**
@@ -343,6 +347,9 @@ struct DREAMMUSICPLAYERLYRIC_API FDreamMusicLyricGroup
 
 	const FDreamMusicLyricLine* operator[](EDreamMusicLyricTextRole InRole) const;
 	bool operator==(const FDreamMusicLyricGroup& Other) const;
+	bool operator==(const FDreamMusicLyricGroup* Other) const;
+
+	FString ToString() const;
 };
 
 /**
@@ -387,6 +394,31 @@ struct DREAMMUSICPLAYERLYRIC_API FDreamMusicLyricMetadata
 	FString GetCreator() const { return GetValue(TEXT("by"), GetValue(TEXT("creator"))); }
 };
 
+USTRUCT(BlueprintType)
+struct FDreamLyricParserOptionGroup
+{
+	GENERATED_BODY()
+
+public:
+	FDreamLyricParserOptionGroup() = default;
+	FDreamLyricParserOptionGroup(EDreamMusicLyricTextRole InRole)
+		: Roles({InRole})
+	{
+	}
+
+	FDreamLyricParserOptionGroup(TArray<EDreamMusicLyricTextRole> InRoles) : Roles(InRoles)
+	{
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parser Options")
+	TArray<EDreamMusicLyricTextRole> Roles;
+
+	operator TArray<EDreamMusicLyricTextRole>() const
+	{
+		return Roles;
+	}
+	bool operator==(const FDreamLyricParserOptionGroup& Other) const;
+};
 
 /**
  * @brief 歌词解析选项配置
@@ -403,7 +435,7 @@ struct DREAMMUSICPLAYERLYRIC_API FDreamLyricParserOptions
 	 * 例如：[Lyric, Translation] 表示先按原歌词分组，再按翻译分组
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parser Options", meta = (Bitflags))
-	TArray<EDreamMusicLyricTextRole> GroupingSequence;
+	TArray<FDreamLyricParserOptionGroup> GroupingSequence;
 
 	/**
 	 * @brief 回退角色 - 当无法匹配序列中的角色时使用的默认角色
@@ -411,16 +443,36 @@ struct DREAMMUSICPLAYERLYRIC_API FDreamLyricParserOptions
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parser Options")
 	EDreamMusicLyricTextRole FallbackRole = EDreamMusicLyricTextRole::Lyric;
 
+	TArray<FDreamLyricParserOptionGroup> GetGroupingSequence() const
+	{
+		return GroupingSequence;
+	}
+
 	/**
 	 * @brief 使用默认配置
 	 */
-	static FDreamLyricParserOptions GetDefault()
+	static FDreamLyricParserOptions GetDefault(bool bAdd = true)
 	{
 		FDreamLyricParserOptions Options;
-		Options.GroupingSequence.Add(EDreamMusicLyricTextRole::Lyric);
+
+		if (bAdd)
+			Options.GroupingSequence.Add(FDreamLyricParserOptionGroup(EDreamMusicLyricTextRole::Lyric));
+
 		Options.FallbackRole = EDreamMusicLyricTextRole::Lyric;
 		return Options;
 	}
+
+	void Clear()
+	{
+		GroupingSequence.Empty();
+	}
+
+
+	bool IsEmpty() const;
+
+	void operator+=(EDreamMusicLyricTextRole Role);
+	void operator-=(EDreamMusicLyricTextRole Role);
+	bool operator[](EDreamMusicLyricTextRole Role);
 
 	FDreamLyricParserOptions()
 	{

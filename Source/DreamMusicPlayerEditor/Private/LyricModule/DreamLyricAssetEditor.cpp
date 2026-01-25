@@ -1,6 +1,6 @@
-#include "DreamLyricAssetEditor.h"
+#include "LyricModule/DreamLyricAssetEditor.h"
 #include "DreamLyricAsset.h"
-#include "DreamLyricGroupWrapper.h"
+#include "LyricModule/DreamLyricGroupWrapper.h"
 #include "PropertyEditorModule.h"
 #include "IDetailsView.h"
 #include "Widgets/Docking/SDockTab.h"
@@ -18,6 +18,8 @@
 #include "EditorStyleSet.h"
 #include "ToolMenus.h"
 #include "DreamMusicPlayerCommon.h"
+#include "DreamMusicPlayerEditorStyles.h"
+#include "DreamMusicPlayerLog.h"
 #include "EditorAssetLibrary.h"
 #include "UObject/SavePackage.h"
 #include "Framework/Notifications/NotificationManager.h"
@@ -27,6 +29,7 @@
 #include "Widgets/SNullWidget.h"
 #include "Framework/Application/SlateApplication.h"
 #include "PropertyPath.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 #define LOCTEXT_NAMESPACE "DreamLyricAssetEditor"
 
@@ -80,43 +83,45 @@ void FDreamLyricAssetEditor::InitLyricAssetEditor(const EToolkitMode::Type Mode,
 		->AddArea
 		(
 			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
-			->Split
-			(
-				FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)
-				->SetSizeCoefficient(0.7f)
-				->Split
-				(
-					FTabManager::NewStack()
-					->SetSizeCoefficient(0.5f)
-					->AddTab(LyricListTabId, ETabState::OpenedTab)
-				)
-				->Split
-				(
-					FTabManager::NewStack()
-					->SetSizeCoefficient(0.5f)
-					->AddTab(EditTabId, ETabState::OpenedTab)
-				)
-			)
-			->Split
-			(
-				FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)
-				->SetSizeCoefficient(0.3f)
-				->Split
-				(
-					FTabManager::NewStack()
-					->SetSizeCoefficient(0.5f)
-					->AddTab(PropertiesTabId, ETabState::OpenedTab)
-				)
-				->Split
-				(
-					FTabManager::NewStack()
-					->SetSizeCoefficient(0.5f)
-					->AddTab(StatisticsTabId, ETabState::OpenedTab)
-				)
-			)
+			                             ->Split
+			                             (
+				                             FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)
+				                                                       ->SetSizeCoefficient(0.7f)
+				                                                       ->Split
+				                                                       (
+					                                                       FTabManager::NewStack()
+					                                                       ->SetSizeCoefficient(0.5f)
+					                                                       ->AddTab(LyricListTabId, ETabState::OpenedTab)
+				                                                       )
+				                                                       ->Split
+				                                                       (
+					                                                       FTabManager::NewStack()
+					                                                       ->SetSizeCoefficient(0.5f)
+					                                                       ->AddTab(EditTabId, ETabState::OpenedTab)
+				                                                       )
+			                             )
+			                             ->Split
+			                             (
+				                             FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)
+				                                                       ->SetSizeCoefficient(0.3f)
+				                                                       ->Split
+				                                                       (
+					                                                       FTabManager::NewStack()
+					                                                       ->SetSizeCoefficient(0.5f)
+					                                                       ->AddTab(PropertiesTabId, ETabState::OpenedTab)
+				                                                       )
+				                                                       ->Split
+				                                                       (
+					                                                       FTabManager::NewStack()
+					                                                       ->SetSizeCoefficient(0.5f)
+					                                                       ->AddTab(StatisticsTabId, ETabState::OpenedTab)
+				                                                       )
+			                             )
 		);
 
 	InitAssetEditor(Mode, InitToolkitHost, TEXT("DreamLyricAssetEditorApp"), StandaloneDefaultLayout, true, true, InLyricAsset);
+
+	ExtendToolBar();
 
 	// 刷新视图
 	RefreshAllViews();
@@ -127,20 +132,20 @@ void FDreamLyricAssetEditor::RegisterTabSpawners(const TSharedRef<class FTabMana
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 
 	InTabManager->RegisterTabSpawner(PropertiesTabId, FOnSpawnTab::CreateSP(this, &FDreamLyricAssetEditor::SpawnPropertiesTab))
-		.SetDisplayName(LOCTEXT("PropertiesTab", "Properties"))
-		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
+	            .SetDisplayName(LOCTEXT("PropertiesTab", "Properties"))
+	            .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
 
 	InTabManager->RegisterTabSpawner(LyricListTabId, FOnSpawnTab::CreateSP(this, &FDreamLyricAssetEditor::SpawnLyricListTab))
-		.SetDisplayName(LOCTEXT("LyricListTab", "Lyrics"))
-		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Viewports"));
+	            .SetDisplayName(LOCTEXT("LyricListTab", "Lyrics"))
+	            .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Viewports"));
 
 	InTabManager->RegisterTabSpawner(StatisticsTabId, FOnSpawnTab::CreateSP(this, &FDreamLyricAssetEditor::SpawnStatisticsTab))
-		.SetDisplayName(LOCTEXT("StatisticsTab", "Statistics"))
-		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Info"));
+	            .SetDisplayName(LOCTEXT("StatisticsTab", "Statistics"))
+	            .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Info"));
 
 	InTabManager->RegisterTabSpawner(EditTabId, FOnSpawnTab::CreateSP(this, &FDreamLyricAssetEditor::SpawnEditTab))
-		.SetDisplayName(LOCTEXT("EditTab", "Edit"))
-		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Edit"));
+	            .SetDisplayName(LOCTEXT("EditTab", "Edit"))
+	            .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Edit"));
 }
 
 void FDreamLyricAssetEditor::UnregisterTabSpawners(const TSharedRef<class FTabManager>& InTabManager)
@@ -193,6 +198,72 @@ bool FDreamLyricAssetEditor::OnRequestClose(EAssetEditorCloseReason InCloseReaso
 	}
 
 	return FAssetEditorToolkit::OnRequestClose(InCloseReason);
+}
+
+void FDreamLyricAssetEditor::ExtendToolBar()
+{
+	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
+
+	// "Asset" 是工具栏的标准扩展点，或者使用 "Settings"
+	ToolbarExtender->AddToolBarExtension(
+		"Asset",
+		EExtensionHook::After,
+		GetToolkitCommands(),
+		FToolBarExtensionDelegate::CreateLambda([this](FToolBarBuilder& ToolbarBuilder)
+		{
+			ToolbarBuilder.BeginSection("MyCustomSection");
+			{
+				ToolbarBuilder.AddWidget(
+					SNew(SBox)
+					.WidthOverride(256.0f)
+					.HeightOverride(50.0f)
+					.VAlign(VAlign_Center)
+					.HAlign(HAlign_Center)
+					[
+						SNew(SButton)
+						.OnClicked_Lambda([]()
+						{
+							UKismetSystemLibrary::LaunchURL(FString(TEXT("https://github.com/TypeDreamMoon")));
+							return FReply::Handled();
+						})
+						[
+							SNew(SImage)
+							.Image(FDreamMusicPlayerEditorStyles::Get()->GetBrush("DreamToolkit"))
+							.ColorAndOpacity(FLinearColor::White)
+						]
+					]
+				);
+
+				ToolbarBuilder.AddSeparator();
+
+				ToolbarBuilder.AddWidget(
+					SNew(SBox)
+					.WidthOverride(180.0f)
+					.HeightOverride(50.0f)
+					.VAlign(VAlign_Center)
+					.HAlign(HAlign_Center)
+					[
+						SNew(SButton)
+						.OnClicked_Lambda([]()
+						{
+							UKismetSystemLibrary::LaunchURL(FString(TEXT("https://dmstudio.top")));
+							return FReply::Handled();
+						})
+						[
+							SNew(SImage)
+							.Image(FDreamMusicPlayerEditorStyles::Get()->GetBrush("DreamDev"))
+							.ColorAndOpacity(FLinearColor::White)
+						]
+					]
+				);
+			}
+			ToolbarBuilder.EndSection();
+		})
+	);
+
+	AddToolbarExtender(ToolbarExtender);
+
+	RegenerateMenusAndToolbars();
 }
 
 TSharedRef<SDockTab> FDreamLyricAssetEditor::SpawnPropertiesTab(const FSpawnTabArgs& Args)
@@ -273,6 +344,7 @@ TSharedRef<SDockTab> FDreamLyricAssetEditor::SpawnLyricListTab(const FSpawnTabAr
 					]
 				]
 			]
+
 			// 列表视图
 			+ SVerticalBox::Slot()
 			.FillHeight(1.0f)
@@ -282,31 +354,20 @@ TSharedRef<SDockTab> FDreamLyricAssetEditor::SpawnLyricListTab(const FSpawnTabAr
 				.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
 				.Padding(4.0f)
 				[
-					SAssignNew(LyricListView, SListView<TSharedPtr<FString>>)
+					SAssignNew(LyricListView, SListView<TSharedPtr<FDreamMusicLyricGroup>>)
 					.ListItemsSource(&LyricListItems)
+					.SelectionMode(ESelectionMode::Type::Single)
 					.OnGenerateRow(this, &FDreamLyricAssetEditor::GenerateLyricListRow)
-					.OnSelectionChanged_Lambda([this](TSharedPtr<FString> Item, ESelectInfo::Type SelectInfo)
+					.OnSelectionChanged_Lambda([this](TSharedPtr<FDreamMusicLyricGroup> Item, ESelectInfo::Type SelectInfo)
 					{
 						if (Item.IsValid())
 						{
-							// 查找对应的组索引
-							FString ItemStr = *Item;
-							int32 TabIndex = ItemStr.Find(TEXT("\t"));
-							if (TabIndex != INDEX_NONE)
+							SelectedGroupIndex = LyricAsset->Groups.IndexOfByPredicate([&](const FDreamMusicLyricGroup& Group)
 							{
-								FString TimeStr = ItemStr.Left(TabIndex);
-								// 从 GroupData 中查找对应的组索引
-								FDreamMusicTimestamp Time = FDreamMusicTimestamp::Parse(TimeStr);
-								SelectedGroupIndex = INDEX_NONE;
-								for (const auto& GroupData : LyricGroupData)
-								{
-									if (GroupData->Timestamp == Time)
-									{
-										SelectedGroupIndex = GroupData->GroupIndex;
-										break;
-									}
-								}
-							}
+								return Group == Item.Get();
+							});
+
+							DMP_LOG(Log, TEXT("SelectedItemIdx: %d"), SelectedGroupIndex);
 						}
 						else
 						{
@@ -434,7 +495,7 @@ void FDreamLyricAssetEditor::RefreshLyricList()
 	TArray<FGroupWithIndex> GroupsWithIndex;
 	for (int32 i = 0; i < LyricAsset->Groups.Num(); ++i)
 	{
-		GroupsWithIndex.Add({ &LyricAsset->Groups[i], i });
+		GroupsWithIndex.Add({&LyricAsset->Groups[i], i});
 	}
 	GroupsWithIndex.Sort([](const FGroupWithIndex& A, const FGroupWithIndex& B)
 	{
@@ -446,10 +507,10 @@ void FDreamLyricAssetEditor::RefreshLyricList()
 	{
 		const FDreamMusicLyricGroup& Group = *GroupsWithIndex[i].Group;
 		int32 OriginalIndex = GroupsWithIndex[i].OriginalIndex;
-		FString TimeStr = FString::Printf(TEXT("%02d:%02d.%03d"), 
-			Group.StartTimestamp.Minute, 
-			Group.StartTimestamp.Seconds, 
-			Group.StartTimestamp.Millisecond);
+		FString TimeStr = FString::Printf(TEXT("%02d:%02d.%03d"),
+		                                  Group.StartTimestamp.Minute,
+		                                  Group.StartTimestamp.Seconds,
+		                                  Group.StartTimestamp.Millisecond);
 
 		FString ContentStr;
 		for (const FDreamMusicLyricLine& Line : Group.Lines)
@@ -458,7 +519,7 @@ void FDreamLyricAssetEditor::RefreshLyricList()
 			{
 				ContentStr += TEXT(" | ");
 			}
-			
+
 			FString RoleStr;
 			switch (Line.Role)
 			{
@@ -488,26 +549,10 @@ void FDreamLyricAssetEditor::RefreshLyricList()
 			ContentStr += RoleStr + TEXT(" ") + LineText;
 		}
 
-		FString ItemStr = FString::Printf(TEXT("%s\t%s"), *TimeStr, *ContentStr);
-		LyricListItems.Add(MakeShareable(new FString(ItemStr)));
+		LyricListItems.Add(MakeShareable(new FDreamMusicLyricGroup(LyricAsset->Groups[OriginalIndex])));
 
 		// 创建组显示数据
-		TSharedPtr<FLyricGroupDisplayData> GroupData = MakeShareable(new FLyricGroupDisplayData());
-		GroupData->Timestamp = Group.StartTimestamp;
-		GroupData->GroupIndex = OriginalIndex; // 使用原始数组索引
-		for (const FDreamMusicLyricLine& Line : Group.Lines)
-		{
-			FString LineText = Line.Text;
-			if (LineText.IsEmpty() && Line.Words.Num() > 0)
-			{
-				for (const FDreamMusicLyricWord& Word : Line.Words)
-				{
-					LineText += Word.Content;
-				}
-			}
-			GroupData->Lines.Add(TPair<EDreamMusicLyricTextRole, FString>(Line.Role, LineText));
-		}
-		LyricGroupData.Add(GroupData);
+		LyricGroupData.Add(MakeShareable(new FLyricGroupDisplayData{Group, OriginalIndex}));
 	}
 
 	if (LyricListView.IsValid())
@@ -534,7 +579,7 @@ void FDreamLyricAssetEditor::RefreshStatistics()
 	FLyricAssetStatistics Stats = LyricAsset->GetStatistics();
 
 	FString StatsText;
-	
+
 	// 基本信息
 	StatsText += FString::Printf(
 		TEXT("📊 基本信息\n")
@@ -579,7 +624,7 @@ void FDreamLyricAssetEditor::RefreshStatistics()
 	{
 		StatsText += TEXT("📝 元数据\n");
 		StatsText += TEXT("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-		
+
 		if (!Title.IsEmpty())
 		{
 			StatsText += FString::Printf(TEXT("标题: %s\n"), *Title);
@@ -601,42 +646,23 @@ void FDreamLyricAssetEditor::RefreshStatistics()
 	StatisticsTextBlock->SetText(FText::FromString(StatsText));
 }
 
-TSharedRef<ITableRow> FDreamLyricAssetEditor::GenerateLyricListRow(TSharedPtr<FString> InItem, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> FDreamLyricAssetEditor::GenerateLyricListRow(TSharedPtr<FDreamMusicLyricGroup> InItem, const TSharedRef<STableViewBase>& OwnerTable)
 {
-	FString ItemStr = *InItem;
-	FString TimeStr;
-	FString ContentStr;
-
-	// 解析时间戳和内容
-	int32 TabIndex = ItemStr.Find(TEXT("\t"));
-	if (TabIndex != INDEX_NONE)
-	{
-		TimeStr = ItemStr.Left(TabIndex);
-		ContentStr = ItemStr.Mid(TabIndex + 1);
-	}
-	else
-	{
-		TimeStr = ItemStr;
-		ContentStr = TEXT("");
-	}
+	FDreamMusicLyricGroup Item = *InItem;
 
 	// 检查是否匹配搜索文本
 	bool bMatchesSearch = true;
 	if (!SearchText.IsEmpty())
 	{
 		FString SearchStr = SearchText.ToString().ToLower();
-		bMatchesSearch = ContentStr.ToLower().Contains(SearchStr) || TimeStr.Contains(SearchStr);
+		bMatchesSearch = Item.ToString().ToLower().Contains(SearchStr);
 	}
 
 	// 查找对应的组数据
 	TSharedPtr<FLyricGroupDisplayData> GroupData;
 	for (const auto& Data : LyricGroupData)
 	{
-		FString DataTimeStr = FString::Printf(TEXT("%02d:%02d.%03d"), 
-			Data->Timestamp.Minute, 
-			Data->Timestamp.Seconds, 
-			Data->Timestamp.Millisecond);
-		if (DataTimeStr == TimeStr)
+		if (Data->Group == Item)
 		{
 			GroupData = Data;
 			break;
@@ -669,7 +695,7 @@ TSharedRef<ITableRow> FDreamLyricAssetEditor::GenerateLyricListRow(TSharedPtr<FS
 					.Padding(6.0f, 4.0f)
 					[
 						SNew(STextBlock)
-						.Text(FText::FromString(TimeStr))
+						.Text(FText::FromString(Item.StartTimestamp.ToString()))
 						.Font(FCoreStyle::GetDefaultFontStyle("Mono", 11))
 						.ColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.9f, 1.0f))
 					]
@@ -679,7 +705,7 @@ TSharedRef<ITableRow> FDreamLyricAssetEditor::GenerateLyricListRow(TSharedPtr<FS
 				.VAlign(VAlign_Center)
 				[
 					SNew(STextBlock)
-					.Text(FText::FromString(ContentStr))
+					.Text(FText::FromString(Item.ToString()))
 					.AutoWrapText(true)
 					.Font(FAppStyle::GetFontStyle("PropertyWindow.NormalFont"))
 				]
@@ -692,42 +718,42 @@ TSharedRef<SWidget> FDreamLyricAssetEditor::CreateLyricLinesWidget(TSharedPtr<FL
 	TSharedRef<SVerticalBox> LinesBox = SNew(SVerticalBox);
 	if (InGroupData.IsValid())
 	{
-		for (const auto& Line : InGroupData->Lines)
+		for (const auto& Line : InGroupData->Group.Lines)
 		{
 			LinesBox->AddSlot()
-				.AutoHeight()
-				.Padding(0.0f, 0.0f, 0.0f, 6.0f)
+			        .AutoHeight()
+			        .Padding(0.0f, 0.0f, 0.0f, 6.0f)
+			[
+				SNew(SHorizontalBox)
+				// 角色标签
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				.Padding(0.0f, 0.0f, 8.0f, 0.0f)
 				[
-					SNew(SHorizontalBox)
-					// 角色标签
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					.VAlign(VAlign_Center)
-					.Padding(0.0f, 0.0f, 8.0f, 0.0f)
-					[
-						SNew(SBorder)
-						.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-						.BorderBackgroundColor(GetRoleColor(Line.Key) * 0.3f)
-						.Padding(6.0f, 3.0f)
-						[
-							SNew(STextBlock)
-							.Text(GetRoleDisplayName(Line.Key))
-							.Font(FAppStyle::GetFontStyle("PropertyWindow.BoldFont"))
-							.ColorAndOpacity(GetRoleColor(Line.Key))
-						]
-					]
-					// 歌词文本
-					+ SHorizontalBox::Slot()
-					.FillWidth(1.0f)
-					.VAlign(VAlign_Center)
+					SNew(SBorder)
+					.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+					.BorderBackgroundColor(GetRoleColor(Line.Role) * 0.3f)
+					.Padding(6.0f, 3.0f)
 					[
 						SNew(STextBlock)
-						.Text(FText::FromString(Line.Value))
-						.Font(FAppStyle::GetFontStyle("PropertyWindow.NormalFont"))
-						.AutoWrapText(true)
-						.ColorAndOpacity(FLinearColor(0.9f, 0.9f, 0.9f, 1.0f))
+						.Text(GetRoleDisplayName(Line.Role))
+						.Font(FAppStyle::GetFontStyle("PropertyWindow.BoldFont"))
+						.ColorAndOpacity(GetRoleColor(Line.Role))
 					]
-				];
+				]
+				// 歌词文本
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.0f)
+				.VAlign(VAlign_Center)
+				[
+					SNew(STextBlock)
+					.Text(FText::FromString(Line.Text))
+					.Font(FAppStyle::GetFontStyle("PropertyWindow.NormalFont"))
+					.AutoWrapText(true)
+					.ColorAndOpacity(FLinearColor(0.9f, 0.9f, 0.9f, 1.0f))
+				]
+			];
 		}
 	}
 	return LinesBox;
@@ -740,22 +766,17 @@ TSharedRef<ITableRow> FDreamLyricAssetEditor::GenerateLyricGroupRow(TSharedPtr<F
 		return SNew(STableRow<TSharedPtr<FLyricGroupDisplayData>>, OwnerTable);
 	}
 
-	FString TimeStr = FString::Printf(TEXT("%02d:%02d.%03d"), 
-		InGroupData->Timestamp.Minute, 
-		InGroupData->Timestamp.Seconds, 
-		InGroupData->Timestamp.Millisecond);
-
 	// 检查是否匹配搜索文本
 	bool bMatchesSearch = true;
 	if (!SearchText.IsEmpty())
 	{
 		FString SearchStr = SearchText.ToString().ToLower();
-		bMatchesSearch = TimeStr.Contains(SearchStr);
+		bMatchesSearch = InGroupData.Get()->Group.ToString().Contains(SearchStr);
 		if (!bMatchesSearch)
 		{
-			for (const auto& Line : InGroupData->Lines)
+			for (const auto& Line : InGroupData->Group.Lines)
 			{
-				if (Line.Value.ToLower().Contains(SearchStr))
+				if (Line.Text.ToLower().Contains(SearchStr))
 				{
 					bMatchesSearch = true;
 					break;
@@ -779,7 +800,7 @@ TSharedRef<ITableRow> FDreamLyricAssetEditor::GenerateLyricGroupRow(TSharedPtr<F
 						MenuBuilder.AddMenuEntry(
 							FUIAction(FExecuteAction::CreateSP(this, &FDreamLyricAssetEditor::OnEditSelectedGroup)),
 							SNew(STextBlock)
-								.Text(LOCTEXT("EditGroup", "编辑")),
+							.Text(LOCTEXT("EditGroup", "编辑")),
 							NAME_None,
 							LOCTEXT("EditGroupTooltip", "编辑选中的歌词组")
 						);
@@ -787,7 +808,7 @@ TSharedRef<ITableRow> FDreamLyricAssetEditor::GenerateLyricGroupRow(TSharedPtr<F
 						MenuBuilder.AddMenuEntry(
 							FUIAction(FExecuteAction::CreateSP(this, &FDreamLyricAssetEditor::OnDeleteSelectedGroupMenu)),
 							SNew(STextBlock)
-								.Text(LOCTEXT("DeleteGroupMenu", "删除")),
+							.Text(LOCTEXT("DeleteGroupMenu", "删除")),
 							NAME_None,
 							LOCTEXT("DeleteGroupMenuTooltip", "删除选中的歌词组")
 						);
@@ -828,7 +849,7 @@ TSharedRef<ITableRow> FDreamLyricAssetEditor::GenerateLyricGroupRow(TSharedPtr<F
 						.Padding(8.0f, 6.0f)
 						[
 							SNew(STextBlock)
-							.Text(FText::FromString(TimeStr))
+							.Text(FText::FromString(InGroupData.Get()->Group.StartTimestamp.ToString()))
 							.Font(FCoreStyle::GetDefaultFontStyle("Mono", 12))
 							.ColorAndOpacity(FLinearColor(0.8f, 0.9f, 1.0f, 1.0f))
 							.ShadowOffset(FVector2D(1.0f, 1.0f))
@@ -986,7 +1007,6 @@ void FDreamLyricAssetEditor::OnEditSelectedGroup()
 	if (SelectedGroupIndex != INDEX_NONE && LyricAsset && LyricAsset->Groups.IsValidIndex(SelectedGroupIndex))
 	{
 		// 打开编辑标签页
-		FGlobalTabmanager::Get()->TryInvokeTab(EditTabId);
 		RefreshEditView();
 	}
 }
@@ -1004,17 +1024,17 @@ void FDreamLyricAssetEditor::RefreshEditView()
 		if (!IsValid(EditingGroupObject))
 		{
 			EditingGroupObject = NewObject<UDreamLyricGroupWrapper>(GetTransientPackage(), UDreamLyricGroupWrapper::StaticClass());
-			
+
 			// 注册属性变更回调，以便在编辑时同步回原始数组
 			EditDetailsView->OnFinishedChangingProperties().AddSP(this, &FDreamLyricAssetEditor::OnEditGroupPropertyChanged);
 		}
-		
+
 		// 将选中的组复制到包装器中
 		UDreamLyricGroupWrapper* Wrapper = Cast<UDreamLyricGroupWrapper>(EditingGroupObject);
 		if (Wrapper)
 		{
 			Wrapper->Group = LyricAsset->Groups[SelectedGroupIndex];
-			
+
 			// 设置包装器对象到 Detail 视图
 			EditDetailsView->SetObject(Wrapper, true);
 		}
@@ -1043,4 +1063,3 @@ void FDreamLyricAssetEditor::OnEditGroupPropertyChanged(const FPropertyChangedEv
 }
 
 #undef LOCTEXT_NAMESPACE
-
