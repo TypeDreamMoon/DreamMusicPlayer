@@ -8,6 +8,7 @@
 #include "taglib/tag.h"
 
 #include "Engine/Texture2D.h"
+#include "DreamMusicPlayerTagLib.generated.h"
 
 namespace TagLib
 {

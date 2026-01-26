@@ -17,7 +17,7 @@ enum class ELrcImportMode : uint8
 	LineByLine
 };
 
-class DREAMMUSICPLAYERLYRIC_API SLyricImportDialog : public SCompoundWidget
+class DREAMMUSICPLAYERIMPORTER_API SLyricImportDialog : public SCompoundWidget
 {
 public:
 	SLATE_BEGIN_ARGS(SLyricImportDialog)

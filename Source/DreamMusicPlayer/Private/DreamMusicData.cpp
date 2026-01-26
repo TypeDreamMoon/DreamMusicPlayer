@@ -13,14 +13,14 @@ bool FDreamMusicData::operator==(const FDreamMusicData& Target) const
 
 bool FDreamMusicData::HasExpansionData(TSubclassOf<UDreamMusicPlayerExpansionData> ExpansionDataClass) const
 {
-	for (UDreamMusicPlayerExpansionData* ExpansionData : ExpansionData)
+	for (UDreamMusicPlayerExpansionData* Expansion : ExpansionData)
 	{
-		if (ExpansionData == nullptr)
+		if (Expansion == nullptr)
 		{
 			continue;
 		}
 
-		if (ExpansionData->GetClass() == ExpansionDataClass)
+		if (Expansion->GetClass() == ExpansionDataClass)
 		{
 			return true;
 		}

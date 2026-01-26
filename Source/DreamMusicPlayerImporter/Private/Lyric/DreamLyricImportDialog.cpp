@@ -1,4 +1,4 @@
-#include "DreamLyricImportDialog.h"
+#include "Lyric/DreamLyricImportDialog.h"
 
 #include "DreamMusicPlayerLog.h"
 #include "Widgets/Layout/SBorder.h"

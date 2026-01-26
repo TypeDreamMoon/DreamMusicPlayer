@@ -4,21 +4,17 @@
 #include "DreamLyricTypes.h"
 #include "ExpansionData/DreamMusicPlayerExpansionData_Lyric.h"
 
-namespace FDreamLyricUtils
+struct DREAMMUSICPLAYERLYRIC_API FDreamLyricUtils
 {
-	using namespace dlp;
+public:
+	static dlp::ELyricContentRole ConvertRole(EDreamMusicLyricTextRole InRole);
+	static EDreamMusicLyricTextRole ConvertRole(dlp::ELyricContentRole InRole);
 
-	ELyricContentRole ConvertRole(EDreamMusicLyricTextRole InRole);
+	static dlp::EFileFormat ConvertFormat(EDreamMusicPlayerLyricType Format);
+	static EDreamMusicPlayerLyricType ConvertFormat(dlp::EFileFormat Format);
 
-	EDreamMusicLyricTextRole ConvertRole(ELyricContentRole InRole);
-
-	EFileFormat ConvertFormat(EDreamMusicPlayerLyricType Format);
-
-	EDreamMusicPlayerLyricType ConvertFormat(EFileFormat Format);
-
-	TArray<FDreamMusicLyricGroup> ReadLyricFile(const dlp::File::FLyricFile& LyricFile, std::optional<std::reference_wrapper<FDreamMusicLyricMetadata>> OptionalMetadata = std::nullopt);
-
-	FDreamMusicLyricGroup GetLyricAtTimestamp(FDreamMusicTimestamp Timestamp, const TArray<FDreamMusicLyricGroup>& Lyrics);
-	FString GetLyricFilePath(FString FileName);
-	TArray<FString> GetLyricFileNames();
-}
+	static TArray<FDreamMusicLyricGroup> ReadLyricFile(const dlp::File::FLyricFile& LyricFile, std::optional<std::reference_wrapper<FDreamMusicLyricMetadata>> OptionalMetadata = std::nullopt);
+	static FDreamMusicLyricGroup GetLyricAtTimestamp(FDreamMusicTimestamp Timestamp, const TArray<FDreamMusicLyricGroup>& Lyrics);
+	static FString GetLyricFilePath(FString FileName);
+	static TArray<FString> GetLyricFileNames();
+};

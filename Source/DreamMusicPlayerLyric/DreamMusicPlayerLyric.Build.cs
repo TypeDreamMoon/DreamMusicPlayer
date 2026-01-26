@@ -25,16 +25,6 @@ public class DreamMusicPlayerLyric : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"UnrealEd",
-				"EditorSubsystem",
-				"ToolMenus",
-				"EditorStyle",
-				"EditorWidgets",
-				"PropertyEditor",
-				"AssetTools",
-				"ContentBrowser",
-				"DesktopPlatform", 
-				"EditorScriptingUtilities",
 			}
 		);
 

@@ -80,6 +80,6 @@ public:
 	FMusicPlayerThemeColorChanged OnThemeColorChanged;
 
 protected:
-	virtual void BP_ChangeMusic_Implementation(const FDreamMusicDataStruct& InData) override;
+	virtual void BP_ChangeMusic_Implementation(const FDreamMusicData& InData) override;
 	virtual void BP_Deinitialize_Implementation() override;
 };

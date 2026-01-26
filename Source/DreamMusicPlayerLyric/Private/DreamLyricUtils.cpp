@@ -69,6 +69,8 @@ TArray<FString> FDreamLyricUtils::GetLyricFileNames()
 	return Names;
 }
 
+using namespace dlp;
+
 dlp::ELyricContentRole FDreamLyricUtils::ConvertRole(EDreamMusicLyricTextRole InRole)
 {
 	switch (InRole)
@@ -86,7 +88,7 @@ dlp::ELyricContentRole FDreamLyricUtils::ConvertRole(EDreamMusicLyricTextRole In
 	return ELyricContentRole::None;
 }
 
-EDreamMusicLyricTextRole FDreamLyricUtils::ConvertRole(ELyricContentRole InRole)
+EDreamMusicLyricTextRole FDreamLyricUtils::ConvertRole(dlp::ELyricContentRole InRole)
 {
 	switch (InRole)
 	{
@@ -120,7 +122,7 @@ dlp::EFileFormat FDreamLyricUtils::ConvertFormat(EDreamMusicPlayerLyricType Form
 	return EFileFormat::LRC;
 }
 
-EDreamMusicPlayerLyricType FDreamLyricUtils::ConvertFormat(EFileFormat Format)
+EDreamMusicPlayerLyricType FDreamLyricUtils::ConvertFormat(dlp::EFileFormat Format)
 {
 	switch (Format)
 	{

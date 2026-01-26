@@ -32,8 +32,12 @@ public class DreamMusicPlayerThirdParty : ModuleRules
         {
             string LibFolderPath = Path.Combine(ThirdPartyPath, "lib", "win64");
             PublicAdditionalLibraries.Add(Path.Combine(LibFolderPath, "tag.lib"));
+            PublicAdditionalLibraries.Add(Path.Combine(LibFolderPath, "zlib.lib"));
         }
+        
+        PublicDefinitions.Add("TAGLIB_STATIC");
 
         bEnableExceptions = true;
+        bUseRTTI = true;
     }
 }

@@ -14,7 +14,7 @@ namespace dlp::Parser
 }
 
 UCLASS()
-class DREAMMUSICPLAYERLYRIC_API ULyricAssetFactory : public UFactory
+class DREAMMUSICPLAYERIMPORTER_API ULyricAssetFactory : public UFactory
 {
 	GENERATED_BODY()
 

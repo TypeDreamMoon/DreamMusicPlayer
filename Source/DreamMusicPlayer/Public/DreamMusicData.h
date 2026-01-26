@@ -40,9 +40,9 @@ public:
 	template <typename T>
 	T* GetExpansionData() const
 	{
-		for (auto ExpansionData : ExpansionData)
+		for (auto Element : ExpansionData)
 		{
-			if (auto CastedExpansionData = Cast<T>(ExpansionData))
+			if (auto CastedExpansionData = Cast<T>(Element))
 			{
 				return CastedExpansionData;
 			}

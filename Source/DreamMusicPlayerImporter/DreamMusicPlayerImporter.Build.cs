@@ -10,6 +10,9 @@ public class DreamMusicPlayerImporter : ModuleRules
             new string[]
             {
                 "Core",
+                "DreamMusicPlayer",
+                "DreamMusicPlayerLyric",
+                "DreamMusicPlayerThirdParty",
             }
         );
 
@@ -19,7 +22,18 @@ public class DreamMusicPlayerImporter : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "Slate",
-                "SlateCore"
+                "SlateCore",
+                "UnrealEd",
+                "EditorSubsystem",
+                "ToolMenus",
+                "EditorStyle",
+                "EditorWidgets",
+                "PropertyEditor",
+                "AssetTools",
+                "ContentBrowser",
+                "DesktopPlatform", 
+                "EditorScriptingUtilities",
+                "InputCore",
             }
         );
     }

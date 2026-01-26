@@ -45,7 +45,7 @@
 		},
 		{
 			"Name": "DreamMusicPlayerImporter",
-			"Type": "Runtime",
+			"Type": "Editor",
 			"LoadingPhase": "Default"
 		}
 	],

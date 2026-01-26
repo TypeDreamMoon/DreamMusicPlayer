@@ -102,7 +102,7 @@ void UDreamMusicPlayerExpansion_ThemeColors::ExtractTextureThemeColors(UTexture2
 	}
 }
 
-void UDreamMusicPlayerExpansion_ThemeColors::BP_ChangeMusic_Implementation(const FDreamMusicDataStruct& InData)
+void UDreamMusicPlayerExpansion_ThemeColors::BP_ChangeMusic_Implementation(const FDreamMusicData& InData)
 {
 	ExtractCoverThemeColors(CoverThemeColorCount, MaxIterationsCount);
 }

@@ -2,6 +2,7 @@
 
 
 #include "Expansion/DreamMusicPlayerExpansion_AudioAnalysis.h"
+#include "DreamMusicData.h"
 #include "Classes/DreamMusicPlayerComponent.h"
 #include "ConstantQNRT.h"
 #include "ConstantQNRTFactory.h"
@@ -9,9 +10,7 @@
 #include "DreamMusicPlayerLog.h"
 #include "LoudnessNRT.h"
 #include "LoudnessNRTFactory.h"
-#include "Engine/Canvas.h"
 #include "ExpansionData/DreamMusicPlayerExpansionData_AudioAnalysis.h"
-#include "Kismet/KismetRenderingLibrary.h"
 
 void UDreamMusicPlayerExpansion_AudioAnalysis::GetAudioNrtData(TArray<float>& ConstantNrtL, TArray<float>& ConstantNrtR,
                                                                TArray<float>& ConstantNrtAverage,
@@ -92,7 +91,7 @@ void UDreamMusicPlayerExpansion_AudioAnalysis::UpdateAudioAnalysisData()
 	}
 }
 
-void UDreamMusicPlayerExpansion_AudioAnalysis::BP_ChangeMusic_Implementation(const FDreamMusicDataStruct& InData)
+void UDreamMusicPlayerExpansion_AudioAnalysis::BP_ChangeMusic_Implementation(const FDreamMusicData& InData)
 {
 	LoadAudioNrt();
 }

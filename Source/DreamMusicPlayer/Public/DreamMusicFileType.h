@@ -4,7 +4,7 @@
 #include "DreamMusicFileType.generated.h"
 
 UENUM(BlueprintType)
-enum class EDreamMusicPlayerTagLibFileFormat
+enum class EDreamMusicPlayerTagLibFileFormat : uint8
 {
 	Unknown,
 	RIFF_AIFF,
