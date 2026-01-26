@@ -8,7 +8,7 @@
 #include "Containers/Array.h"
 #include "DreamMusicPlayerLog.h"
 #include "AudioManager/DreamMusicAudioManager_Default.h"
-#include "Classes/DreamMusicData.h"
+#include "Classes/DreamMusicDataAsset.h"
 #include "Classes/DreamMusicPlayerExpansion.h"
 #include "Classes/DreamMusicAudioManager.h"
 
@@ -106,7 +106,7 @@ void UDreamMusicPlayerComponent::InitializeMusicListWithSongTable(UDataTable* Ta
 	InitializeMusicList();
 }
 
-void UDreamMusicPlayerComponent::InitializeMusicListWithDataArray(TArray<FDreamMusicDataStruct> InData)
+void UDreamMusicPlayerComponent::InitializeMusicListWithDataArray(TArray<FDreamMusicData> InData)
 {
 	MusicDataList.Empty();
 	MusicDataList = InData;
@@ -188,21 +188,21 @@ void UDreamMusicPlayerComponent::TogglePauseMusic()
 	}
 }
 
-void UDreamMusicPlayerComponent::PlayMusicFromMusicData(FDreamMusicDataStruct InData)
+void UDreamMusicPlayerComponent::PlayMusicFromMusicData(FDreamMusicData InData)
 {
 	PlayMode = EDreamMusicPlayerPlayMode::EDMPPS_Loop;
 	SetMusicData(InData);
 	StartMusic();
 }
 
-void UDreamMusicPlayerComponent::PlayMusicFromMusicDataAsset(UDreamMusicData* InData)
+void UDreamMusicPlayerComponent::PlayMusicFromMusicDataAsset(UDreamMusicDataAsset* InData)
 {
 	PlayMode = EDreamMusicPlayerPlayMode::EDMPPS_Loop;
 	SetMusicData(InData->Data);
 	StartMusic();
 }
 
-FDreamMusicDataStruct UDreamMusicPlayerComponent::GetNextMusicData(FDreamMusicDataStruct InData)
+FDreamMusicData UDreamMusicPlayerComponent::GetNextMusicData(FDreamMusicData InData)
 {
 	if (PlayMode == EDreamMusicPlayerPlayMode::EDMPPS_Loop)
 	{
@@ -220,7 +220,7 @@ FDreamMusicDataStruct UDreamMusicPlayerComponent::GetNextMusicData(FDreamMusicDa
 	}
 }
 
-FDreamMusicDataStruct UDreamMusicPlayerComponent::GetLastMusicData(FDreamMusicDataStruct InData)
+FDreamMusicData UDreamMusicPlayerComponent::GetLastMusicData(FDreamMusicData InData)
 {
 	if (PlayMode == EDreamMusicPlayerPlayMode::EDMPPS_Loop)
 	{
@@ -310,7 +310,7 @@ void UDreamMusicPlayerComponent::StartMusic()
 	// Validate SoundWave before playing
 	if (!SoundWave || !SoundWave->IsValidLowLevel())
 	{
-		DMP_LOG(Error, TEXT("Invalid SoundWave for music: %s"), *CurrentMusicData.Information.Title);
+		DMP_LOG(Error, TEXT("Invalid SoundWave for music: %s"), *CurrentMusicData.Tag.Title);
 		return;
 	}
 
@@ -335,7 +335,7 @@ void UDreamMusicPlayerComponent::StartMusic()
 
 	// Callback
 	OnMusicPlay.Broadcast(CurrentMusicData);
-	DMP_LOG(Log, TEXT("Play Music : Name : %-15s Duration : %f"), *CurrentMusicData.Information.Title, CurrentMusicDuration);
+	DMP_LOG(Log, TEXT("Play Music : Name : %-15s Duration : %f"), *CurrentMusicData.Tag.Title, CurrentMusicDuration);
 }
 
 void UDreamMusicPlayerComponent::EndMusic(bool Native)
@@ -372,7 +372,7 @@ void UDreamMusicPlayerComponent::EndMusic(bool Native)
 	CurrentMusicPercent = 0.0f;
 
 	OnMusicEnd.Broadcast();
-	DMP_LOG(Log, TEXT("Music End : Name : %-15s Play Mode : %d"), *CurrentMusicData.Information.Title, (int)PlayMode);
+	DMP_LOG(Log, TEXT("Music End : Name : %-15s Play Mode : %d"), *CurrentMusicData.Tag.Title, (int)PlayMode);
 
 	// Handle auto-play logic only if not manually stopped
 	if (!Native)
@@ -453,12 +453,12 @@ void UDreamMusicPlayerComponent::UnPauseMusic()
 	OnMusicUnPause.Broadcast();
 }
 
-void UDreamMusicPlayerComponent::SetMusicData(FDreamMusicDataStruct InData)
+void UDreamMusicPlayerComponent::SetMusicData(FDreamMusicData InData)
 {
 	CurrentMusicData = InData;
 
-	SoundWave = CurrentMusicData.Data.Music.LoadSynchronous();
-	Cover = CurrentMusicData.Information.Cover.LoadSynchronous();
+	SoundWave = CurrentMusicData.Music.LoadSynchronous();
+	Cover = CurrentMusicData.Tag.CoverArt;
 
 	AudioManager->Music_Changed(InData);
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)

@@ -3,18 +3,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DreamMusicData.h"
 #include "DreamMusicPlayerCommon.h"
 #include "Engine/DataAsset.h"
-#include "DreamMusicData.generated.h"
+#include "DreamMusicDataAsset.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class DREAMMUSICPLAYER_API UDreamMusicData : public UPrimaryDataAsset
+class DREAMMUSICPLAYER_API UDreamMusicDataAsset : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FDreamMusicDataStruct Data;
+	FDreamMusicData Data;
 };

@@ -6,8 +6,9 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "DreamMusicPlayerBlueprint.generated.h"
 
+class UDreamMusicPlayerComponent;
 class UDreamMusicPlayerExpansionData;
-struct FDreamMusicDataStruct;
+struct FDreamMusicData;
 struct FDreamMusicTimestamp;
 /**
  * 
@@ -18,8 +19,6 @@ class DREAMMUSICPLAYER_API UDreamMusicPlayerBlueprint : public UBlueprintFunctio
 	GENERATED_BODY()
 
 public:
-	
-
 	UFUNCTION(BlueprintPure, Category = "DreamMusicPlayer|Functions|Types")
 	static float ConvLyricTimestampToFloat(FDreamMusicTimestamp InTimestamp);
 
@@ -27,14 +26,20 @@ public:
 	static FDreamMusicTimestamp ConvFloatToLyricTimestamp(float InFloat);
 
 	UFUNCTION(BlueprintPure, Category = "DreamMusicPlayer|Functions|Expansion", Meta = (DeterminesOutputType="InExpansionDataClass", DynamicOutputParam="OutExpansionData"))
-	static bool GetExpansionDataByClass(const FDreamMusicDataStruct& InMusicData, TSubclassOf<UDreamMusicPlayerExpansionData> InExpansionDataClass, UDreamMusicPlayerExpansionData*& OutExpansionData);
+	static bool GetExpansionDataByClass(const FDreamMusicData& InMusicData, TSubclassOf<UDreamMusicPlayerExpansionData> InExpansionDataClass, UDreamMusicPlayerExpansionData*& OutExpansionData);
 
 	UFUNCTION(BlueprintCallable, Category = "DreamMusicPlayer|Functions|MusicInformation")
-	static TArray<FDreamMusicDataStruct> GetArtistMusics(UDataTable* InArtistDataTable, FName InArtistName);
+	static TArray<FDreamMusicData> GetArtistMusics(UDataTable* InArtistDataTable, FName InArtistName);
 
 	UFUNCTION(BlueprintCallable, Category = "DreamMusicPlayer|Functions|MusicInformation")
-	static TArray<FDreamMusicDataStruct> GetAlbumMusics(UDataTable* InAlbumDataTable, FName InAlbumName);
+	static TArray<FDreamMusicData> GetAlbumMusics(UDataTable* InAlbumDataTable, FName InAlbumName);
 
 	UFUNCTION(BlueprintCallable, Category = "DreamMusicPlayer|Functions|MusicInformation")
-	static TArray<FDreamMusicDataStruct> FilterMusicByTitle(TArray<FDreamMusicDataStruct> InMusicDatas, FString InTitle);
+	static TArray<FDreamMusicData> FilterMusicByTitle(TArray<FDreamMusicData> InMusicDatas, FString InTitle);
+
+	UFUNCTION(BlueprintPure, Category = "DreamMusicPlayer|Functions")
+	static UDreamMusicPlayerComponent* GetDreamMusicPlayerComponent(AActor* InActor);
+
+	UFUNCTION(BlueprintPure, Category = "DreamMusicPlayer|Functions")
+	static UDreamMusicPlayerComponent* GetDreamMusicPlayerComponentByInterface(AActor* InActor);
 };

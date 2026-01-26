@@ -37,6 +37,16 @@
 			"Name": "DreamMusicPlayerNetwork",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "DreamMusicPlayerThirdParty",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "DreamMusicPlayerImporter",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	],
 	"SupportURL": "https://github.com/TypeDreamMoon/DreamMusicPlayer",

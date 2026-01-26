@@ -3,11 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DreamMusicData.h"
 #include "DreamMusicPlayerCommon.h"
+#include "DreamMusicTimestamp.h"
 #include "UObject/Object.h"
 #include "DreamMusicPlayerExpansion.generated.h"
 
-class UDreamMusicData;
+class UDreamMusicDataAsset;
 class UDreamMusicPlayerComponent;
 
 /**
@@ -26,12 +28,12 @@ public:
 	FDreamMusicTimestamp CurrentTimestamp;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Dream Music Player Expansion")
-	FDreamMusicDataStruct CurrentMusicData;
+	FDreamMusicData CurrentMusicData;
 
 public:
 	virtual void Initialize(UDreamMusicPlayerComponent* InComponent);
 	virtual void Tick(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime);
-	virtual void ChangeMusic(const FDreamMusicDataStruct& InData);
+	virtual void ChangeMusic(const FDreamMusicData& InData);
 	virtual void MusicSetPercent(float InPercent);
 	virtual void MusicStart();
 	virtual void MusicStop();
@@ -49,7 +51,7 @@ protected:
 	void BP_Tick(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime);
 
 	UFUNCTION(BlueprintNativeEvent, DisplayName = "On Change Music")
-	void BP_ChangeMusic(const FDreamMusicDataStruct& InData);
+	void BP_ChangeMusic(const FDreamMusicData& InData);
 
 	UFUNCTION(BlueprintNativeEvent, DisplayName = "On Music Set Progress")
 	void BP_MusicSetPercent(float InPercent);

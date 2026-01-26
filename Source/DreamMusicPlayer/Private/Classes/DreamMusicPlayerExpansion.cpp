@@ -3,11 +3,14 @@
 
 #include "Classes/DreamMusicPlayerExpansion.h"
 
+#include "DreamMusicData.h"
+#include "DreamMusicTimestamp.h"
+
 void UDreamMusicPlayerExpansion::BP_Deinitialize_Implementation()
 {
 }
 
-void UDreamMusicPlayerExpansion::BP_ChangeMusic_Implementation(const FDreamMusicDataStruct& InData)
+void UDreamMusicPlayerExpansion::BP_ChangeMusic_Implementation(const FDreamMusicData& InData)
 {
 }
 
@@ -31,7 +34,7 @@ void UDreamMusicPlayerExpansion::Tick(const FDreamMusicTimestamp& InTimestamp, f
 	BP_Tick(InTimestamp, InDeltaTime);
 }
 
-void UDreamMusicPlayerExpansion::ChangeMusic(const FDreamMusicDataStruct& InData)
+void UDreamMusicPlayerExpansion::ChangeMusic(const FDreamMusicData& InData)
 {
 	CurrentMusicData = InData;
 	BP_ChangeMusic(InData);

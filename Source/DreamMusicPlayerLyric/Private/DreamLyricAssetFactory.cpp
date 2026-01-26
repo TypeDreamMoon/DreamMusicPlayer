@@ -1,7 +1,7 @@
 #include "DreamLyricAssetFactory.h"
 #include "DreamLyricAsset.h"
 #include "DreamLyricImportDialog.h"
-#include "DreamLyricParserRuntime.h"
+#include "DreamLyricParserRuntimeBlueprint.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "HAL/PlatformFilemanager.h"

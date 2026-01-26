@@ -7,7 +7,7 @@
 #include "DreamMusicAudioManager.generated.h"
 
 struct FDreamMusicTimestamp;
-struct FDreamMusicDataStruct;
+struct FDreamMusicData;
 class UDreamMusicPlayerComponent;
 /**
  * 播放中间件
@@ -36,7 +36,7 @@ public:
 	virtual void Deinitialize();
 	virtual bool IsPlaying() const;
 	virtual void Tick(const FDreamMusicTimestamp& InTimestamp, float DeltaTime);
-	virtual void Music_Changed(const FDreamMusicDataStruct& InMusicData);
+	virtual void Music_Changed(const FDreamMusicData& InMusicData);
 	virtual void Music_Play(float InTime = 0.f);
 	virtual void Music_Start();
 	virtual void Music_Stop();

@@ -6,7 +6,7 @@
 #include "Widgets/Text/SMultiLineEditableText.h"
 #include "Widgets/Views/SListView.h" // 引入 ListView
 #include "Widgets/SWindow.h"
-#include "DreamLyricParserRuntime.h"
+#include "DreamLyricParserRuntimeBlueprint.h"
 #include "DreamLyricImportDialog.generated.h"
 
 UENUM(BlueprintType)

@@ -45,6 +45,7 @@ public class DreamMusicPlayerLyric : ModuleRules
 		{
 			string LibFolderPath = Path.Combine(ThirdPartyPath, "lib", "amd64");
 			PublicAdditionalLibraries.Add(Path.Combine(LibFolderPath, "libdlp.lib"));
+			PublicAdditionalLibraries.Add(Path.Combine(LibFolderPath, "libdlp_ex.lib"));
 		}
 	}
 }

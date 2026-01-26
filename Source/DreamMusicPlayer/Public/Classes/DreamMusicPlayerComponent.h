@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DreamMusicData.h"
 #include "DreamMusicPlayerCommon.h"
 #include "Classes/DreamMusicPlayerExpansion.h"
 #include "DreamMusicPlayerComponent.generated.h"
@@ -32,9 +33,9 @@ public:
 public:
 	/** Delegates **/
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMusicPlayerMusicDataDelegate, FDreamMusicDataStruct, Data);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMusicPlayerMusicDataDelegate, FDreamMusicData, Data);
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMusicPlayerMusicDataListDelegate, const TArray<FDreamMusicDataStruct>&, List);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMusicPlayerMusicDataListDelegate, const TArray<FDreamMusicData>&, List);
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMusicPlayerCommonDelegate);
 
@@ -110,7 +111,7 @@ public:
 
 	// Current Music Wave
 	UPROPERTY(BlueprintReadOnly, Category = "State")
-	TObjectPtr<USoundWave> SoundWave;
+	TObjectPtr<USoundBase> SoundWave;
 
 	// Current Music Cover
 	UPROPERTY(BlueprintReadOnly, Category = "State")
@@ -138,7 +139,7 @@ public:
 
 	// Current Music Data Struct
 	UPROPERTY(BlueprintReadOnly, Category = "State")
-	FDreamMusicDataStruct CurrentMusicData;
+	FDreamMusicData CurrentMusicData;
 
 	// Music End Duration
 	UPROPERTY(BlueprintReadOnly, Category = "State")
@@ -163,7 +164,7 @@ public:
 
 	// Music Data List
 	UPROPERTY(BlueprintReadWrite, Category = "Data")
-	TArray<FDreamMusicDataStruct> MusicDataList;
+	TArray<FDreamMusicData> MusicDataList;
 
 #pragma endregion Data
 
@@ -209,7 +210,7 @@ public:
 	 * @param InData Music Datas
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Functions")
-	void InitializeMusicListWithDataArray(TArray<FDreamMusicDataStruct> InData);
+	void InitializeMusicListWithDataArray(TArray<FDreamMusicData> InData);
 
 	/**
 	 * Play Music
@@ -263,7 +264,7 @@ public:
 	 * @param InData Music Data
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Functions")
-	void PlayMusicFromMusicData(FDreamMusicDataStruct InData);
+	void PlayMusicFromMusicData(FDreamMusicData InData);
 
 	/**
 	 * Play Music From Music Data
@@ -271,7 +272,7 @@ public:
 	 * @param InData Music Data
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Functions")
-	void PlayMusicFromMusicDataAsset(UDreamMusicData* InData);
+	void PlayMusicFromMusicDataAsset(UDreamMusicDataAsset* InData);
 
 	/**
 	 * Get Next Music Data
@@ -279,7 +280,7 @@ public:
 	 * @return The Next Track Of The Music
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Functions")
-	FDreamMusicDataStruct GetNextMusicData(FDreamMusicDataStruct InData);
+	FDreamMusicData GetNextMusicData(FDreamMusicData InData);
 
 	/**
 	 * Get Last Music Data
@@ -287,7 +288,7 @@ public:
 	 * @return The Last Track Of The Music
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Functions")
-	FDreamMusicDataStruct GetLastMusicData(FDreamMusicDataStruct InData);
+	FDreamMusicData GetLastMusicData(FDreamMusicData InData);
 
 	UFUNCTION(BlueprintPure, Category = "Functions|Expansion", Meta = (DeterminesOutputType="InExpansionClass", DynamicOutputParam="OutExpansion"))
 	void GetExpansionByClass(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass, UDreamMusicPlayerExpansion*& OutExpansion) const;
@@ -323,7 +324,7 @@ private:
 	 * Set Music Data
 	 * @param InData New Music Data
 	 */
-	void SetMusicData(FDreamMusicDataStruct InData);
+	void SetMusicData(FDreamMusicData InData);
 
 	/**
 	 * Set Play State
@@ -370,7 +371,7 @@ public:
 	template <typename T>
 	T* GetExpansionData() const
 	{
-		for (auto ExpansionData : CurrentMusicData.ExpansionDatas)
+		for (auto ExpansionData : CurrentMusicData.ExpansionData)
 		{
 			if (ExpansionData->IsA(T::StaticClass()))
 			{

@@ -28,7 +28,7 @@ public:
 	virtual UAudioComponent* GetAudioComponent() override;
 	virtual void Initialize(UDreamMusicPlayerComponent* InComponent) override;
 	virtual void Deinitialize() override;
-	virtual void Music_Changed(const FDreamMusicDataStruct& InMusicData) override;
+	virtual void Music_Changed(const FDreamMusicData& InMusicData) override;
 	virtual void Music_Play(float InTime = 0.f) override;
 	virtual void Music_Stop() override;
 	virtual void Music_Pause() override;

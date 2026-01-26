@@ -54,10 +54,10 @@ void UDreamMusicAudioManager_Fade::Deinitialize()
 	}
 }
 
-void UDreamMusicAudioManager_Fade::Music_Changed(const FDreamMusicDataStruct& InMusicData)
+void UDreamMusicAudioManager_Fade::Music_Changed(const FDreamMusicData& InMusicData)
 {
 	// 设置后台非激活组件音乐
-	GetInactiveAudioComponent()->SetSound(InMusicData.Data.Music.LoadSynchronous());
+	GetInactiveAudioComponent()->SetSound(InMusicData.Music.LoadSynchronous());
 	GetInactiveAudioComponent()->Sound->VirtualizationMode = EVirtualizationMode::PlayWhenSilent;
 }
 

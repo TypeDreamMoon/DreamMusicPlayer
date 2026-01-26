@@ -7,7 +7,7 @@
 #include "Blueprint/UserWidget.h"
 #include "DreamMusicPlayerDelegateWidget.generated.h"
 
-struct FDreamMusicDataStruct;
+struct FDreamMusicData;
 class UDreamMusicPlayerComponent;
 /**
  * 
@@ -31,13 +31,13 @@ public:
 	void BP_OnInitialize(UDreamMusicPlayerComponent* InComponent);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "DreamMusicPlayerDelegateWidget", meta = (DisplayName = "OnMusicDataChanged"))
-	void BP_MusicDataChanged(FDreamMusicDataStruct InData);
+	void BP_MusicDataChanged(FDreamMusicData InData);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "DreamMusicPlayerDelegateWidget", meta = (DisplayName = "OnMusicDataListChanged"))
-	void BP_MusicDataListChanged(const TArray<FDreamMusicDataStruct>& InData);
+	void BP_MusicDataListChanged(const TArray<FDreamMusicData>& InData);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "DreamMusicPlayerDelegateWidget", meta = (DisplayName = "OnMusicPlay"))
-	void BP_MusicPlay(FDreamMusicDataStruct InData);
+	void BP_MusicPlay(FDreamMusicData InData);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "DreamMusicPlayerDelegateWidget", meta = (DisplayName = "OnMusicPause"))
 	void BP_MusicPause();

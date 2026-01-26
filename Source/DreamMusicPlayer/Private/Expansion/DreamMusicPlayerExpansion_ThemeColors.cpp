@@ -26,16 +26,10 @@ void UDreamMusicPlayerExpansion_ThemeColors::ExtractCoverThemeColors(int32 Clust
 		CurrentKMeansTask = nullptr;
 	}
 
-	LoadAssetAsync(CurrentMusicData.Information.Cover.ToSoftObjectPath().GetAssetPath(),
-	               FLoadAssetAsyncDelegate::CreateLambda(
-		               [this, ClusterCount, MaxIterations]
-	               (const FTopLevelAssetPath&, UObject* Object, EAsyncLoadingResult::Type)
-		               {
-			               ExtractTextureThemeColors(
-				               Cast<UTexture2D>(Object),
-				               ClusterCount,
-				               MaxIterations);
-		               }));
+	ExtractTextureThemeColors(
+		CurrentMusicData.Tag.CoverArt,
+		ClusterCount,
+		MaxIterations);
 }
 
 

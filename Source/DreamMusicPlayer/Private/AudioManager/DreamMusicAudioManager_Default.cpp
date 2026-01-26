@@ -5,6 +5,7 @@
 
 #include "DreamMusicPlayerCommon.h"
 #include "Components/AudioComponent.h"
+#include "DreamMusicData.h"
 
 UAudioComponent* UDreamMusicAudioManager_Default::GetAudioComponent()
 {
@@ -22,9 +23,9 @@ bool UDreamMusicAudioManager_Default::IsPlaying() const
 	return AudioComponent->IsPlaying();
 }
 
-void UDreamMusicAudioManager_Default::Music_Changed(const FDreamMusicDataStruct& InMusicData)
+void UDreamMusicAudioManager_Default::Music_Changed(const FDreamMusicData& InMusicData)
 {
-	AudioComponent->SetSound(InMusicData.Data.Music.LoadSynchronous());
+	AudioComponent->SetSound(InMusicData.Music.LoadSynchronous());
 }
 
 void UDreamMusicAudioManager_Default::Music_Play(float InTime)

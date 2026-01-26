@@ -27,7 +27,7 @@ void UDreamMusicPlayerExpansion_MusicVideo::BP_MusicSetPercent_Implementation(fl
 	MediaPlayer->Seek(InPercent * MediaPlayer->GetDuration());
 }
 
-void UDreamMusicPlayerExpansion_MusicVideo::BP_ChangeMusic_Implementation(const FDreamMusicDataStruct& InData)
+void UDreamMusicPlayerExpansion_MusicVideo::BP_ChangeMusic_Implementation(const FDreamMusicData& InData)
 {
 	if (!InData.HasExpansionData(UDreamMusicPlayerExpansionData_MusicVideo::StaticClass()))
 	{

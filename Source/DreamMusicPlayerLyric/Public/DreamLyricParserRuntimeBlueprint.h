@@ -3,8 +3,9 @@
 #include "CoreMinimal.h"
 #include "DreamLyricTypes.h"
 #include "dlp/File.hpp"
-#include "DreamLyricParserRuntime.generated.h"
+#include "DreamLyricParserRuntimeBlueprint.generated.h"
 
+class UDreamLyricAsset;
 /**
  * @brief 运行时歌词导入结果
  */
@@ -23,8 +24,11 @@ struct DREAMMUSICPLAYERLYRIC_API FDreamLyricImportResult
 	UDreamLyricAsset* Asset = nullptr;
 
 	FDreamLyricImportResult() = default;
+
 	FDreamLyricImportResult(bool bInSuccess, const FString& InErrorMessage, UDreamLyricAsset* InAsset = nullptr)
-		: bSuccess(bInSuccess), ErrorMessage(InErrorMessage), Asset(InAsset) {}
+		: bSuccess(bInSuccess), ErrorMessage(InErrorMessage), Asset(InAsset)
+	{
+	}
 };
 
 /**
@@ -34,7 +38,7 @@ struct DREAMMUSICPLAYERLYRIC_API FDreamLyricImportResult
  * 参考 DreamMusicPlayer/Public 中的实现方式
  */
 UCLASS(BlueprintType)
-class DREAMMUSICPLAYERLYRIC_API UDreamLyricParserRuntime : public UObject
+class DREAMMUSICPLAYERLYRIC_API UDreamLyricParserRuntimeBlueprint : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
@@ -104,15 +108,11 @@ public:
 		FString& OutErrorMessage,
 		const FDreamLyricParserOptions& ParserOptions = FDreamLyricParserOptions()
 	);
-	
+
 	static void ConvertParsedLyric(dlp::File::FLyricFile ParsedFile, TArray<FDreamMusicLyricGroup>& OutGroups);
 
 	/**
 	 * @brief 将第三方库的解析结果转换为 ULyricAsset
 	 */
-	static void ConvertParsedLyricToAsset(
-		const dlp::File::FLyricFile& ParsedFile,
-		UDreamLyricAsset* Asset
-	);
+	static void ConvertParsedLyric(const dlp::File::FLyricFile& ParsedFile, UDreamLyricAsset* Asset);
 };
-

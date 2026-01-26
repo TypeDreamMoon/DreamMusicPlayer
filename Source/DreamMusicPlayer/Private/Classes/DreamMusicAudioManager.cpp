@@ -25,7 +25,7 @@ void UDreamMusicAudioManager::Tick(const FDreamMusicTimestamp& InTimestamp, floa
 {
 }
 
-void UDreamMusicAudioManager::Music_Changed(const FDreamMusicDataStruct& InMusicData)
+void UDreamMusicAudioManager::Music_Changed(const FDreamMusicData& InMusicData)
 {
 }
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DreamLyricParserRuntime.h"
+#include "DreamLyricParserRuntimeBlueprint.h"
 #include "dlp/File.hpp"
 #include "Factories/Factory.h"
 #include "DreamLyricAssetFactory.generated.h"

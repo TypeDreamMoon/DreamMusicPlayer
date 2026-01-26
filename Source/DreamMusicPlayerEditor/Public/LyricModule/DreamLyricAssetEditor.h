@@ -140,11 +140,6 @@ private:
 	void OnEditSelectedGroup();
 
 	/**
-	 * @brief 构建列表项的右键菜单
-	 */
-	void BuildContextMenu(FMenuBuilder& MenuBuilder, TSharedPtr<FString> Item);
-
-	/**
 	 * @brief 刷新编辑视图
 	 */
 	void RefreshEditView();
@@ -191,7 +186,7 @@ private:
 	TArray<TSharedPtr<FLyricGroupDisplayData>> LyricGroupData;
 
 	/** 选中的组索引 */
-	int32 SelectedGroupIndex;
+	int32 SelectedGroupIndex = 0;
 
 	/** 搜索框文本 */
 	FText SearchText;

@@ -1,4 +1,4 @@
-#include "DreamLyricParserRuntime.h"
+#include "DreamLyricParserRuntimeBlueprint.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "HAL/PlatformFilemanager.h"
@@ -30,7 +30,7 @@ dlp::File::FLyricGroupRoleOption FDreamLyricParserOptions::ToLibraryType() const
 	return Result;
 }
 
-FDreamLyricImportResult UDreamLyricParserRuntime::ImportLyricFileFromPath(
+FDreamLyricImportResult UDreamLyricParserRuntimeBlueprint::ImportLyricFileFromPath(
 	const FString& FilePath,
 	EDreamMusicPlayerLyricType Format,
 	const FDreamLyricParserOptions& ParserOptions)
@@ -75,7 +75,7 @@ FDreamLyricImportResult UDreamLyricParserRuntime::ImportLyricFileFromPath(
 	return Result;
 }
 
-FDreamLyricImportResult UDreamLyricParserRuntime::ImportLyricFileFromString(
+FDreamLyricImportResult UDreamLyricParserRuntimeBlueprint::ImportLyricFileFromString(
 	const FString& FileContent,
 	EDreamMusicPlayerLyricType Format,
 	const FString& SourceFileName,
@@ -103,19 +103,19 @@ FDreamLyricImportResult UDreamLyricParserRuntime::ImportLyricFileFromString(
 	return Result;
 }
 
-EDreamMusicPlayerLyricType UDreamLyricParserRuntime::DetectFileFormat(const FString& FilePath)
+EDreamMusicPlayerLyricType UDreamLyricParserRuntimeBlueprint::DetectFileFormat(const FString& FilePath)
 {
 	FString Extension = FPaths::GetExtension(FilePath).ToLower();
 	return DetectFormatFromExtension(Extension);
 }
 
-bool UDreamLyricParserRuntime::CanImportFile(const FString& FilePath)
+bool UDreamLyricParserRuntimeBlueprint::CanImportFile(const FString& FilePath)
 {
 	FString Extension = FPaths::GetExtension(FilePath).ToLower();
 	return Extension == TEXT("lrc") || Extension == TEXT("ass") || Extension == TEXT("srt");
 }
 
-EDreamMusicPlayerLyricType UDreamLyricParserRuntime::DetectFormatFromExtension(const FString& Extension)
+EDreamMusicPlayerLyricType UDreamLyricParserRuntimeBlueprint::DetectFormatFromExtension(const FString& Extension)
 {
 	FString LowerExtension = Extension.ToLower();
 	if (LowerExtension == TEXT("lrc"))
@@ -134,7 +134,7 @@ EDreamMusicPlayerLyricType UDreamLyricParserRuntime::DetectFormatFromExtension(c
 	return EDreamMusicPlayerLyricType::LRC;
 }
 
-bool UDreamLyricParserRuntime::ParseLyricContent(
+bool UDreamLyricParserRuntimeBlueprint::ParseLyricContent(
 	const FString& FileContent,
 	dlp::EFileFormat Format,
 	UDreamLyricAsset* OutAsset,
@@ -157,7 +157,7 @@ bool UDreamLyricParserRuntime::ParseLyricContent(
 		dlp::File::FLyricFile LyricFile = Process.Process(Format, ContentStr, ParserOptions.ToLibraryType());
 
 		// 转换为资产数据
-		ConvertParsedLyricToAsset(LyricFile, OutAsset);
+		ConvertParsedLyric(LyricFile, OutAsset);
 
 		return true;
 	}
@@ -173,7 +173,7 @@ bool UDreamLyricParserRuntime::ParseLyricContent(
 	}
 }
 
-void UDreamLyricParserRuntime::ConvertParsedLyric(dlp::File::FLyricFile ParsedFile, TArray<FDreamMusicLyricGroup>& OutGroups)
+void UDreamLyricParserRuntimeBlueprint::ConvertParsedLyric(dlp::File::FLyricFile ParsedFile, TArray<FDreamMusicLyricGroup>& OutGroups)
 {
 	// 转换组
 	for (const auto& Group : ParsedFile.groups)
@@ -212,7 +212,7 @@ void UDreamLyricParserRuntime::ConvertParsedLyric(dlp::File::FLyricFile ParsedFi
 	}
 }
 
-void UDreamLyricParserRuntime::ConvertParsedLyricToAsset(
+void UDreamLyricParserRuntimeBlueprint::ConvertParsedLyric(
 	const dlp::File::FLyricFile& ParsedFile,
 	UDreamLyricAsset* Asset)
 {

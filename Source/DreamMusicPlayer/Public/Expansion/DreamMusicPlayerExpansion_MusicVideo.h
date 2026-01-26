@@ -29,7 +29,7 @@ protected:
 	virtual void BP_MusicPause_Implementation() override;
 	virtual void BP_MusicUnPause_Implementation() override;
 	virtual void BP_MusicSetPercent_Implementation(float InPercent) override;
-	virtual void BP_ChangeMusic_Implementation(const FDreamMusicDataStruct& InData) override;
+	virtual void BP_ChangeMusic_Implementation(const FDreamMusicData& InData) override;
 
 	UPROPERTY()
 	FDreamMusicPlayerExpansionData_MusicVideo_Define CachedMusicVideoData;

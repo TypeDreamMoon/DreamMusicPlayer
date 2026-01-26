@@ -74,15 +74,15 @@ void UDreamMusicPlayerDelegateWidget::NativeDestruct()
 	MusicPlayerComponent.Reset();
 }
 
-void UDreamMusicPlayerDelegateWidget::BP_MusicDataChanged_Implementation(FDreamMusicDataStruct InData)
+void UDreamMusicPlayerDelegateWidget::BP_MusicDataChanged_Implementation(FDreamMusicData InData)
 {
 }
 
-void UDreamMusicPlayerDelegateWidget::BP_MusicDataListChanged_Implementation(const TArray<FDreamMusicDataStruct>& InData)
+void UDreamMusicPlayerDelegateWidget::BP_MusicDataListChanged_Implementation(const TArray<FDreamMusicData>& InData)
 {
 }
 
-void UDreamMusicPlayerDelegateWidget::BP_MusicPlay_Implementation(FDreamMusicDataStruct InData)
+void UDreamMusicPlayerDelegateWidget::BP_MusicPlay_Implementation(FDreamMusicData InData)
 {
 }
 
