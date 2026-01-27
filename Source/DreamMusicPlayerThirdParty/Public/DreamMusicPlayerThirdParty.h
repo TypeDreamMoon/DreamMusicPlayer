@@ -8,4 +8,7 @@ class FDreamMusicPlayerThirdPartyModule : public IModuleInterface
 public:
     virtual void StartupModule() override;
     virtual void ShutdownModule() override;
+    
+private:
+    TMap<FString, void*> LibraryHandles;
 };

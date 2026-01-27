@@ -34,6 +34,7 @@ public class DreamMusicPlayerImporter : ModuleRules
                 "DesktopPlatform", 
                 "EditorScriptingUtilities",
                 "InputCore",
+                "AudioEditor"
             }
         );
     }

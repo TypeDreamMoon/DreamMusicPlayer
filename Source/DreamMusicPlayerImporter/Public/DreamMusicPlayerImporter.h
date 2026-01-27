@@ -13,4 +13,5 @@ private:
 	void RegisterMenus();
 	void UnregisterMenus();
 	void OnImportLyricFileClicked();
+	void OnImportMusicFileClicked();
 };

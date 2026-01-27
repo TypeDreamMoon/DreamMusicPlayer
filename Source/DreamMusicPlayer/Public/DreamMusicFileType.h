@@ -17,6 +17,7 @@ enum class EDreamMusicPlayerTagLibFileFormat : uint8
 	Matroska,
 	Mod,
 	MP4,
+	MP3,
 	MPC,
 	MPEG,
 	Ogg,
