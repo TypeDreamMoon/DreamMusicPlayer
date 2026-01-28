@@ -1,6 +1,6 @@
-#include "LyricModule/DreamLyricAssetEditor.h"
+#include "Lyric/DreamLyricAssetEditor.h"
 #include "DreamLyricAsset.h"
-#include "LyricModule/DreamLyricGroupWrapper.h"
+#include "Lyric/DreamLyricGroupWrapper.h"
 #include "PropertyEditorModule.h"
 #include "IDetailsView.h"
 #include "Widgets/Docking/SDockTab.h"

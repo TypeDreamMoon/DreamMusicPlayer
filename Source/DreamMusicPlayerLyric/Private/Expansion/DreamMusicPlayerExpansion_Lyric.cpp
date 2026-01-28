@@ -9,6 +9,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "DreamLyricAsset.h"
 #include "DreamLyricUtils.h"
+#include "DreamMusicPlayerBlueprint.h"
+#include "DreamMusicPlayerLyricBlueprint.h"
 #include "dlp/Process.hpp"
 
 void UDreamMusicPlayerExpansion_Lyric::InitializeLyricList()
@@ -119,7 +121,7 @@ void UDreamMusicPlayerExpansion_Lyric::BP_MusicStart_Implementation()
 
 void UDreamMusicPlayerExpansion_Lyric::BP_Tick_Implementation(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime)
 {
-	SetCurrentLyric(FDreamLyricUtils::GetLyricAtTimestamp(CurrentTimestamp, CurrentMusicLyricList));
+	SetCurrentLyric(UDreamMusicPlayerLyricBlueprint::FindGroupAtTime(CurrentMusicLyricList, InTimestamp));
 }
 
 
@@ -273,7 +275,7 @@ void UDreamMusicPlayerExpansion_Lyric::SetCurrentLyric(FDreamMusicLyricGroup InL
 		CurrentLyric = InLyric;
 		OnLyricChanged.Broadcast(CurrentLyric, CurrentMusicLyricList.Find(CurrentLyric));
 		OnLyricChangedNative.Broadcast(CurrentLyric, CurrentMusicLyricList.Find(CurrentLyric));
-		DMP_LOG_DEBUG_EXPANSION(Log, "Lyric", TEXT("Set : Time : %02d:%02d.%02d Content : %s"),
+		DMP_LOG_DEBUG_EXPANSION(Log, TEXT("Set : Time : %02d:%02d.%02d Content : %s"),
 		                        InLyric.StartTimestamp.Minute, InLyric.StartTimestamp.Seconds, InLyric.StartTimestamp.Millisecond, *InLyric[EDreamMusicLyricTextRole::Lyric]->Text);
 	}
 }

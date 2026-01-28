@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Expansion/DreamMusicPlayerExpansion_ThemeColors.h"
+#include "Classes/DreamMusicPlayerExpansion_ThemeColors.h"
 #include "DreamMusicPlayerDebugLog.h"
 #include "AsyncAction/DreamAsyncAction_KMeansTexture.h"
 #include "Classes/DreamMusicPlayerComponent.h"

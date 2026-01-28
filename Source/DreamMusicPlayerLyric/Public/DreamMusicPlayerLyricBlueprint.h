@@ -45,11 +45,17 @@ public:
 	static FDreamMusicLyricGroup FindCurrentOrPrevGroup(const TArray<FDreamMusicLyricGroup>& Groups, const FDreamMusicTimestamp& Timestamp);
 
 	UFUNCTION(BlueprintCallable, Category = "Dream Music Player|Lyric")
-	static FDreamMusicLyricProgress GetLineWordProgress(const FDreamMusicLyricLine& Line, const FDreamMusicTimestamp& Timestamp);
+	static FDreamMusicLyricProgress GetLineWordProgress(const FDreamMusicLyricLine& Line, const FDreamMusicTimestamp& Timestamp, bool bUseWordInterpolation = false);
 
 	UFUNCTION(BlueprintCallable, Category = "Dream Music Player|Lyric")
 	static FDreamMusicLyricProgress GetLineProgress(const FDreamMusicLyricLine& Line, const FDreamMusicTimestamp& Timestamp);
 
 	UFUNCTION(BlueprintCallable, Category = "Dream Music Player|Lyric")
-	TArray<FDreamMusicLyricSearchResult> SearchLyric(const TArray<FDreamMusicLyricGroup>& Groups, const FString& Query, double Threshold = 0.5);
+	static TArray<FDreamMusicLyricSearchResult> SearchLyric(const TArray<FDreamMusicLyricGroup>& Groups, const FString& Query, double Threshold = 0.5);
+
+	UFUNCTION(BlueprintCallable, Category = "Dream Music Player|Lyric")
+	static FDreamMusicLyricLine FindLine(const FDreamMusicLyricGroup& Group, EDreamMusicLyricTextRole Role);
+	
+	UFUNCTION(BlueprintCallable, Category = "Dream Music Player|Lyric")
+	static bool HasLine(const FDreamMusicLyricGroup& Group, EDreamMusicLyricTextRole Role);
 };

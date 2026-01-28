@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Classes/DreamMusicPlayerExpansion.h"
-#include "ExpansionData/DreamMusicPlayerExpansionData_MusicVideo.h"
+#include "Data/DreamMusicPlayerExpansionData_MusicVideo.h"
 #include "DreamMusicPlayerExpansion_MusicVideo.generated.h"
 
 class UDreamMusicPlayerExpansionData_MusicVideo;
@@ -14,7 +14,7 @@ class UMediaPlayer;
  * 
  */
 UCLASS(DisplayName = "Music Video")
-class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansion_MusicVideo : public UDreamMusicPlayerExpansion
+class DREAMMUSICPLAYEREXPANSION_API UDreamMusicPlayerExpansion_MusicVideo : public UDreamMusicPlayerExpansion
 {
 	GENERATED_BODY()
 

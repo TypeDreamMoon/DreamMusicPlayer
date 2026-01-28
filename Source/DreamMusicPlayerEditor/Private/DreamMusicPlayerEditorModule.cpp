@@ -1,8 +1,9 @@
 ﻿#include "DreamMusicPlayerEditorModule.h"
-#include "LyricModule/DreamLyricAssetTypeActions.h"
+#include "Lyric/DreamLyricAssetTypeActions.h"
 #include "AssetToolsModule.h"
 #include "DreamMusicPlayerEditorStyles.h"
 #include "IAssetTools.h"
+#include "Lyric/Search/LyricsWindowManager.h"
 
 #define LOCTEXT_NAMESPACE "FDreamMusicPlayerEditorModule"
 
@@ -17,6 +18,8 @@ void FDreamMusicPlayerEditorModule::StartupModule()
 
 	FDreamMusicPlayerEditorStyles::Initialize();
 	FDreamMusicPlayerEditorStyles::Register();
+	
+	FLyricsWindowManager::RegisterTabSpawner();
 }
 
 void FDreamMusicPlayerEditorModule::ShutdownModule()
@@ -33,6 +36,7 @@ void FDreamMusicPlayerEditorModule::ShutdownModule()
 	CreatedAssetTypeActions.Empty();
 
 	FDreamMusicPlayerEditorStyles::Unregister();
+	FLyricsWindowManager::UnregisterTabSpawner();
 }
 
 #undef LOCTEXT_NAMESPACE

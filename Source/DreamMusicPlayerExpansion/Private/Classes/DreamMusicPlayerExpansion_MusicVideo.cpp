@@ -1,11 +1,11 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Expansion/DreamMusicPlayerExpansion_MusicVideo.h"
+#include "Classes/DreamMusicPlayerExpansion_MusicVideo.h"
 
 #include "MediaPlayer.h"
 #include "BaseMediaSource.h"
-#include "ExpansionData/DreamMusicPlayerExpansionData_MusicVideo.h"
+#include "Data/DreamMusicPlayerExpansionData_MusicVideo.h"
 
 void UDreamMusicPlayerExpansion_MusicVideo::OnMediaOpenedHandle(FString OpenedUrl)
 {

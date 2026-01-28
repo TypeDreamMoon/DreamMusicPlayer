@@ -1,0 +1,2 @@
+#include "Lyric/DreamLyricGroupWrapper.h"
+

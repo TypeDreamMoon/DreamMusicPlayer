@@ -28,9 +28,7 @@ public class DreamMusicPlayer : ModuleRules
 			new string[]
 			{
 				"Core",
-				"Engine", 
-				"MediaAssets", 
-				"ImgMedia",
+				"Engine",
 			}
 		);
 
@@ -41,10 +39,7 @@ public class DreamMusicPlayer : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"AudioSynesthesia",
-				"AudioSynesthesiaCore",
 				"DeveloperSettings",
-				"AudioExtensions",
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);

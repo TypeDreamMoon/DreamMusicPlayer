@@ -47,6 +47,11 @@
 			"Name": "DreamMusicPlayerImporter",
 			"Type": "Editor",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "DreamMusicPlayerExpansion",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	],
 	"SupportURL": "https://github.com/TypeDreamMoon/DreamMusicPlayer",

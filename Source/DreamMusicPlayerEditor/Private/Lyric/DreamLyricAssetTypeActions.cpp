@@ -1,6 +1,6 @@
-#include "LyricModule/DreamLyricAssetTypeActions.h"
+#include "Lyric/DreamLyricAssetTypeActions.h"
 #include "DreamLyricAsset.h"
-#include "LyricModule/DreamLyricAssetEditor.h"
+#include "Lyric/DreamLyricAssetEditor.h"
 #include "ToolMenus.h"
 
 #define LOCTEXT_NAMESPACE "DreamLyricAssetTypeActions"

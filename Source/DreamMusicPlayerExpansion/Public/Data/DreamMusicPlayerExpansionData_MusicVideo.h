@@ -29,7 +29,7 @@ public:
  * 
  */
 UCLASS(DisplayName = "Music Video Expansion Data", Blueprintable, BlueprintType)
-class DREAMMUSICPLAYER_API UDreamMusicPlayerExpansionData_MusicVideo : public UDreamMusicPlayerExpansionData
+class DREAMMUSICPLAYEREXPANSION_API UDreamMusicPlayerExpansionData_MusicVideo : public UDreamMusicPlayerExpansionData
 {
 	GENERATED_BODY()
 

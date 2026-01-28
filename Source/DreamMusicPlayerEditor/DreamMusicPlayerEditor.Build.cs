@@ -12,6 +12,9 @@ public class DreamMusicPlayerEditor : ModuleRules
                 "Core",
                 "DreamMusicPlayer",
                 "DreamMusicPlayerLyric",
+                "Json",
+                "JsonUtilities",
+                "HTTP",
             }
         );
 
@@ -34,7 +37,8 @@ public class DreamMusicPlayerEditor : ModuleRules
                 "ApplicationCore",
                 "InputCore",
                 "EditorScriptingUtilities",
-                "Projects"
+                "Projects",
+                "OpenSSL",
             }
         );
     }

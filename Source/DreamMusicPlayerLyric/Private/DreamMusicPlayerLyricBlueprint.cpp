@@ -177,98 +177,163 @@ FDreamMusicLyricGroup UDreamMusicPlayerLyricBlueprint::FindCurrentOrPrevGroup(co
 	return Groups[Index - 1];
 }
 
-FDreamMusicLyricProgress UDreamMusicPlayerLyricBlueprint::GetLineWordProgress(const FDreamMusicLyricLine& Line, const FDreamMusicTimestamp& Timestamp)
+FDreamMusicLyricProgress UDreamMusicPlayerLyricBlueprint::GetLineWordProgress(const FDreamMusicLyricLine& Line, const FDreamMusicTimestamp& Timestamp, bool bUseWordInterpolation)
 {
 	FDreamMusicLyricProgress Result;
-	Result.LineProgress = 0.0f;
-	Result.CurrentWordIndex = -1;
-	Result.bIsActive = false;
+    Result.LineProgress = 0.0f;
+    Result.CurrentWordIndex = -1;
+    Result.bIsActive = false;
 
-	// 获取行的时间范围 (依赖 Line 内部的方法)
-	FDreamMusicTimestamp LineStart = Line.GetStartTimestamp();
-	FDreamMusicTimestamp LineEnd = Line.GetEndTimestamp();
+    // 基础数据获取
+    FDreamMusicTimestamp LineStart = Line.GetStartTimestamp();
+    FDreamMusicTimestamp LineEnd = Line.GetEndTimestamp();
+    
+    // ---------------------------------------------------------
+    // 0. 通用状态检查：整行是否处于 Active 状态
+    // ---------------------------------------------------------
+    if (Timestamp >= LineStart && Timestamp <= LineEnd)
+    {
+        Result.bIsActive = true;
+    }
+    else
+    {
+        Result.bIsActive = false;
+        // 如果时间还没到，直接返回空进度
+        if (Timestamp < LineStart) 
+        {
+            if (!Line.Words.IsEmpty()) 
+            {
+                Result.CurrentWordIndex = 0;
+                Result.CurrentWord = Line.Words[0];
+            }
+            return Result; 
+        }
+        // 如果时间已过，返回满进度
+        if (Timestamp > LineEnd) 
+        {
+            Result.LineProgress = 1.0f;
+            if (!Line.Words.IsEmpty()) 
+            {
+                Result.CurrentWordIndex = Line.Words.Num() - 1;
+                Result.CurrentWord = Line.Words.Last();
+            }
+            return Result;
+        }
+    }
 
-	// 1. 如果行内没有单词，或者非逐字模式，退化为简单的行进度计算 (这里假设总是尝试计算逐字)
-	if (Line.Words.IsEmpty())
-	{
-		Result = GetLineProgress(Line, Timestamp);
-		// 修正一下，因为 GetLineProgres 主要是算 float，这里我们要确保 WordIndex 正确
-		if (Timestamp >= LineEnd)
-		{
-			Result.LineProgress = 1.0f;
-			Result.bIsActive = false; // 已结束
-		}
-		else if (Timestamp >= LineStart)
-		{
-			Result.bIsActive = true;
-		}
-		return Result;
-	}
+    // ---------------------------------------------------------
+    // 1. 模式 A: 整行进度模式 (Whole Line Mode)
+    // ---------------------------------------------------------
+    if (!bUseWordInterpolation)
+    {
+        double TotalDuration = DreamLyricUtils::GetDurationSeconds(LineStart, LineEnd);
+        if (TotalDuration > 0.0)
+        {
+            double Elapsed = DreamLyricUtils::GetDurationSeconds(LineStart, Timestamp);
+            Result.LineProgress = FMath::Clamp((float)(Elapsed / TotalDuration), 0.0f, 1.0f);
+        }
+        else
+        {
+            Result.LineProgress = 1.0f;
+        }
 
-	const int32 Count = Line.Words.Num();
+        // 即使是整行模式，为了方便UI高亮，我们依然尝试计算当前处于哪个字
+        // 如果不需要这个功能，可以把下面这段删掉
+        if (!Line.Words.IsEmpty())
+        {
+            for (int32 i = 0; i < Line.Words.Num(); ++i)
+            {
+                // 如果时间小于该词结束时间，就是这个词（包含Gap期也会算在前一个词或后一个词，这里简单判定）
+                if (Timestamp < Line.Words[i].EndTimestamp)
+                {
+                    Result.CurrentWordIndex = i;
+                    Result.CurrentWord = Line.Words[i];
+                    break;
+                }
+            }
+            // 如果遍历完都没找到（比如在最后一个字的Gap里），设为最后一个
+            if (Result.CurrentWordIndex == -1)
+            {
+                Result.CurrentWordIndex = Line.Words.Num() - 1;
+                Result.CurrentWord = Line.Words.Last();
+            }
+        }
+        
+        return Result;
+    }
 
-	// 2. 边界检查：时间早于第一个字
-	if (Timestamp < Line.Words[0].StartTimestamp)
-	{
-		Result.CurrentWordIndex = 0;
-		Result.LineProgress = 0.0f;
-		Result.bIsActive = false; // 还没开始唱
-		Result.CurrentWord = Line.Words[0];
-		return Result;
-	}
+    // ---------------------------------------------------------
+    // 2. 模式 B: 逐字进度模式 (Per Word / Karaoke Mode)
+    // ---------------------------------------------------------
+    
+    // 如果没有单词，退化回整行逻辑或直接返回
+    if (Line.Words.IsEmpty())
+    {
+        return Result; // Progress 0, Active based on check above
+    }
 
-	// 3. 边界检查：时间晚于最后一个字
-	if (Timestamp >= Line.Words.Last().EndTimestamp)
-	{
-		Result.CurrentWordIndex = Count - 1;
-		Result.LineProgress = 1.0f;
-		Result.bIsActive = false; // 已经唱完了
-		Result.CurrentWord = Line.Words.Last();
-		return Result;
-	}
+    const int32 Count = Line.Words.Num();
 
-	// 4. 遍历查找 (线性查找，因为一行单词数通常很少)
-	for (int32 i = 0; i < Count; ++i)
-	{
-		const FDreamMusicLyricWord& Word = Line.Words[i];
+    // 2.1 边界检查：早于第一个字
+    if (Timestamp < Line.Words[0].StartTimestamp)
+    {
+        Result.CurrentWordIndex = 0;
+        Result.CurrentWord = Line.Words[0];
+        Result.LineProgress = 0.0f; 
+        return Result;
+    }
 
-		// Case A: 时间落在当前单词范围内
-		if (Timestamp >= Word.StartTimestamp && Timestamp < Word.EndTimestamp)
-		{
-			Result.CurrentWordIndex = i;
-			Result.CurrentWord = Word;
-			Result.bIsActive = true;
+    // 2.2 边界检查：晚于最后一个字
+    if (Timestamp >= Line.Words.Last().EndTimestamp)
+    {
+        Result.CurrentWordIndex = Count - 1;
+        Result.CurrentWord = Line.Words.Last();
+        Result.LineProgress = 1.0f;
+        return Result;
+    }
 
-			double Duration = DreamLyricUtils::GetDurationSeconds(Word.StartTimestamp, Word.EndTimestamp);
-			if (Duration > 0.0)
-			{
-				double Elapsed = DreamLyricUtils::GetDurationSeconds(Word.StartTimestamp, Timestamp);
-				Result.LineProgress = (float)(Elapsed / Duration);
-			}
-			else
-			{
-				Result.LineProgress = 1.0f;
-			}
-			return Result;
-		}
+    // 2.3 遍历查找
+    for (int32 i = 0; i < Count; ++i)
+    {
+        const FDreamMusicLyricWord& Word = Line.Words[i];
 
-		// Case B: Gap 期 (两个单词之间的空隙)
-		// "Hello" [gap] "World" -> 光标应该在 "World" 上等待，进度为 0
-		if (i + 1 < Count)
-		{
-			const FDreamMusicLyricWord& NextWord = Line.Words[i + 1];
-			if (Timestamp >= Word.EndTimestamp && Timestamp < NextWord.StartTimestamp)
-			{
-				Result.CurrentWordIndex = i + 1;
-				Result.CurrentWord = NextWord;
-				Result.LineProgress = 0.0f;
-				Result.bIsActive = true; // 仍然算作行内活跃状态
-				return Result;
-			}
-		}
-	}
+        // Case: 时间落在当前单词内部
+        if (Timestamp >= Word.StartTimestamp && Timestamp < Word.EndTimestamp)
+        {
+            Result.CurrentWordIndex = i;
+            Result.CurrentWord = Word;
+            Result.bIsActive = true;
 
-	return Result;
+            double WordDuration = DreamLyricUtils::GetDurationSeconds(Word.StartTimestamp, Word.EndTimestamp);
+            if (WordDuration > KINDA_SMALL_NUMBER) // 也就是 > 0
+            {
+                double Elapsed = DreamLyricUtils::GetDurationSeconds(Word.StartTimestamp, Timestamp);
+                Result.LineProgress = FMath::Clamp((float)(Elapsed / WordDuration), 0.0f, 1.0f);
+            }
+            else
+            {
+                Result.LineProgress = 1.0f;
+            }
+            return Result;
+        }
+
+        // Case: Gap 期 (当前字结束了，下一个字还没开始)
+        // 逻辑：光标应该停留在"下一个字"的起始位置等待，进度为0
+        if (i + 1 < Count)
+        {
+            const FDreamMusicLyricWord& NextWord = Line.Words[i + 1];
+            if (Timestamp >= Word.EndTimestamp && Timestamp < NextWord.StartTimestamp)
+            {
+                Result.CurrentWordIndex = i + 1;
+                Result.CurrentWord = NextWord;
+                Result.LineProgress = 0.0f; // 下一个字还没唱，进度0
+                Result.bIsActive = true;    // 依然算行活跃
+                return Result;
+            }
+        }
+    }
+
+    return Result;
 }
 
 FDreamMusicLyricProgress UDreamMusicPlayerLyricBlueprint::GetLineProgress(const FDreamMusicLyricLine& Line, const FDreamMusicTimestamp& Timestamp)
@@ -358,4 +423,21 @@ TArray<FDreamMusicLyricSearchResult> UDreamMusicPlayerLyricBlueprint::SearchLyri
 	});
 
 	return Results;
+}
+
+FDreamMusicLyricLine UDreamMusicPlayerLyricBlueprint::FindLine(const FDreamMusicLyricGroup& Group, EDreamMusicLyricTextRole Role)
+{
+	if (auto* ptr = Group[Role])
+	{
+		return *ptr;
+	}
+	else
+	{
+		return FDreamMusicLyricLine();
+	}
+}
+
+bool UDreamMusicPlayerLyricBlueprint::HasLine(const FDreamMusicLyricGroup& Group, EDreamMusicLyricTextRole Role)
+{
+	return Group[Role] != nullptr;
 }
