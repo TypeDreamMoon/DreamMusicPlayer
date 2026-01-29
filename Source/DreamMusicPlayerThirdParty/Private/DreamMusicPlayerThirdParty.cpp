@@ -12,18 +12,11 @@ void FDreamMusicPlayerThirdPartyModule::StartupModule()
 		"zlib1.dll",
 		"FLAC.dll",
 		"FLAC++.dll",
+		"libaubio-5.dll",
 	};
-	// 1. 获取插件的 Binaries/Win64 目录
-	// 注意：这里必须用 FindPlugin 找到你的插件名 "DreamMusicPlayer"
+	
 	FString BaseDir = IPluginManager::Get().FindPlugin("DreamMusicPlayer")->GetBaseDir();
 	FString LibDir = FPaths::Combine(*BaseDir, TEXT("Binaries/Win64"));
-
-	// 2. 构造 DLL 的完整路径
-	FString ZlibPath = FPaths::Combine(*LibDir, TEXT("zlib1.dll"));
-	FString FlacPath = FPaths::Combine(*LibDir, TEXT("FLAC.dll"));
-	FString FlacPlusPath = FPaths::Combine(*LibDir, TEXT("FLAC++.dll"));
-
-	// 3. 手动加载 (注意顺序！先底层依赖，再上层)
 
 	for (const FString& Element : DllNames)
 	{

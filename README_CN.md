@@ -67,6 +67,8 @@
 
 20. Windows SMTC支持
 
+21. libAubio集成 分析音频特征
+
 ## 路线图 :
 
 1. BPM识别

@@ -11,6 +11,7 @@ public class DreamMusicPlayerExpansion : ModuleRules
             {
                 "Core",
                 "DreamMusicPlayer",
+                "DreamMusicPlayerThirdParty",
                 "MediaAssets", 
                 "ImgMedia", 
                 "AudioSynesthesia",

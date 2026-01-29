@@ -30,6 +30,9 @@ public class DreamMusicPlayerThirdParty : ModuleRules
 				"ImageWriteQueue",
 				"StylusInput",
 				"Slate",
+				"AudioMixer", // LibAubio
+				"AudioExtensions", // LibAubio
+				"AudioPlatformConfiguration", // LibAubio
 			}
 		);
 
@@ -42,21 +45,27 @@ public class DreamMusicPlayerThirdParty : ModuleRules
 			string LibFolderPath = Path.Combine(ThirdPartyPath, "lib", "win64");
 			string BinFolderPath = Path.Combine(ThirdPartyPath, "bin", "win64");
 
-			PublicAdditionalLibraries.Add(Path.Combine(LibFolderPath, "tag.lib"));
-			PublicAdditionalLibraries.Add(Path.Combine(LibFolderPath, "zlib.lib"));
-			PublicAdditionalLibraries.Add(Path.Combine(LibFolderPath, "ogg.lib"));
-			PublicAdditionalLibraries.Add(Path.Combine(LibFolderPath, "FLACpp.lib"));
-			PublicAdditionalLibraries.Add(Path.Combine(LibFolderPath, "FLAC.lib"));
+			PublicAdditionalLibraries.AddRange(new string[]
+			{
+				Path.Combine(LibFolderPath, "tag.lib"),
+				Path.Combine(LibFolderPath, "zlib.lib"),
+				Path.Combine(LibFolderPath, "ogg.lib"),
+				Path.Combine(LibFolderPath, "FLACpp.lib"),
+				Path.Combine(LibFolderPath, "FLAC.lib"),
+				Path.Combine(LibFolderPath, "aubio.lib"),
+			});
 
 			RuntimeDependencies.Add("$(BinaryOutputDir)/FLAC++.dll", Path.Combine(BinFolderPath, "FLAC++.dll"));
 			RuntimeDependencies.Add("$(BinaryOutputDir)/FLAC.dll", Path.Combine(BinFolderPath, "FLAC.dll"));
 			RuntimeDependencies.Add("$(BinaryOutputDir)/zlib1.dll", Path.Combine(BinFolderPath, "zlib1.dll"));
 			RuntimeDependencies.Add("$(BinaryOutputDir)/ogg.dll", Path.Combine(BinFolderPath, "ogg.dll"));
+			RuntimeDependencies.Add("$(BinaryOutputDir)/libaubio-5.dll", Path.Combine(BinFolderPath, "libaubio-5.dll"));
 
 			PublicDelayLoadDLLs.Add("FLAC++.dll");
 			PublicDelayLoadDLLs.Add("FLAC.dll");
 			PublicDelayLoadDLLs.Add("zlib1.dll");
 			PublicDelayLoadDLLs.Add("ogg.dll");
+			PublicDelayLoadDLLs.Add("libaubio-5.dll");
 
 			// Windows Runtime Libraries
 
@@ -76,8 +85,11 @@ public class DreamMusicPlayerThirdParty : ModuleRules
 				"Include",
 				Target.WindowsPlatform.WindowsSdkVersion,
 				"cppwinrt"));
-
-			PublicDefinitions.Add("TAGLIB_STATIC");
+			
+			PublicDefinitions.AddRange(new string[]
+			{
+				"TAGLIB_STATIC",
+			});
 
 			bUseRTTI = true;
 		}

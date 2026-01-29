@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Classes/DreamMusicPlayerExpansion.h"
+#include "DreamMusicPlayerAubio.h"
 #include "DreamMusicPlayerExpansion_AudioAnalysis.generated.h"
 
+// 前向声明
 struct FLKFSResults;
 class ULoudnessSettings;
 class ULKFSSettings;
@@ -14,102 +16,13 @@ struct FLKFSNRTResults;
 struct FLoudnessResults;
 struct FConstantQResults;
 
-struct FSpectrumRingBuffer
-{
-	// 二维数组：[HistoryIndex][BandIndex]
-	TArray<TArray<float>> Buffer;
-    
-	// 当前写入位置的指针（头部）
-	int32 WriteIndex = 0;
-    
-	// 缓冲区最大容量（帧数）
-	int32 MaxHistorySize = 0;
-
-	// 初始化/重置大小
-	void Resize(int32 InHistorySize, int32 InNumBands)
-	{
-		MaxHistorySize = InHistorySize;
-		WriteIndex = 0;
-		Buffer.Empty();
-		Buffer.SetNum(MaxHistorySize);
-        
-		// 预分配内存
-		for (auto& Frame : Buffer)
-		{
-			Frame.SetNumZeroed(InNumBands);
-		}
-	}
-
-	// 写入新的一帧数据
-	void PushFrame(const TArray<float>& NewData)
-	{
-		if (MaxHistorySize <= 0 || Buffer.IsEmpty()) return;
-
-		// 写入当前位置（覆盖最旧的数据）
-		if (NewData.Num() == Buffer[WriteIndex].Num())
-		{
-			Buffer[WriteIndex] = NewData;
-		}
-		else
-		{
-			Buffer[WriteIndex] = NewData; 
-		}
-
-		// 移动指针，环形回绕
-		WriteIndex = (WriteIndex + 1) % MaxHistorySize;
-	}
-
-	// 获取“过去 N 帧”的平均能量
-	float GetAverageEnergyOfRecentFrames(int32 FramesToLookBack, int32 LowBandIndex, int32 HighBandIndex) const
-	{
-		if (MaxHistorySize == 0) return 0.0f;
-
-		float TotalEnergy = 0.0f;
-		int32 Count = 0;
-		int32 ActualFrames = FMath::Min(FramesToLookBack, MaxHistorySize);
-
-		for (int32 i = 0; i < ActualFrames; ++i)
-		{
-			int32 ReadIdx = (WriteIndex - 1 - i + MaxHistorySize) % MaxHistorySize;
-			const TArray<float>& FrameData = Buffer[ReadIdx];
-            
-			for (int32 Band = LowBandIndex; Band <= HighBandIndex; ++Band)
-			{
-				if (FrameData.IsValidIndex(Band))
-				{
-					TotalEnergy += FrameData[Band];
-					Count++;
-				}
-			}
-		}
-		return (Count > 0) ? (TotalEnergy / Count) : 0.0f;
-	}
-};
-
-namespace Audio
-{
-	class FConstantQResult;
-}
-
 class UConstantQAnalyzer;
 class ULKFSAnalyzer;
 class ULoudnessAnalyzer;
 
-UENUM(BlueprintType)
-enum class EDreamMusicPlayerExpansion_AudioAnalysis_AverageType : uint8
-{
-	// Left Div Right
-	Left_Right UMETA(DisplayName = "Left And Right"),
-	// Right Div Left
-	Right_Left UMETA(DisplayName = "Right And Left"),
-	// Only Left
-	Left UMETA(DisplayName = "Only Left"),
-	// Only Right
-	Right UMETA(DisplayName = "Only Right"),
-};
-
 /**
- * 
+ * 音频分析拓展组件
+ * 集成了 CQT (可视化)、Loudness/LKFS (响度) 和 Aubio (节拍/Onset 检测)
  */
 UCLASS(DisplayName = "Audio Analysis")
 class DREAMMUSICPLAYEREXPANSION_API UDreamMusicPlayerExpansion_AudioAnalysis : public UDreamMusicPlayerExpansion
@@ -117,37 +30,61 @@ class DREAMMUSICPLAYEREXPANSION_API UDreamMusicPlayerExpansion_AudioAnalysis : p
 	GENERATED_BODY()
 
 public:
+	// --- Delegates (事件委托) ---
+
+	// CQT 频谱纹理更新完成 (用于 UI 材质显示)
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAnalysisTextureLoaded, const TArray<UTexture2D*>&, Texture);
 
+	// 实时 CQT 数据回调
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAnalysisConstantQResult, const TArray<FConstantQResults>&, Results);
 
+	// 实时响度数据回调
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAnalysisLoudnessResult, const FLoudnessResults&, Results);
 
+	// 实时 LKFS 数据回调
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAnalysisLKFSResult, const FLKFSResults&, Results);
-	
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBeatDetected, float, BeatIntensity);
+
+	// ★ [新增] Aubio 检测到 Beat (节拍/动次打次) 时触发
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAubioBeatDetected);
+
+	// ★ [新增] Aubio 检测到 Onset (音符起始点/任何发声瞬间) 时触发
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAubioOnsetDetected);
 
 public:
+	// --- 基础设置 ---
+
+	// 是否自动启动 AudioBus (通常为 True)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	bool bAutoStartAudioBus = true;
-	
+
+	// 用于分析的 AudioBus 资产
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	UAudioBus* AnalysisAudioBus;
 
+	// --- 功能开关 ---
+
+	// 启用 CQT (Constant-Q Transform) 分析 - 用于生成频谱纹理
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	bool bEnableConstantQAnalysis = false;
 
+	// 启用响度分析
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	bool bEnableLoudnessAnalysis = false;
 
+	// 启用 LKFS 分析
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	bool bEnableLKFSAnalysis = false;
 
+	// ★ [新增] 启用 Aubio 分析 (Beat & Onset)
+	// 这将在切换音乐时并在后台线程预处理音频文件
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	bool bEnableAubioAnalysis = true;
+
+	// 是否将 CQT 结果写入 Texture2D (用于材质可视化)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	bool bEnableCreateAnalysisTexture = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	EDreamMusicPlayerExpansion_AudioAnalysis_AverageType AverageType;
+	
+	// --- 详细配置对象 ---
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", Instanced, Meta = (EditCondition = "bEnableConstantQAnalysis", EditConditionHides))
 	UConstantQSettings* ConstantQSettings;
@@ -157,29 +94,32 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", Instanced, Meta = (EditCondition = "bEnableLKFSAnalysis", EditConditionHides))
 	ULKFSSettings* LKFSSettings;
-	
-	// 敏感度：当前能量必须是平均值的多少倍才触发？(推荐 1.3 - 1.5)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio Analysis|Beat Settings")
-	float BeatSensitivity = 1.4f;
 
-	// 冷却时间：两次鼓点之间的最小间隔 (秒)，防止连击 (推荐 0.15s - 0.25s)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio Analysis|Beat Settings")
-	float BeatCooldownDuration = 0.2f;
+	// --- Aubio 参数 ---
 
-	// 低频截止比例：我们只分析 CQT 频谱的前百分之多少？(底鼓通常在最左边，0.2 表示前 20%)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio Analysis|Beat Settings")
-	float LowFreqBandRatio = 0.2f;
-	
-	// 历史缓冲区大小：保存多少帧？(假设 60fps，60帧就是1秒历史)
-	UPROPERTY(EditAnywhere, Category = "Audio Analysis|Buffer")
-	int32 HistoryBufferSize = 60;
+	// Onset 检测阈值 (默认为 0.3)。
+	// 数值越小越灵敏 (可能误检)，数值越大越严格 (可能漏检)。
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio Analysis|Aubio", Meta = (EditCondition = "bEnableAubioAnalysis"))
+	float AubioOnsetThreshold = 0.3f;
 
 public:
-	UFUNCTION(BlueprintPure, Category = "Functions")
+	// --- 蓝图 API ---
+
+	UFUNCTION(BlueprintPure, Category = "Audio Analysis|Functions")
 	TArray<UTexture2D*> GetAnalysisTexture() { return Internal_AnalysisTextures; }
 
-	UFUNCTION(BlueprintPure, Category = "Functions")
+	UFUNCTION(BlueprintPure, Category = "Audio Analysis|Functions")
 	UTexture2D* GetAnalysisTextureAtChannel(int32 Channel) { return Internal_AnalysisTextures.IsValidIndex(Channel) ? Internal_AnalysisTextures[Channel] : nullptr; }
+
+	// 获取当前歌曲的整体 BPM (由 Aubio 分析得出)
+	UFUNCTION(BlueprintPure, Category = "Audio Analysis|Aubio")
+	float GetCurrentBPM() const { return CachedAnalysisResult.Bpm; }
+
+	// 获取当前歌曲的平均音高 (Hz)
+	UFUNCTION(BlueprintPure, Category = "Audio Analysis|Aubio")
+	float GetAveragePitch() const { return CachedAnalysisResult.AveragePitch; }
+
+	// --- 事件分配器 ---
 
 	UPROPERTY(BlueprintAssignable, Category = "Delegate")
 	FOnAnalysisTextureLoaded OnAnalysisTextureLoaded;
@@ -192,18 +132,29 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Delegate")
 	FOnAnalysisLKFSResult OnAnalysisLKFSResult;
-	
-	UPROPERTY(BlueprintAssignable, Category = "Audio Analysis|Beat")
-	FOnBeatDetected OnKickDetected;
+
+	// 节拍事件
+	UPROPERTY(BlueprintAssignable, Category = "Audio Analysis|Aubio")
+	FOnAubioBeatDetected OnBeatDetected;
+
+	// 音符/起音事件
+	UPROPERTY(BlueprintAssignable, Category = "Audio Analysis|Aubio")
+	FOnAubioOnsetDetected OnOnsetDetected;
 
 protected:
+	// --- 核心生命周期重写 ---
 	virtual void BP_Initialize_Implementation(UDreamMusicPlayerComponent* InComponent) override;
 	virtual void BP_MusicStart_Implementation() override;
 	virtual void BP_ChangeMusic_Implementation(const FDreamMusicData& InData) override;
-	
+	// ★ 必须重写 Tick 以同步 Aubio 数据与播放进度
+	virtual void BP_Tick_Implementation(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime) override;
+
+	// --- 内部逻辑 ---
+
 	void UpdateConstantQAnalysisData();
 	void UpdateTextureFromSpectrum(UTexture2D* InTexture, const TArray<float>& InSpectrumData);
 
+	// --- 资源与分析器 ---
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UTexture2D>> Internal_AnalysisTextures;
 
@@ -217,27 +168,37 @@ protected:
 	ULKFSAnalyzer* Internal_LKFSAnalyzer;
 
 	bool bIsCreated = false;
-
 	int32 Internal_ChannelNums;
-	TArray<FConstantQResults> Internal_ConstantQResultBuffer;
-	FCriticalSection DataGuard;
-	TArray<FSpectrumRingBuffer> Internal_ChannelHistoryBuffers;
-	
-	float RunningAverageEnergy = 0.0f; // 动态平均能量
-	double LastBeatTriggerTime = 0.0;  // 上次触发的时间
-	bool bIsBufferInitialized = false;
 
+	// CQT 数据缓冲
+	TArray<FConstantQResults> Internal_ConstantQResultBuffer;
+	FCriticalSection DataGuard; // 线程锁
+
+	// --- Aubio 数据缓存 ---
+
+	// 存储完整的分析结果 (BPM, BeatTimes, OnsetTimes)
+	FDreamMusicAnalysisResult CachedAnalysisResult;
+
+	// 标记后台分析是否完成
+	bool bIsAnalysisReady = false;
+
+	// 当前播放进度对应的索引
+	int32 CurrentBeatIndex = 0;
+	int32 CurrentOnsetIndex = 0;
+
+	// 执行异步分析任务
+	void PerformAsyncAubioAnalysis(USoundWave* InSoundWave);
+
+	// --- 内部回调 ---
 	UFUNCTION()
 	void OnAnalysisConstantQResults(UConstantQAnalyzer* Analyzer, int32 ChannelIndex, const FConstantQResults& Results);
 	UFUNCTION()
 	void OnAnalysisLoudnessResults(const FLoudnessResults& Results);
 	UFUNCTION()
 	void OnAnalysisLKFSResults(ULKFSAnalyzer* Analyzer, const FLKFSResults& Results);
-	
-	// 辅助函数：执行检测
-	void ProcessKickDetectionWithBuffer(int32 ChannelIndex);
 };
 
+// 工具类
 UCLASS(BlueprintType)
 class UDreamMusicPlayerExpansion_AudioAnalysisUtil : public UBlueprintFunctionLibrary
 {
