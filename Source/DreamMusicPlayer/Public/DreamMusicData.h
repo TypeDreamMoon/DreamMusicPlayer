@@ -6,6 +6,13 @@
 
 class UDreamMusicPlayerExpansionData;
 
+UENUM(BlueprintType)
+enum class EDreamMusicPlayerMusicType : uint8
+{
+	Asset = 0,
+	Network = 1,
+};
+
 USTRUCT(BlueprintType)
 struct DREAMMUSICPLAYER_API FDreamMusicData
 {
@@ -26,10 +33,19 @@ public:
 	FDreamMusicTag Tag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EDreamMusicPlayerMusicType MusicType = EDreamMusicPlayerMusicType::Asset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition = "MusicType == EDreamMusicPlayerMusicType::Network"))
+	FString MusicURL;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Meta = (EditCondition = "MusicType == EDreamMusicPlayerMusicType::Asset"))
 	TSoftObjectPtr<USoundBase> Music;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
 	TArray<UDreamMusicPlayerExpansionData*> ExpansionData;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<USoundWave> CachedMusic;
 
 public:
 	bool IsValid() const;

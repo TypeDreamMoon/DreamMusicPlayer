@@ -6,6 +6,7 @@
 #include "DreamMusicData.h"
 #include "DreamMusicPlayerCommon.h"
 #include "Classes/DreamMusicPlayerExpansion.h"
+#include "Engine/StreamableManager.h"
 #include "DreamMusicPlayerComponent.generated.h"
 
 
@@ -16,10 +17,10 @@ class UDreamAsyncAction_KMeansTexture;
 struct FKMeansColorCluster;
 
 /**
- * 
+ * Dream Music Player Core Component
  */
 UCLASS(ClassGroup=DreamComponent, Blueprintable, meta=(BlueprintSpawnableComponent),
-	HideCategories=(Parameters,ComponentTick,ComponentReplication), AutoCollapseCategories=(State))
+	HideCategories=(Parameters,ComponentTick,ComponentReplication,Sockets,Activation), AutoCollapseCategories=(State))
 class DREAMMUSICPLAYER_API UDreamMusicPlayerComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -177,7 +178,7 @@ public:
 	TArray<UDreamMusicPlayerExpansion*> ExpansionList;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	float BackdropMusicVolume = 0.0f;
+	float BackdropMusicVolume = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Settings")
 	USoundClass* SoundClass = nullptr;
@@ -296,18 +297,27 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Functions|Expansion")
 	bool HasExpansion(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass) const;
 
-private:
+
 	/**
-	 * Start Music Native
+	 * When the music is loaded
+	 * @param bPlay do play music
+	 */
+	void OnMusicLoaded(bool bPlay);
+	
+private:
+	
+	/**
+	 * @warning Do not use this function on its own please use OnMusicLoaded function if you want to call it
+	 * @brief Start Music Native
 	 */
 	void StartMusic();
 
 	/**
-	 * End Music Native
+	 * @brief End Music Native
 	 * @param Native Whether To Call For A Component
 	 */
 	void EndMusic(bool Native = false);
-
+	
 	void HandleAutoPlayTransition();
 
 	/**
@@ -323,8 +333,9 @@ private:
 	/**
 	 * Set Music Data
 	 * @param InData New Music Data
+	 * @param bPlay Whether To Play
 	 */
-	void SetMusicData(FDreamMusicData InData);
+	void SetMusicData(FDreamMusicData InData, bool bPlay);
 
 	/**
 	 * Set Play State
@@ -336,7 +347,7 @@ private:
 	 * Music Timer Tick
 	 */
 	void MusicTick(float DeltaTime);
-
+	
 	// 音乐开始播放的世界时间
 	double MusicStartWorldTime = 0.0;
 
@@ -345,11 +356,15 @@ private:
 
 	// 是否刚刚进行了 Seek 操作
 	bool bJustSeeked = false;
+	
+	TSharedPtr<FStreamableHandle> MusicLoadHandle;
 
 	/**
 	 * 获取更精确的当前播放时间
 	 */
 	float GetAccuratePlayTime() const;
+	
+	
 
 public:
 	template <typename T>

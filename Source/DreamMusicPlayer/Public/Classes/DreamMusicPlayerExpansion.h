@@ -33,6 +33,7 @@ public:
 public:
 	virtual void Initialize(UDreamMusicPlayerComponent* InComponent);
 	virtual void Tick(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime);
+	virtual void SetMusicData(const FDreamMusicData& InData);
 	virtual void ChangeMusic(const FDreamMusicData& InData);
 	virtual void MusicSetPercent(float InPercent);
 	virtual void MusicStart();
@@ -42,6 +43,10 @@ public:
 	virtual void MusicEnd();
 	virtual void UnbindDelegates();
 	virtual void Deinitialize();
+	// Whether the extension module supports streaming media playback
+	virtual bool SupportStream() const PURE_VIRTUAL(SupportStream, { return false; });
+	// Whether the extension module supports networking
+	virtual bool SupportNetworking() const PURE_VIRTUAL(SupportNetworking, { return false; });
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, DisplayName = "On Initialize")

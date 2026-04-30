@@ -9,6 +9,7 @@
 #include "Engine/Texture2D.h"
 #include "TextureResource.h"
 #include "Async/Async.h"
+#include "Interfaces/IAudioFormat.h"
 
 // ============================================================================
 // CQT & Texture Visualization Logic
@@ -98,6 +99,22 @@ void UDreamMusicPlayerExpansion_AudioAnalysis::UpdateTextureFromSpectrum(UTextur
 // ============================================================================
 // Lifecycle Methods
 // ============================================================================
+
+/*
+void UDreamMusicPlayerExpansion_AudioAnalysis::SetAnalysisDataFromBuffer(const TArray<float>& PcmData, int32 SampleRate, int32 NumChannels)
+{
+	// 重置状态
+	Internal_ChannelNums = NumChannels;
+	BP_MusicStart_Implementation(); // 重新初始化 Buffer 和 Texture
+
+	// 此处调用你的 Aubio 封装类进行离线分析
+	// 假设你有一个 FDreamMusicPlayerAubio 实例或者静态方法
+	// 示例：
+	// FDreamMusicAnalysisResult Result;
+	// AubioAnalyzer->AnalyzeRawFloatBuffer(PcmData, SampleRate, NumChannels, Result);
+	// CachedAnalysisResult = Result;
+	// bIsAnalysisReady = true;
+}*/
 
 void UDreamMusicPlayerExpansion_AudioAnalysis::BP_Initialize_Implementation(UDreamMusicPlayerComponent* InComponent)
 {
@@ -240,65 +257,54 @@ void UDreamMusicPlayerExpansion_AudioAnalysis::PerformAsyncAubioAnalysis(USoundW
 {
 	if (!InSoundWave) return;
 
-    // 1. 标记未就绪
-    bIsAnalysisReady = false;
-    CurrentBeatIndex = 0;
-    CurrentOnsetIndex = 0;
-    CachedAnalysisResult = FDreamMusicAnalysisResult();
+	// 1. 标记未就绪
+	bIsAnalysisReady = false;
+	CurrentBeatIndex = 0;
+	CurrentOnsetIndex = 0;
+	CachedAnalysisResult = FDreamMusicAnalysisResult();
 
-    // ========================================================================
-    // 在主线程预加载数据
-    // ========================================================================
-    // 我们必须在主线程触发 GetCompressedData，以确保音频数据已从 DDC 构建/加载。
-    // 如果在后台线程第一次调用它，会触发 DerivedDataCache 的构建，导致断言失败崩溃。
-    if (!InSoundWave->RawPCMData) // 如果没有 RawPCMData，才需要走压缩数据流程
-    {
-        const FName RuntimeFormat = InSoundWave->GetRuntimeFormat();
-        const FPlatformAudioCookOverrides* CompressionOverrides = USoundWave::GetPlatformCompressionOverridesForCurrentPlatform();
-        
-        // 这一行会强制引擎在主线程准备好数据 (可能会有轻微卡顿，但在切换歌曲时通常可接受)
-        if (InSoundWave->GetCompressedData(RuntimeFormat, CompressionOverrides) == nullptr)
-        {
-            DMP_LOG_DEBUG_EXPANSION(Warning, TEXT("Failed to load compressed data on GameThread for Aubio analysis."));
-            // 如果主线程都拿不到数据，后台线程更拿不到，直接返回避免崩溃
-            return; 
-        }
-    }
-    // ========================================================================
+	// ========================================================================
+	// 在主线程预加载数据
+	// ========================================================================
+	// 我们必须在主线程触发 GetCompressedData，以确保音频数据已从 DDC 构建/加载。
+	// 如果在后台线程第一次调用它，会触发 DerivedDataCache 的构建，导致断言失败崩溃。
+	if (!InSoundWave->RawPCMData) // 如果没有 RawPCMData，才需要走压缩数据流程
+	{
+		const FName RuntimeFormat = InSoundWave->GetRuntimeFormat();
+		const FPlatformAudioCookOverrides* CompressionOverrides = USoundWave::GetPlatformCompressionOverridesForCurrentPlatform();
 
-    // 2. 准备线程安全参数
-    TWeakObjectPtr<UDreamMusicPlayerExpansion_AudioAnalysis> WeakThis(this);
-    TStrongObjectPtr<USoundWave> StrongSoundWave(InSoundWave);
-    float Threshold = AubioOnsetThreshold;
+		// 这一行会强制引擎在主线程准备好数据 (可能会有轻微卡顿，但在切换歌曲时通常可接受)
+		if (InSoundWave->GetCompressedData(RuntimeFormat, CompressionOverrides) == nullptr)
+		{
+			DMP_LOG_DEBUG_EXPANSION(Warning, TEXT("Failed to load compressed data on GameThread for Aubio analysis."));
+			// 如果主线程都拿不到数据，后台线程更拿不到，直接返回避免崩溃
+			return;
+		}
+	}
+	// ========================================================================
 
-    // 3. 在后台线程执行分析 (现在是安全的，因为数据已在上面准备好了)
-    AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [WeakThis, StrongSoundWave, Threshold]()
-    {
-        if (!StrongSoundWave.IsValid()) return;
+	float Threshold = AubioOnsetThreshold;
 
-        FDreamMusicPlayerAubio Analyzer;
-        Analyzer.SetOnsetThreshold(Threshold);
-        
-        FDreamMusicAnalysisResult TempResult;
-        
-        // 这里的 AnalyzeEntireSoundWave 内部会再次调用 GetCompressedData，
-        // 但因为我们在主线程已经调用过一次，这里会直接返回指针，不会崩溃。
-        bool bSuccess = Analyzer.AnalyzeEntireSoundWave(StrongSoundWave.Get(), TempResult);
+	int NumChannels = InSoundWave->NumChannels;
+	int SampleRate = InSoundWave->GetImportedSampleRate();
+	TArray<uint8> PCMData;
 
-        // ... 后续回调代码不变 ...
-        AsyncTask(ENamedThreads::GameThread, [WeakThis, bSuccess, TempResult]()
-        {
-            if (UDreamMusicPlayerExpansion_AudioAnalysis* This = WeakThis.Get())
-            {
-                if (bSuccess)
-                {
-                    This->CachedAnalysisResult = TempResult;
-                    This->bIsAnalysisReady = true;
-                    // ... Log ...
-                }
-            }
-        });
-    });
+	FDreamMusicPlayerAubio Analyzer;
+	Analyzer.SetOnsetThreshold(Threshold);
+	Analyzer.DecodeSoundWave(InSoundWave, PCMData, SampleRate, NumChannels);
+
+	FDreamMusicAnalysisResult TempResult;
+
+	// 这里的 AnalyzeEntireSoundWave 内部会再次调用 GetCompressedData，
+	// 但因为我们在主线程已经调用过一次，这里会直接返回指针，不会崩溃。
+	bool bSuccess = Analyzer.AnalyzeEntireSoundWave(PCMData, SampleRate, NumChannels, TempResult);
+
+
+	if (bSuccess)
+	{
+		CachedAnalysisResult = TempResult;
+		bIsAnalysisReady = true;
+	}
 }
 
 void UDreamMusicPlayerExpansion_AudioAnalysis::BP_Tick_Implementation(const FDreamMusicTimestamp& InTimestamp, float InDeltaTime)

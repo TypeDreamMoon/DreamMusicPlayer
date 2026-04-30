@@ -3,7 +3,7 @@
 
 bool FDreamMusicData::IsValid() const
 {
-	return Tag.IsValid() && Music.IsValid();
+	return Tag.IsValid() && MusicType == EDreamMusicPlayerMusicType::Network ? true : Music.IsValid();
 }
 
 bool FDreamMusicData::operator==(const FDreamMusicData& Target) const

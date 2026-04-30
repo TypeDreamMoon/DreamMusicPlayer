@@ -38,12 +38,14 @@ public:
 	/**
 	 * [核心功能] 分析整个 SoundWave 资源
 	 * 自动处理音频解压、声道混合和分帧处理
-	 * * @param InSoundWave  输入的音频波形对象 (支持 wav, ogg, mp3 等)
+	 * @param PCMData  输入的PCM 数据
 	 * @param OutResult    输出的分析结果
+	 * @param SampleRate   采样率 (如 44100)
+	 * @param NumChannels 声道数 (如 1)
 	 * @return             是否分析成功
 	 * * @note 这是一个耗时操作，建议在异步线程 (AsyncTask) 中调用，以免阻塞游戏主线程。
 	 */
-	bool AnalyzeEntireSoundWave(USoundWave* InSoundWave, FDreamMusicAnalysisResult& OutResult);
+	bool AnalyzeEntireSoundWave(const TArray<uint8>& PCMData, int SampleRate, int NumChannels, FDreamMusicAnalysisResult& OutResult);
 
 	/**
 	 * 设置 Onset (起始点) 检测的灵敏度阈值
@@ -51,6 +53,17 @@ public:
 	 */
 	void SetOnsetThreshold(float Threshold);
 
+	// bool AnalyzeRawAudio(const TArray<float>& RawPCMData, int32 NumChannels, int32 SampleRate, FDreamMusicAnalysisResult& OutResult);
+
+	/**
+	 * @warning 该函数需要在音频播放前调用
+	 * @param InSoundWave  输入的 SoundWave 资源
+	 * @param OutPCMData  输出的 PCM 数据
+	 * @param OutSampleRate    采样率
+	 * @param OutNumChannels    声道数
+	 * @return 是否成功解码
+	 */
+	bool DecodeSoundWave(USoundWave* InSoundWave, TArray<uint8>& OutPCMData, int& OutSampleRate, int& OutNumChannels);
 private:
 	/**
 	 * 初始化 Aubio 内部对象

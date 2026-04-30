@@ -1,8 +1,5 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#include "AudioManager/DreamMusicAudioManager_Fade.h"
+﻿#include "AudioManager/DreamMusicAudioManager_Fade.h"
 #include "Classes/DreamMusicPlayerComponent.h"
-
 #include "DreamMusicPlayerDebugLog.h"
 #include "Components/AudioComponent.h"
 
@@ -10,190 +7,200 @@ void UDreamMusicAudioManager_Fade::Initialize(UDreamMusicPlayerComponent* InComp
 {
 	Super::Initialize(InComponent);
 
-	SubAudioComponentA = NewObject<UAudioComponent>(GetOwner(), TEXT("MusicPlayerAudioComponentA"));
-	if (SubAudioComponentA)
-	{
-		SubAudioComponentA->SetupAttachment(GetOwner()->GetRootComponent());
-		SubAudioComponentA->bAutoActivate = false; // Prevent auto-activation
-		if (MusicPlayerComponent->SoundClass)
-		{
-			SubAudioComponentA->SoundClassOverride = MusicPlayerComponent->SoundClass;
-		}
-		SubAudioComponentA->RegisterComponent();
-	}
+	AudioTrackA = CreateAudioComponent(TEXT("MusicAudioTrack_A"));
+	AudioTrackB = CreateAudioComponent(TEXT("MusicAudioTrack_B"));
+	
+	// 默认 A 为主轨道
+	bIsTrackA_Active = true;
+}
 
-	SubAudioComponentB = NewObject<UAudioComponent>(GetOwner(), TEXT("MusicPlayerAudioComponentB"));
-	if (SubAudioComponentB)
+UAudioComponent* UDreamMusicAudioManager_Fade::CreateAudioComponent(FName Name)
+{
+	UAudioComponent* NewComp = NewObject<UAudioComponent>(GetOwner(), Name);
+	if (NewComp)
 	{
-		SubAudioComponentB->SetupAttachment(GetOwner()->GetRootComponent());
-		SubAudioComponentB->bAutoActivate = false; // Prevent auto-activation
-		if (MusicPlayerComponent->SoundClass)
+		NewComp->SetupAttachment(GetOwner()->GetRootComponent());
+		NewComp->bAutoActivate = false;
+		
+		if (MusicPlayerComponent && MusicPlayerComponent->SoundClass)
 		{
-			SubAudioComponentB->SoundClassOverride = MusicPlayerComponent->SoundClass;
+			NewComp->SoundClassOverride = MusicPlayerComponent->SoundClass;
 		}
-		SubAudioComponentB->RegisterComponent();
+		NewComp->RegisterComponent();
 	}
+	return NewComp;
 }
 
 void UDreamMusicAudioManager_Fade::Deinitialize()
 {
 	Super::Deinitialize();
 
-	if (GWorld && GWorld->GetTimerManager().TimerExists(StopTimerHandle))
+	if (GWorld)
 	{
 		GWorld->GetTimerManager().ClearTimer(StopTimerHandle);
 	}
 
-	if (SubAudioComponentA && SubAudioComponentA->IsValidLowLevel())
-	{
-		SubAudioComponentA->Stop();
-	}
-	if (SubAudioComponentB && SubAudioComponentB->IsValidLowLevel())
-	{
-		SubAudioComponentB->Stop();
-	}
+	if (AudioTrackA) AudioTrackA->Stop();
+	if (AudioTrackB) AudioTrackB->Stop();
 }
 
 void UDreamMusicAudioManager_Fade::Music_Changed(const FDreamMusicData& InMusicData)
 {
-	// 设置后台非激活组件音乐
-	GetInactiveAudioComponent()->SetSound(InMusicData.Music.LoadSynchronous());
-	GetInactiveAudioComponent()->Sound->VirtualizationMode = EVirtualizationMode::PlayWhenSilent;
+	// 这里的逻辑是：准备下一首音乐的数据到“次要”轨道，不影响当前播放的“主要”轨道
+	UAudioComponent* NextComp = GetSecondaryComponent();
+	DMP_LOG(Log, TEXT("%s"), *NextComp->GetName())
+	if (!NextComp) return;
+
+	USoundBase* NewSound = nullptr;
+	if (InMusicData.CachedMusic != nullptr)
+	{
+		NewSound = InMusicData.CachedMusic.Get();
+	}
+	else
+	{
+		if (InMusicData.Music.IsValid())
+		{
+			NewSound = InMusicData.Music.Get();
+		}
+		else if (!InMusicData.Music.IsNull())
+		{
+			NewSound = InMusicData.Music.LoadSynchronous();
+		}
+	}
+
+	NextComp->SetSound(NewSound);
 }
 
 void UDreamMusicAudioManager_Fade::Music_Play(float InTime)
 {
-	GetActiveAudioComponent()->Play(InTime);
+	// 此时，SecondaryComponent 已经装载好了新音乐（在 Music_Changed 中）
+	UAudioComponent* NewTrack = GetSecondaryComponent();
+	DMP_LOG(Log, TEXT("%s"), *NewTrack->GetName())
+	UAudioComponent* OldTrack = GetPrimaryComponent();
 
-	// Apply fade in
-	if (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeInDuration > 0.0f && InTime == 0.f)
+	if (!NewTrack) return;
+
+	// 1. 清理之前的淡出 Timer，防止意外停止
+	if (GWorld)
 	{
-		GetActiveAudioComponent()->FadeIn(FadeAudioSetting.FadeInDuration, 1.0f);
+		GWorld->GetTimerManager().ClearTimer(StopTimerHandle);
 	}
+
+	// 2. 播放新轨道 (Fade In)
+	float FadeInTime = FadeAudioSetting.bEnableFadeAudio ? FadeAudioSetting.FadeInDuration : 0.0f;
+	
+	// 如果需要淡入且是从头播放
+	if (FadeInTime > 0.0f && InTime < KINDA_SMALL_NUMBER)
+	{
+		NewTrack->Sound->VirtualizationMode = EVirtualizationMode::PlayWhenSilent;
+		// NewTrack->SetVolumeMultiplier(0.0f); // 确保从0开始
+		// NewTrack->Play(InTime);
+		NewTrack->FadeIn(FadeInTime, Volume, InTime);
+	}
+	else
+	{
+		NewTrack->SetVolumeMultiplier(Volume);
+		NewTrack->Play(InTime);
+	}
+
+	// 3. 停止旧轨道 (Fade Out)
+	if (OldTrack && OldTrack->IsPlaying())
+	{
+		float FadeOutTime = FadeAudioSetting.bEnableFadeAudio ? FadeAudioSetting.FadeOutDuration : 0.0f;
+		if (FadeOutTime > 0.0f)
+		{
+			OldTrack->FadeOut(FadeOutTime, 0.0f);
+		}
+		else
+		{
+			OldTrack->Stop();
+		}
+	}
+
+	// 4. 关键：交换身份。现在新的轨道变成了主轨道。
+	SwapActiveTrack();
 }
 
 void UDreamMusicAudioManager_Fade::Music_Stop()
 {
-	GetActiveAudioComponent()->Stop();
+	// 立即停止所有
+	if (GWorld) GWorld->GetTimerManager().ClearTimer(StopTimerHandle);
+	
+	if (AudioTrackA) AudioTrackA->Stop();
+	if (AudioTrackB) AudioTrackB->Stop();
 }
 
 void UDreamMusicAudioManager_Fade::Music_Pause()
 {
-	GetActiveAudioComponent()->SetPaused(true);
+	GetPrimaryComponent()->SetPaused(true);
 }
 
 void UDreamMusicAudioManager_Fade::Music_UnPause()
 {
-	GetActiveAudioComponent()->SetPaused(false);
-}
-
-void UDreamMusicAudioManager_Fade::Music_Start()
-{
-	Super::Music_Start();
-
-	// 停止计时器
-	if (GWorld && GWorld->GetTimerManager().TimerExists(StopTimerHandle))
-	{
-		GWorld->GetTimerManager().ClearTimer(StopTimerHandle);
-	}
-
-	// 切换组件
-	ToggleActiveAudioComponent();
-
-	// 获取组件
-	UAudioComponent* ActiveComponent = GetActiveAudioComponent();
-
-	// 检查组件是否可用
-	if (!ActiveComponent)
-	{
-		DMP_LOG_DEBUG_EXPANSION(Error, TEXT("No valid audio component available"));
-		return;
-	}
-
-	// Set volume to 0 before playing if fade-in is enabled
-	if (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeInDuration > 0.0f)
-	{
-		ActiveComponent->SetVolumeMultiplier(1.0f);
-	}
+	GetPrimaryComponent()->SetPaused(false);
 }
 
 void UDreamMusicAudioManager_Fade::Music_End()
 {
-	if (GWorld && GWorld->GetTimerManager().TimerExists(StopTimerHandle))
+	// 这是 Component 调用的“结束当前音乐”（例如切歌前或者播放完毕）
+	// 执行淡出停止
+	
+	if (GWorld) GWorld->GetTimerManager().ClearTimer(StopTimerHandle);
+
+	UAudioComponent* ActiveComp = GetPrimaryComponent();
+	if (!ActiveComp || !ActiveComp->IsPlaying()) return;
+
+	float FadeOutTime = (FadeAudioSetting.bEnableFadeAudio) ? FadeAudioSetting.FadeOutDuration : 0.0f;
+
+	if (FadeOutTime > 0.0f)
 	{
-		GWorld->GetTimerManager().ClearTimer(StopTimerHandle);
-	}
+		ActiveComp->FadeOut(FadeOutTime, 0.0f);
 
-	UAudioComponent* ActiveComponent = GetActiveAudioComponent();
-
-	// Calculate fade out duration
-	float FadeOutDuration = (FadeAudioSetting.bEnableFadeAudio && FadeAudioSetting.FadeOutDuration > 0.0f)
-		                        ? FadeAudioSetting.FadeOutDuration
-		                        : 0.0f;
-
-	// Start fade out
-	if (FadeOutDuration > 0.0f)
-	{
-		ActiveComponent->FadeOut(FadeOutDuration, 0.0f);
-
-		// Schedule stop after fade completes
+		// 使用 WeakPtr 保护 Timer 回调
+		TWeakObjectPtr<UAudioComponent> WeakComp(ActiveComp);
 		if (GWorld)
 		{
-			GWorld->GetTimerManager().SetTimer(
-				StopTimerHandle,
-				[this, ActiveComponent]()
+			GWorld->GetTimerManager().SetTimer(StopTimerHandle, [WeakComp]()
+			{
+				if (UAudioComponent* StrongComp = WeakComp.Get())
 				{
-					if (ActiveComponent && ActiveComponent->IsValidLowLevel())
-					{
-						ActiveComponent->Stop();
-					}
-				},
-				FadeOutDuration,
-				false
-			);
+					StrongComp->Stop();
+				}
+			}, FadeOutTime, false);
 		}
 	}
 	else
 	{
-		// Stop immediately if no fade
-		ActiveComponent->Stop();
+		ActiveComp->Stop();
 	}
 }
 
 void UDreamMusicAudioManager_Fade::SetVolume(float InVolume)
 {
-	Volume = InVolume;
-	GetInactiveAudioComponent()->SetVolumeMultiplier(InVolume);
-	GetActiveAudioComponent()->SetVolumeMultiplier(InVolume);
+	Super::SetVolume(InVolume);
+	// 实时调整两个轨道的音量乘数 (注意：FadeIn/Out 会覆盖这个，所以仅在稳定播放时有效)
+	// 如果正在 Fade，直接设值可能会打断 Fade 曲线，这里简单处理
+	if (AudioTrackA) AudioTrackA->SetVolumeMultiplier(InVolume);
+	if (AudioTrackB) AudioTrackB->SetVolumeMultiplier(InVolume);
 }
 
-UAudioComponent* UDreamMusicAudioManager_Fade::GetAudioComponent()
+UAudioComponent* UDreamMusicAudioManager_Fade::GetAudioComponent() const
 {
-	return GetActiveAudioComponent();
+	// 总是返回当前的主轨道
+	return GetPrimaryComponent();
 }
 
-UAudioComponent* UDreamMusicAudioManager_Fade::GetActiveAudioComponent() const
+UAudioComponent* UDreamMusicAudioManager_Fade::GetPrimaryComponent() const
 {
-	UAudioComponent* Component = CurrentActiveAudioComponent ? SubAudioComponentB : SubAudioComponentA;
-	return IsAudioComponentReady(Component) ? Component : nullptr;
+	return bIsTrackA_Active ? AudioTrackA : AudioTrackB;
 }
 
-UAudioComponent* UDreamMusicAudioManager_Fade::GetInactiveAudioComponent() const
+UAudioComponent* UDreamMusicAudioManager_Fade::GetSecondaryComponent() const
 {
-	UAudioComponent* Component = CurrentActiveAudioComponent ? SubAudioComponentA : SubAudioComponentB;
-	return IsAudioComponentReady(Component) ? Component : nullptr;
+	return bIsTrackA_Active ? AudioTrackB : AudioTrackA;
 }
 
-
-UAudioComponent* UDreamMusicAudioManager_Fade::GetLastActiveAudioComponent() const
+void UDreamMusicAudioManager_Fade::SwapActiveTrack()
 {
-	UAudioComponent* Component = CurrentActiveAudioComponent ? SubAudioComponentA : SubAudioComponentB;
-	return IsAudioComponentReady(Component) ? Component : nullptr;
-}
-
-bool UDreamMusicAudioManager_Fade::ToggleActiveAudioComponent()
-{
-	CurrentActiveAudioComponent = !CurrentActiveAudioComponent;
-	DMP_LOG(Log, TEXT("Toggle Active Audio Component : %d"), CurrentActiveAudioComponent)
-	return CurrentActiveAudioComponent;
+	bIsTrackA_Active = !bIsTrackA_Active;
 }

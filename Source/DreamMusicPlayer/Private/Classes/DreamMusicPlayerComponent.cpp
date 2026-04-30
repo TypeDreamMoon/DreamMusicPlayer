@@ -3,14 +3,11 @@
 
 #include "Classes/DreamMusicPlayerComponent.h"
 
-#include "DreamMusicTimestamp.h"
-#include "Algo/RandomShuffle.h"
 #include "Containers/Array.h"
 #include "DreamMusicPlayerLog.h"
-#include "AudioManager/DreamMusicAudioManager_Default.h"
 #include "Classes/DreamMusicDataAsset.h"
-#include "Classes/DreamMusicPlayerExpansion.h"
-#include "Classes/DreamMusicAudioManager.h"
+#include "AudioManager/DreamMusicAudioManager_Default.h"
+
 
 UDreamMusicPlayerComponent::UDreamMusicPlayerComponent()
 {
@@ -21,7 +18,7 @@ UDreamMusicPlayerComponent::UDreamMusicPlayerComponent()
 
 void UDreamMusicPlayerComponent::BeginPlay()
 {
-	// Create audio components with better configuration
+	FApp::SetUnfocusedVolumeMultiplier(BackdropMusicVolume);
 
 	if (SongList)
 	{
@@ -47,6 +44,8 @@ void UDreamMusicPlayerComponent::BeginPlay()
 
 void UDreamMusicPlayerComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	FApp::SetUnfocusedVolumeMultiplier(1.0f);
+
 	// Stop any playing music
 	if (bIsPlaying)
 	{
@@ -87,8 +86,9 @@ void UDreamMusicPlayerComponent::InitializeMusicList()
 {
 	DMP_LOG(Log, TEXT("InitializeMusicList - Begin"));
 	TArray<FDreamMusicPlayerSongList*> BufferList;
-	MusicDataList.Empty();
 	SongList->GetAllRows<FDreamMusicPlayerSongList>("", BufferList);
+
+	MusicDataList.Empty(BufferList.Num());
 	for (auto Element : BufferList)
 	{
 		if (Element)
@@ -116,18 +116,13 @@ void UDreamMusicPlayerComponent::InitializeMusicListWithDataArray(TArray<FDreamM
 void UDreamMusicPlayerComponent::PlayMusic(EDreamMusicPlayerPlayMode InPlayMode)
 {
 	PlayMode = InPlayMode;
-	if (PlayMode == EDreamMusicPlayerPlayMode::EDMPPS_Random)
-	{
-		Algo::RandomShuffle(MusicDataList);
-	}
 
 	if (bIsPlaying)
 	{
 		EndMusic();
 	}
 
-	SetMusicData(MusicDataList[0]);
-	StartMusic();
+	SetMusicData(MusicDataList[0], true);
 }
 
 void UDreamMusicPlayerComponent::PlayNextMusic()
@@ -143,8 +138,14 @@ void UDreamMusicPlayerComponent::PlayNextMusic()
 		EndMusic(true);
 	}
 
-	SetMusicData(GetNextMusicData(CurrentMusicData));
-	StartMusic();
+	FDreamMusicData NextMusicData = GetNextMusicData(CurrentMusicData);
+
+	if (PlayMode == EDreamMusicPlayerPlayMode::EDMPPS_Random)
+	{
+		NextMusicData = MusicDataList[FMath::RandRange(0, MusicDataList.Num() - 1)];
+	}
+
+	SetMusicData(NextMusicData, true);
 }
 
 void UDreamMusicPlayerComponent::PlayLastMusic()
@@ -160,8 +161,7 @@ void UDreamMusicPlayerComponent::PlayLastMusic()
 		EndMusic(true);
 	}
 
-	SetMusicData(GetLastMusicData(CurrentMusicData));
-	StartMusic();
+	SetMusicData(GetLastMusicData(CurrentMusicData), true);
 }
 
 void UDreamMusicPlayerComponent::SetPauseMusic(bool bInPause)
@@ -191,291 +191,13 @@ void UDreamMusicPlayerComponent::TogglePauseMusic()
 void UDreamMusicPlayerComponent::PlayMusicFromMusicData(FDreamMusicData InData)
 {
 	PlayMode = EDreamMusicPlayerPlayMode::EDMPPS_Loop;
-	SetMusicData(InData);
-	StartMusic();
+	SetMusicData(InData, true);
 }
 
 void UDreamMusicPlayerComponent::PlayMusicFromMusicDataAsset(UDreamMusicDataAsset* InData)
 {
 	PlayMode = EDreamMusicPlayerPlayMode::EDMPPS_Loop;
-	SetMusicData(InData->Data);
-	StartMusic();
-}
-
-FDreamMusicData UDreamMusicPlayerComponent::GetNextMusicData(FDreamMusicData InData)
-{
-	if (PlayMode == EDreamMusicPlayerPlayMode::EDMPPS_Loop)
-	{
-		return CurrentMusicData.IsValid() ? CurrentMusicData : InData;
-	}
-	if (MusicDataList.Contains(InData))
-	{
-		return MusicDataList[(MusicDataList.Find(InData) + 1) > MusicDataList.Num() - 1
-			                     ? 0
-			                     : MusicDataList.Find(InData) + 1];
-	}
-	else
-	{
-		return MusicDataList[0];
-	}
-}
-
-FDreamMusicData UDreamMusicPlayerComponent::GetLastMusicData(FDreamMusicData InData)
-{
-	if (PlayMode == EDreamMusicPlayerPlayMode::EDMPPS_Loop)
-	{
-		return CurrentMusicData.IsValid() ? CurrentMusicData : InData;
-	}
-	return MusicDataList[(MusicDataList.Find(InData) - 1 < 0)
-		                     ? MusicDataList.Num() - 1
-		                     : MusicDataList.Find(InData) - 1];
-}
-
-void UDreamMusicPlayerComponent::GetExpansionByClass(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass, UDreamMusicPlayerExpansion*& OutExpansion) const
-{
-	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
-	{
-		if (Expansion == nullptr)
-			continue;
-
-		if (Expansion->GetClass() == InExpansionClass)
-		{
-			OutExpansion = Expansion;
-			return;
-		}
-	}
-}
-
-bool UDreamMusicPlayerComponent::HasExpansion(TSubclassOf<UDreamMusicPlayerExpansion> InExpansionClass) const
-{
-	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
-	{
-		if (Expansion == nullptr)
-			continue;
-
-		if (Expansion->GetClass() == InExpansionClass)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-float UDreamMusicPlayerComponent::GetAccuratePlayTime() const
-{
-	if (!bIsPlaying || bIsPaused)
-	{
-		return CurrentDuration;
-	}
-
-	// 如果刚刚进行了 Seek，使用 Seek 位置作为基准
-	if (bJustSeeked)
-	{
-		return LastSeekPosition;
-	}
-
-	// 使用世界时间来计算更精确的播放时间
-	if (MusicStartWorldTime > 0.0)
-	{
-		double CurrentWorldTime = FPlatformTime::Seconds();
-		float ElapsedTime = static_cast<float>(CurrentWorldTime - MusicStartWorldTime);
-		float CalculatedTime = LastSeekPosition + ElapsedTime;
-
-		// 确保时间不会超出音乐长度
-		return FMath::Clamp(CalculatedTime, 0.0f, CurrentMusicDuration);
-	}
-
-	// 降级到当前计算方法
-	return CurrentDuration;
-}
-
-void UDreamMusicPlayerComponent::StartMusic()
-{
-	if (!CurrentMusicData.IsValid())
-	{
-		DMP_LOG(Error, TEXT("Current Music Data Is Not Valid !!!"))
-		return;
-	}
-
-	// Initialize State
-	CurrentMusicDuration = 0.0f;
-	CurrentMusicPercent = 0.0f;
-	CurrentDuration = 0.0f;
-	LastSeekPosition = 0.0f;
-	MusicStartWorldTime = FPlatformTime::Seconds(); // 记录开始时间
-	bJustSeeked = false;
-	CurrentTimestamp = FDreamMusicTimestamp();
-
-	// Validate SoundWave before playing
-	if (!SoundWave || !SoundWave->IsValidLowLevel())
-	{
-		DMP_LOG(Error, TEXT("Invalid SoundWave for music: %s"), *CurrentMusicData.Tag.Title);
-		return;
-	}
-
-	// Play Music with improved setup
-	CurrentMusicDuration = SoundWave->Duration;
-
-	AudioManager->Music_Start();
-	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
-	{
-		if (Expansion == nullptr)
-			continue;
-
-		Expansion->MusicStart();
-	}
-
-	AudioManager->Music_Play();
-
-	// Update state
-	bIsPaused = false;
-	bIsPlaying = true;
-	SetPlayState(EDreamMusicPlayerPlayState::EDMPPS_Playing);
-
-	// Callback
-	OnMusicPlay.Broadcast(CurrentMusicData);
-	DMP_LOG(Log, TEXT("Play Music : Name : %-15s Duration : %f"), *CurrentMusicData.Tag.Title, CurrentMusicDuration);
-}
-
-void UDreamMusicPlayerComponent::EndMusic(bool Native)
-{
-	if (!bIsPlaying)
-	{
-		return; // Already stopped
-	}
-
-	UAudioComponent* ActiveComponent = AudioManager->GetAudioComponent();
-	if (!ActiveComponent)
-	{
-		DMP_LOG(Warning, TEXT("No active audio component to stop"));
-		return;
-	}
-
-	AudioManager->Music_End();
-	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
-	{
-		if (Expansion == nullptr)
-			continue;
-
-		Expansion->MusicEnd();
-	}
-
-	// Update state immediately
-	bIsPaused = false;
-	bIsPlaying = false;
-	SetPlayState(EDreamMusicPlayerPlayState::EDMPPS_Stop);
-
-	// Clean up state
-	CurrentDuration = 0.0f;
-	CurrentMusicDuration = 0.0f;
-	CurrentMusicPercent = 0.0f;
-
-	OnMusicEnd.Broadcast();
-	DMP_LOG(Log, TEXT("Music End : Name : %-15s Play Mode : %d"), *CurrentMusicData.Tag.Title, (int)PlayMode);
-
-	// Handle auto-play logic only if not manually stopped
-	if (!Native)
-	{
-		// Add small delay to ensure clean transition
-		if (GWorld)
-		{
-			GWorld->GetTimerManager().SetTimerForNextTick([this]()
-			{
-				HandleAutoPlayTransition();
-			});
-		}
-	}
-}
-
-void UDreamMusicPlayerComponent::HandleAutoPlayTransition()
-{
-	if (!bIsPlaying) // Ensure we're still in stopped state
-	{
-		switch (PlayMode)
-		{
-		case EDreamMusicPlayerPlayMode::EDMPPS_Loop:
-			if (CurrentMusicData.IsValid())
-			{
-				SetMusicData(CurrentMusicData);
-				StartMusic();
-			}
-			break;
-		case EDreamMusicPlayerPlayMode::EDMPPS_Normal:
-		case EDreamMusicPlayerPlayMode::EDMPPS_Random:
-			PlayNextMusic();
-			break;
-		}
-	}
-}
-
-void UDreamMusicPlayerComponent::PauseMusic()
-{
-	AudioManager->Music_Pause();
-
-	SetPlayState(EDreamMusicPlayerPlayState::EDMPPS_Paused);
-	bIsPaused = true;
-
-	// 暂停时保存当前精确时间，停止世界时间计算
-	CurrentDuration = GetAccuratePlayTime();
-	LastSeekPosition = CurrentDuration;
-	MusicStartWorldTime = 0.0; // 停止世界时间基准
-
-	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
-	{
-		if (Expansion == nullptr)
-			continue;
-		Expansion->MusicPause();
-	}
-
-	OnMusicPause.Broadcast();
-}
-
-void UDreamMusicPlayerComponent::UnPauseMusic()
-{
-	AudioManager->Music_UnPause();
-
-	SetPlayState(EDreamMusicPlayerPlayState::EDMPPS_Playing);
-	bIsPaused = false;
-
-	// 恢复播放时重新设置时间基准
-	MusicStartWorldTime = FPlatformTime::Seconds();
-	bJustSeeked = true; // 标记为刚刚 Seek，使用保存的位置
-
-	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
-	{
-		if (Expansion == nullptr)
-			continue;
-
-		Expansion->MusicUnPause();
-	}
-
-	OnMusicUnPause.Broadcast();
-}
-
-void UDreamMusicPlayerComponent::SetMusicData(FDreamMusicData InData)
-{
-	CurrentMusicData = InData;
-
-	SoundWave = CurrentMusicData.Music.LoadSynchronous();
-	Cover = CurrentMusicData.Tag.CoverArt;
-
-	AudioManager->Music_Changed(InData);
-	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
-	{
-		if (Expansion == nullptr)
-			continue;
-
-		Expansion->ChangeMusic(InData);
-	}
-
-	OnMusicDataChanged.Broadcast(CurrentMusicData);
-}
-
-void UDreamMusicPlayerComponent::SetPlayState(EDreamMusicPlayerPlayState InState)
-{
-	PlayState = InState;
-	OnPlayStateChanged.Broadcast(PlayState);
+	SetMusicData(InData->Data, true);
 }
 
 void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
@@ -502,14 +224,8 @@ void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
 	float LyricTime = CurrentDuration;
 	CurrentTimestamp = *FDreamMusicTimestamp().FromSeconds(LyricTime);
 
-	// 停止并重新开始播放
-	if (AudioManager->IsPlaying())
-	{
-		AudioManager->Music_Stop();
-	}
-
 	// 从新位置开始播放
-	AudioManager->Music_Play(TargetTime);
+	AudioManager->Music_SetPercent(TargetTime);
 
 	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
 	{
@@ -534,37 +250,4 @@ void UDreamMusicPlayerComponent::SetMusicPercent(float InPercent)
 void UDreamMusicPlayerComponent::SetMusicPercentFromTimestamp(FDreamMusicTimestamp InTimestamp)
 {
 	SetMusicPercent(InTimestamp.ToSeconds() / CurrentMusicDuration);
-}
-
-void UDreamMusicPlayerComponent::MusicTick(float DeltaTime)
-{
-	float AccuratePlayTime = GetAccuratePlayTime();
-
-	// 更新时间状态
-	CurrentDuration = AccuratePlayTime;
-	CurrentMusicPercent = FMath::Clamp(CurrentDuration / CurrentMusicDuration, 0.0f, 1.0f);
-	CurrentTimestamp = *FDreamMusicTimestamp().FromSeconds(CurrentDuration);
-
-	// Auto Next
-	if (CurrentTimestamp >= CurrentMusicDuration)
-	{
-		EndMusic();
-	}
-
-	AudioManager->Tick(CurrentTimestamp, DeltaTime);
-	for (UDreamMusicPlayerExpansion* Expansion : ExpansionList)
-	{
-		if (Expansion == nullptr)
-			continue;
-
-		Expansion->Tick(CurrentTimestamp, DeltaTime);
-	}
-
-	OnMusicTick.Broadcast(CurrentDuration);
-
-	// 重置 Seek 标志
-	if (bJustSeeked)
-	{
-		bJustSeeked = false;
-	}
 }

@@ -9,23 +9,23 @@
 /**
  * 
  */
-UCLASS(DisplayName = "Default")
+UCLASS(DisplayName = "Default", DefaultToInstanced)
 class DREAMMUSICPLAYER_API UDreamMusicAudioManager_Default : public UDreamMusicAudioManager
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(BlueprintReadOnly)
-	UAudioComponent* AudioComponent;
+	UPROPERTY(BlueprintReadOnly, Category = "Audio")
+	TObjectPtr<UAudioComponent> AudioComponent;
 	
 public:
-	virtual UAudioComponent* GetAudioComponent() override;
+	virtual UAudioComponent* GetAudioComponent() const override;
 	virtual void Initialize(UDreamMusicPlayerComponent* InComponent) override;
 	virtual bool IsPlaying() const override;
+	
 	virtual void Music_Changed(const FDreamMusicData& InMusicData) override;
 	virtual void Music_Play(float InTime = 0.f) override;
 	virtual void Music_Stop() override;
 	virtual void Music_Pause() override;
 	virtual void Music_UnPause() override;
-	virtual void Music_Start() override;
 };

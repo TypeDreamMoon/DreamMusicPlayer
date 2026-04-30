@@ -142,6 +142,8 @@ public:
 	FOnAubioOnsetDetected OnOnsetDetected;
 
 protected:
+	// void SetAnalysisDataFromBuffer(const TArray<float>& PcmData, int32 SampleRate, int32 NumChannels);
+	
 	// --- 核心生命周期重写 ---
 	virtual void BP_Initialize_Implementation(UDreamMusicPlayerComponent* InComponent) override;
 	virtual void BP_MusicStart_Implementation() override;

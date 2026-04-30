@@ -36,14 +36,18 @@ public:
 	virtual void Deinitialize();
 	virtual bool IsPlaying() const;
 	virtual void Tick(const FDreamMusicTimestamp& InTimestamp, float DeltaTime);
+	
+	// 在SetMusicData之后触发此函数
 	virtual void Music_Changed(const FDreamMusicData& InMusicData);
+	
+	virtual void Music_SetPercent(float InTime = 0.f);
 	virtual void Music_Play(float InTime = 0.f);
 	virtual void Music_Start();
 	virtual void Music_Stop();
 	virtual void Music_Pause();
 	virtual void Music_UnPause();
 	virtual void Music_End();
-	virtual UAudioComponent* GetAudioComponent();
+	virtual UAudioComponent* GetAudioComponent() const;
 
 	/**
 	 * Check if audio component is ready for use

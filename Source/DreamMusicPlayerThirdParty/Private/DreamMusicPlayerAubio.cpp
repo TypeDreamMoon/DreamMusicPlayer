@@ -141,87 +141,12 @@ void FDreamMusicPlayerAubio::SetOnsetThreshold(float Threshold)
 	}
 }
 
-bool FDreamMusicPlayerAubio::AnalyzeEntireSoundWave(USoundWave* InSoundWave, FDreamMusicAnalysisResult& OutResult)
+bool FDreamMusicPlayerAubio::AnalyzeEntireSoundWave(const TArray<uint8>& PCMData, int SampleRate, int NumChannels, FDreamMusicAnalysisResult& OutResult)
 {
-	if (!InSoundWave)
+	if (PCMData.IsEmpty())
 	{
 		UE_LOG(LogTemp, Error, TEXT("Aubio: SoundWave is null."));
 		return false;
-	}
-
-	TArray<uint8> PCMData;
-	uint32 SampleRate = 44100;
-	uint16 NumChannels = 1;
-
-	// ==================================================================================
-	// 阶段 1: 获取原始 PCM 音频数据
-	// ==================================================================================
-
-	// 策略 A: 直接内存读取 (通常适用于编辑器模式或 ForceInline 加载模式)
-	// 检查 SoundWave 是否已有解压好的数据
-	if (InSoundWave->RawPCMData && InSoundWave->RawPCMDataSize > 0)
-	{
-		PCMData.Append(InSoundWave->RawPCMData, InSoundWave->RawPCMDataSize);
-		// 使用 SoundWave.h 中的 Getter 获取平台相关的采样率
-		SampleRate = (uint32)InSoundWave->GetSampleRateForCurrentPlatform();
-		NumChannels = (uint16)InSoundWave->NumChannels;
-
-		UE_LOG(LogTemp, Log, TEXT("Aubio: Used RawPCMData directly."));
-	}
-	// 策略 B: 使用解码器解压 (适用于打包后的游戏/Cooked Builds/Compressed Streams)
-	else
-	{
-		// 1. 获取运行时格式名 (如 OGG, BINKA 等)
-		FName RuntimeFormat = InSoundWave->GetRuntimeFormat();
-
-		// 2. 创建对应格式的解码器
-		ICompressedAudioInfo* Decoder = Audio::CreateSoundAssetDecoder(RuntimeFormat);
-
-		if (!Decoder)
-		{
-			UE_LOG(LogTemp, Error, TEXT("Aubio: Failed to create decoder for format '%s'. RawPCMData was empty."), *RuntimeFormat.ToString());
-			return false;
-		}
-
-		// 3. 获取压缩的二进制数据块
-		const FPlatformAudioCookOverrides* CompressionOverrides = USoundWave::GetPlatformCompressionOverridesForCurrentPlatform();
-		//
-		FByteBulkData* CompressedBulkData = InSoundWave->GetCompressedData(RuntimeFormat, CompressionOverrides);
-
-		if (CompressedBulkData && CompressedBulkData->GetBulkDataSize() > 0)
-		{
-			// 锁定并读取数据
-			void* ChunkData = CompressedBulkData->Lock(LOCK_READ_ONLY);
-			int32 ChunkSize = CompressedBulkData->GetBulkDataSize();
-			FSoundQualityInfo QualityInfo = {0};
-
-			// 4. 解析压缩头信息
-			if (Decoder->ReadCompressedInfo((uint8*)ChunkData, ChunkSize, &QualityInfo))
-			{
-				SampleRate = QualityInfo.SampleRate;
-				NumChannels = QualityInfo.NumChannels;
-
-				// 预分配内存 (SampleDataSize 是解压后的大小)
-				PCMData.SetNumUninitialized(QualityInfo.SampleDataSize);
-
-				// 5. 解压整个文件到 PCMData
-				Decoder->ExpandFile(PCMData.GetData(), &QualityInfo);
-
-				UE_LOG(LogTemp, Log, TEXT("Aubio: Decompressed audio successfully. Size: %d bytes"), PCMData.Num());
-			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("Aubio: Failed to ReadCompressedInfo."));
-			}
-
-			CompressedBulkData->Unlock();
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Aubio: Compressed data is empty."));
-		}
-
-		delete Decoder; // 务必删除解码器
 	}
 
 	// 检查数据是否有效
@@ -396,6 +321,69 @@ bool FDreamMusicPlayerAubio::ProcessAudio(const TArray<float>& AudioData)
 	}
 
 	return (OutBeatVec->data[0] != 0);
+}
+
+bool FDreamMusicPlayerAubio::DecodeSoundWave(USoundWave* InSoundWave, TArray<uint8>& OutPCMData, int& OutSampleRate, int& OutNumChannels)
+{
+	
+	OutSampleRate = InSoundWave->GetImportedSampleRate();
+	OutNumChannels = InSoundWave->NumChannels;
+	
+	// 1. 获取运行时格式名 (如 OGG, BINKA 等)
+	FName RuntimeFormat = InSoundWave->GetRuntimeFormat();
+
+	// 2. 创建对应格式的解码器
+	ICompressedAudioInfo* Decoder = Audio::CreateSoundAssetDecoder(RuntimeFormat);
+
+	if (!Decoder)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Aubio: Failed to create decoder for format '%s'. RawPCMData was empty."), *RuntimeFormat.ToString());
+		return false;
+	}
+	else
+	{
+		// 3. 获取压缩的二进制数据块
+		const FPlatformAudioCookOverrides* CompressionOverrides = USoundWave::GetPlatformCompressionOverridesForCurrentPlatform();
+		//
+		FByteBulkData* CompressedBulkData = InSoundWave->GetCompressedData(RuntimeFormat, CompressionOverrides);
+
+		if (CompressedBulkData && CompressedBulkData->GetBulkDataSize() > 0)
+		{
+			// 锁定并读取数据
+			void* ChunkData = CompressedBulkData->Lock(LOCK_READ_ONLY);
+			int32 ChunkSize = CompressedBulkData->GetBulkDataSize();
+			FSoundQualityInfo QualityInfo = {0};
+
+			// 4. 解析压缩头信息
+			if (Decoder->ReadCompressedInfo((uint8*)ChunkData, ChunkSize, &QualityInfo))
+			{
+				OutSampleRate = QualityInfo.SampleRate;
+				OutNumChannels = QualityInfo.NumChannels;
+
+				// 预分配内存 (SampleDataSize 是解压后的大小)
+				OutPCMData.SetNumUninitialized(QualityInfo.SampleDataSize);
+
+				// 5. 解压整个文件到 PCMData
+				Decoder->ExpandFile(OutPCMData.GetData(), &QualityInfo);
+
+				UE_LOG(LogTemp, Log, TEXT("Aubio: Decompressed audio successfully. Size: %d bytes"), OutPCMData.Num());
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Aubio: Failed to ReadCompressedInfo."));
+			}
+
+			CompressedBulkData->Unlock();
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Aubio: Compressed data is empty."));
+		}
+
+		delete Decoder; // 务必删除解码器
+	}
+
+	return true;
 }
 
 float FDreamMusicPlayerAubio::GetBPM() const

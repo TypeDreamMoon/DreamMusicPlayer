@@ -34,6 +34,11 @@ void UDreamMusicPlayerExpansion::Tick(const FDreamMusicTimestamp& InTimestamp, f
 	BP_Tick(InTimestamp, InDeltaTime);
 }
 
+void UDreamMusicPlayerExpansion::SetMusicData(const FDreamMusicData& InData)
+{
+	
+}
+
 void UDreamMusicPlayerExpansion::ChangeMusic(const FDreamMusicData& InData)
 {
 	CurrentMusicData = InData;

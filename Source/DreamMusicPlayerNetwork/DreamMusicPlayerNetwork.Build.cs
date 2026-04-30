@@ -10,6 +10,9 @@ public class DreamMusicPlayerNetwork : ModuleRules
             new string[]
             {
                 "Core",
+                "HTTP",
+                "DreamMusicPlayer", 
+                "DreamMusicPlayerThirdParty"
             }
         );
 
@@ -19,7 +22,7 @@ public class DreamMusicPlayerNetwork : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "Slate",
-                "SlateCore"
+                "SlateCore",
             }
         );
     }

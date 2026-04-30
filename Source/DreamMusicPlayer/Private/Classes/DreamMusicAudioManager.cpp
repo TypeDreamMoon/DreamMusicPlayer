@@ -18,7 +18,7 @@ void UDreamMusicAudioManager::Deinitialize()
 
 bool UDreamMusicAudioManager::IsPlaying() const
 {
-	return false;
+	return GetAudioComponent()->IsPlaying();
 }
 
 void UDreamMusicAudioManager::Tick(const FDreamMusicTimestamp& InTimestamp, float DeltaTime)
@@ -27,6 +27,21 @@ void UDreamMusicAudioManager::Tick(const FDreamMusicTimestamp& InTimestamp, floa
 
 void UDreamMusicAudioManager::Music_Changed(const FDreamMusicData& InMusicData)
 {
+}
+
+void UDreamMusicAudioManager::Music_SetPercent(float InTime)
+{
+	if (IsPlaying())
+	{
+		GetAudioComponent()->Play(InTime);
+	}
+	else
+	{
+		GetAudioComponent()->SetVolumeMultiplier(0.f);
+		GetAudioComponent()->Play(InTime);
+		GetAudioComponent()->SetPaused(true);
+		GetAudioComponent()->SetVolumeMultiplier(Volume);
+	}
 }
 
 void UDreamMusicAudioManager::Music_Play(float InTime)
@@ -54,7 +69,7 @@ void UDreamMusicAudioManager::Music_End()
 {
 }
 
-UAudioComponent* UDreamMusicAudioManager::GetAudioComponent()
+UAudioComponent* UDreamMusicAudioManager::GetAudioComponent() const
 {
 	return nullptr;
 }

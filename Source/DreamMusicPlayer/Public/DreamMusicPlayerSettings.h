@@ -42,9 +42,6 @@ public:
 	UPROPERTY(EditAnywhere, DisplayName="启用播放器Tick调试", Category="Debug", Config, meta=(EditConditionHides, EditCondition="bEnableDebugMode"))
 	bool bEnableTickDebugMode = false;
 
-	UPROPERTY(EditAnywhere, DisplayName="启用解析器调试模式", Category="Debug", Config, meta=(EditConditionHides, EditCondition="bEnableDebugMode"))
-	bool bEnableParserDebugMode = false;
-
 	UPROPERTY(VisibleDefaultsOnly, DisplayName="Version", Category="Version")
 	FString Versions;
 };

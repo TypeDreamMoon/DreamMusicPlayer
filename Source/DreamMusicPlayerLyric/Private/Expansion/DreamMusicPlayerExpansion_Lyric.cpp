@@ -20,11 +20,17 @@ void UDreamMusicPlayerExpansion_Lyric::InitializeLyricList()
 		DMP_LOG_DEBUG_EXPANSION(Error, TEXT("CurrentMusicData is Not Valid"));
 		return;
 	}
+	
 	DMP_LOG_DEBUG_EXPANSION(Log, TEXT("InitializeLyricList - Begin"));
 	CurrentMusicLyricList.Empty();
 
 	UDreamMusicPlayerExpansionData_Lyric* ExpansionData = CurrentMusicData.GetExpansionData<UDreamMusicPlayerExpansionData_Lyric>();
 
+	if (ExpansionData == nullptr)
+	{
+		return;
+	}
+		
 	if (ExpansionData->LyricSourceType != EDreamMuiscPlayerLyricSourceType::Asset && ExpansionData->LyricSourceType != EDreamMuiscPlayerLyricSourceType::URL)
 	{
 		FString Path = FDreamLyricUtils::GetLyricFilePath(ExpansionData->LyricFileName);
