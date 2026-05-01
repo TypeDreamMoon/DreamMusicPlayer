@@ -3,10 +3,12 @@
 #include "DreamLyricAsset.h"
 #include "Classes/DreamMusicDataAsset.h" // 引入 Music Asset
 #include "AssetToolsModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "ContentBrowserModule.h"
 #include "DesktopPlatformModule.h"
 #include "IContentBrowserSingleton.h"
 #include "IDesktopPlatform.h"
+#include "IAssetTools.h"
 #include "Lyric/DreamLyricAssetFactory.h"
 #include "Music/DreamMusicAssetFactory.h"
 
@@ -120,6 +122,7 @@ void FDreamMusicPlayerImporterModule::OnImportMusicFileClicked()
 		TEXT("ncm"), // 网易云
 		TEXT("qmcflac"), // QQ音乐
 		TEXT("mflac"), // QQ音乐
+		TEXT("qmc0"), // QQ音乐
 		TEXT("qmc"), // QQ音乐
 		TEXT("mgg"), // QQ音乐
 		TEXT("kgm"), // 酷狗
@@ -164,18 +167,56 @@ void FDreamMusicPlayerImporterModule::OnImportMusicFileClicked()
 		TargetPath = SelectedPaths[0];
 	}
 
-	// 执行导入
+	// 执行导入。这里手动调用 DreamMusicAssetFactory，而不是把 Factory 注册成全局文件导入器。
+	// 这样普通拖入 wav/mp3/flac/ogg 时仍走 UE 默认导入，不会弹 DreamMusic 的 Import Music 窗口。
 	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	IAssetTools& AssetTools = AssetToolsModule.Get();
+	TArray<UObject*> ImportedAssets;
 
-	// 使用新的 Music Factory
-	UDreamMusicAssetFactory* Factory = NewObject<UDreamMusicAssetFactory>();
+	for (const FString& Filename : OutFilenames)
+	{
+		UDreamMusicAssetFactory* Factory = NewObject<UDreamMusicAssetFactory>();
+		if (!Factory->FactoryCanImport(Filename))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("DreamMusicPlayer: unsupported music file: %s"), *Filename);
+			continue;
+		}
 
-	AssetToolsModule.Get().ImportAssets(
-		OutFilenames,
-		TargetPath,
-		Factory,
-		true
-	);
+		const FString BaseAssetName = FString::Printf(TEXT("DM_%s"), *FPaths::GetBaseFilename(Filename));
+		FString PackageName;
+		FString AssetName;
+		AssetTools.CreateUniqueAssetName(TargetPath / BaseAssetName, TEXT(""), PackageName, AssetName);
+
+		UPackage* Package = CreatePackage(*PackageName);
+		if (!Package)
+		{
+			UE_LOG(LogTemp, Error, TEXT("DreamMusicPlayer: failed to create package: %s"), *PackageName);
+			continue;
+		}
+
+		bool bCanceled = false;
+		UObject* ImportedAsset = Factory->FactoryCreateFile(
+			UDreamMusicDataAsset::StaticClass(),
+			Package,
+			FName(*AssetName),
+			RF_Public | RF_Standalone | RF_Transactional,
+			Filename,
+			nullptr,
+			GWarn,
+			bCanceled);
+
+		if (ImportedAsset)
+		{
+			FAssetRegistryModule::AssetCreated(ImportedAsset);
+			Package->MarkPackageDirty();
+			ImportedAssets.Add(ImportedAsset);
+		}
+	}
+
+	if (!ImportedAssets.IsEmpty())
+	{
+		AssetTools.SyncBrowserToAssets(ImportedAssets);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -84,7 +84,7 @@ UDreamMusicAssetFactory::UDreamMusicAssetFactory()
 
 	bCreateNew = false;
 	bEditAfterNew = true;
-	bEditorImport = true;
+	bEditorImport = false;
 	SupportedClass = UDreamMusicDataAsset::StaticClass();
 }
 
@@ -252,10 +252,11 @@ bool UDreamMusicAssetFactory::FactoryCanImport(const FString& Filename)
 		TEXT("ncm"), // 网易云
 		TEXT("qmcflac"), // QQ音乐
 		TEXT("mflac"), // QQ音乐
+		TEXT("qmc0"), // QQ音乐
 		TEXT("qmc"), // QQ音乐
 		TEXT("mgg"), // QQ音乐
 		TEXT("kgm"), // 酷狗
-		TEXT("kwm") // 酷我
+		TEXT("kwm"), // 酷我
 		TEXT("xm"), // 虾米
 	};
 	return SupportedExtensions.Contains(Extension);
