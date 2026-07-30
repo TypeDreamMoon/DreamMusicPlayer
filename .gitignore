@@ -74,5 +74,7 @@ Plugins/**/Intermediate/*
 # Cache files for the editor to use
 DerivedDataCache/*
 
-!Source/DreamMusicPlayerLyric/ThirdParty/lib/**/*.lib
-!Source/DreamMusicPlayerLyric/ThirdParty/lib/**/*.dll
+# Required prebuilt third-party libraries
+!/Source/DreamMusicPlayerLyric/ThirdParty/libdlp/lib/amd64/*.lib
+!/Source/DreamMusicPlayerThirdParty/ThirdParty/bin/win64/*.dll
+!/Source/DreamMusicPlayerThirdParty/ThirdParty/lib/win64/*.lib
